@@ -1,3 +1,8 @@
+
+<div align="center">
+  <img src="assets/Surge.png" alt="Surge Logo" width="200"/>
+</div>
+
 # Surge - Unified Media Management Stack
 
 Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.

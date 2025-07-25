@@ -1,0 +1,29 @@
+libraries:
+  Movies:
+    metadata_path:
+      - pmm: basic
+      - pmm: imdb
+    operations:
+      mass_critic_rating_update: tmdb
+      mass_audience_rating_update: tmdb
+
+  TV Shows:
+    metadata_path:
+      - pmm: basic
+      - pmm: imdb
+    operations:
+      mass_critic_rating_update: tmdb
+      mass_audience_rating_update: tmdb
+
+plex:
+  url: http://surge-plex:32400
+  token: PLEX_TOKEN_HERE
+
+tmdb:
+  apikey: TMDB_API_KEY_HERE
+  language: en
+
+settings:
+  cache: true
+  asset_directory: /assets
+  save_missing: true

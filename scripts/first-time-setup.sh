@@ -185,7 +185,7 @@ gather_auto_preferences() {
     echo ""
     print_info "🔔 Discord Notifications (Optional)"
     echo "Want to receive notifications about updates and processing?"
-    read -p "Discord webhook URL [leave blank to skip]: " discord_webhook
+    read -p "Discord webhook URL (optional): " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
     NOTIFICATION_TITLE_PREFIX="Surge"
     
@@ -282,9 +282,10 @@ gather_custom_preferences() {
     # Timezone
     echo ""
     print_info "Timezone Configuration"
-    echo "Current timezone: $(timedatectl show --property=Timezone --value 2>/dev/null || echo "Unknown")"
-    read -p "Enter timezone [America/New_York]: " timezone
-    TIMEZONE=${timezone:-America/New_York}
+    detected_timezone=$(timedatectl show --property=Timezone --value 2>/dev/null || echo "America/New_York")
+    echo "Current timezone: $detected_timezone"
+    read -p "Enter timezone [$detected_timezone]: " timezone
+    TIMEZONE=${timezone:-$detected_timezone}
     
     # Port Configuration
     echo ""
@@ -431,7 +432,7 @@ gather_custom_preferences() {
     echo "• Error alerts"
     echo "• System status updates"
     echo ""
-    read -p "Discord webhook URL [leave blank to skip]: " discord_webhook
+    read -p "Discord webhook URL (optional): " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
     
     if [ -n "$DISCORD_WEBHOOK_URL" ]; then
@@ -465,14 +466,14 @@ gather_custom_preferences() {
         DISCORD_NOTIFY_SYSTEM="false"
     fi
     
-    read -p "TMDB API Key (for metadata) [leave blank]: " tmdb_key
+    read -p "TMDB API Key (for metadata) (optional): " tmdb_key
     TMDB_API_KEY=${tmdb_key:-}
-    
-    read -p "Trakt Client ID [leave blank]: " trakt_id
+
+    read -p "Trakt Client ID (optional): " trakt_id
     TRAKT_CLIENT_ID=${trakt_id:-}
-    
+
     if [ -n "$TRAKT_CLIENT_ID" ]; then
-        read -p "Trakt Client Secret: " trakt_secret
+        read -p "Trakt Client Secret (optional): " trakt_secret
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
     
@@ -512,7 +513,7 @@ gather_custom_preferences() {
         echo "• Auto-connection to Radarr and Sonarr"
         
         if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ]; then
-            read -p "Real-Debrid API Token (for Torrentio) [optional]: " prowlarr_rd_token
+            read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
             RD_API_TOKEN=${prowlarr_rd_token:-}
         fi
         
@@ -520,12 +521,12 @@ gather_custom_preferences() {
             echo ""
             echo "🔧 cli_debrid Configuration:"
             if [ -z "$RD_API_TOKEN" ]; then
-                read -p "Real-Debrid API Token [optional]: " rd_token_cli
+                read -p "Real-Debrid API Token (optional): " rd_token_cli
                 RD_API_TOKEN=${rd_token_cli:-}
             fi
-            read -p "AllDebrid API Token [optional]: " ad_token
+            read -p "AllDebrid API Token (optional): " ad_token
             AD_API_TOKEN=${ad_token:-}
-            read -p "Premiumize API Token [optional]: " pm_token
+            read -p "Premiumize API Token (optional): " pm_token
             PREMIUMIZE_API_TOKEN=${pm_token:-}
         fi
     fi
@@ -533,10 +534,10 @@ gather_custom_preferences() {
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
-        read -p "Fanart.tv API Key [optional]: " fanart_key
+        read -p "Fanart.tv API Key (optional): " fanart_key
         FANART_API_KEY=${fanart_key:-}
-        
-        read -p "TVDB API Key [optional]: " tvdb_key
+
+        read -p "TVDB API Key (optional): " tvdb_key
         TVDB_API_KEY=${tvdb_key:-}
     fi
 }
@@ -580,8 +581,101 @@ configure_services_post_deployment() {
     
     # Configure media server connections
     configure_media_server_connections
+
+    # Configure homepage widgets for all enabled services
+    configure_homepage_widgets
     
     print_success "Service configuration completed!"
+}
+# Generate homepage.yaml widgets for all enabled services
+configure_homepage_widgets() {
+    print_step "🖥️  Configuring Homepage widgets..."
+    local homepage_yaml="$PROJECT_DIR/homepage.yaml"
+    echo "services:" > "$homepage_yaml"
+
+    # Homepage dashboard
+    echo "  - name: Homepage" >> "$homepage_yaml"
+    echo "    url: http://localhost:${HOMEPAGE_PORT:-3000}" >> "$homepage_yaml"
+
+    # Media server
+    case "$MEDIA_SERVER" in
+        plex)
+            echo "  - name: Plex" >> "$homepage_yaml"
+            echo "    url: http://localhost:${PLEX_PORT:-32400}/web" >> "$homepage_yaml"
+            ;;
+        emby)
+            echo "  - name: Emby" >> "$homepage_yaml"
+            echo "    url: http://localhost:${EMBY_PORT:-8096}" >> "$homepage_yaml"
+            ;;
+        jellyfin)
+            echo "  - name: Jellyfin" >> "$homepage_yaml"
+            echo "    url: http://localhost:${JELLYFIN_PORT:-8096}" >> "$homepage_yaml"
+            ;;
+    esac
+
+    # Core services
+    if [ "$ENABLE_PROWLARR" = "true" ]; then
+        echo "  - name: Prowlarr" >> "$homepage_yaml"
+        echo "    url: http://localhost:9696" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_BAZARR" = "true" ]; then
+        echo "  - name: Bazarr" >> "$homepage_yaml"
+        echo "    url: http://localhost:6767" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_NZBGET" = "true" ]; then
+        echo "  - name: NZBGet" >> "$homepage_yaml"
+        echo "    url: http://localhost:6789" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+        echo "  - name: RDT-Client" >> "$homepage_yaml"
+        echo "    url: http://localhost:6500" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        echo "  - name: cli_debrid" >> "$homepage_yaml"
+        echo "    url: cli" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_DECYPHARR" = "true" ]; then
+        echo "  - name: Decypharr" >> "$homepage_yaml"
+        echo "    url: http://localhost:8282" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_ZILEAN" = "true" ]; then
+        echo "  - name: Zilean" >> "$homepage_yaml"
+        echo "    url: http://localhost:8182" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_GAPS" = "true" ]; then
+        echo "  - name: GAPS" >> "$homepage_yaml"
+        echo "    url: http://localhost:${GAPS_PORT:-8484}" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_OVERSEERR" = "true" ]; then
+        echo "  - name: Overseerr" >> "$homepage_yaml"
+        echo "    url: http://localhost:5055" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_TAUTULLI" = "true" ]; then
+        echo "  - name: Tautulli" >> "$homepage_yaml"
+        echo "    url: http://localhost:8181" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+        echo "  - name: Posterizarr" >> "$homepage_yaml"
+        echo "    url: http://localhost:9876" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_KOMETA" = "true" ]; then
+        echo "  - name: Kometa" >> "$homepage_yaml"
+        echo "    url: http://localhost:5556" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_SCANLY" = "true" ]; then
+        echo "  - name: Scanly" >> "$homepage_yaml"
+        echo "    url: http://localhost:8183" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_CINESYNC" = "true" ]; then
+        echo "  - name: CineSync" >> "$homepage_yaml"
+        echo "    url: http://localhost:8184" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_PLACEHOLDARR" = "true" ]; then
+        echo "  - name: Placeholdarr" >> "$homepage_yaml"
+        echo "    url: http://localhost:8185" >> "$homepage_yaml"
+    fi
+
+    print_success "Homepage widgets configured in homepage.yaml"
 }
 
 # Comprehensive Prowlarr configuration
@@ -703,6 +797,8 @@ add_torrentio_indexer() {
 
 # Add Zilean indexer to Prowlarr
 add_zilean_indexer() {
+        read -p "Enable GAPS (Plex missing movies)? [Y/n]: " enable_gaps
+        ENABLE_GAPS=$([[ "$enable_gaps" =~ ^[Nn]$ ]] && echo "false" || echo "true")
     print_info "Adding Zilean indexer to Prowlarr..."
     
     local indexer_data='{
@@ -985,7 +1081,7 @@ PGID=$PGID
 DATA_ROOT=$STORAGE_PATH
 MOVIES_DIR=\${DATA_ROOT}/media/movies
 TV_SHOWS_DIR=\${DATA_ROOT}/media/tv
-DOWNLOADS_DIR=\${DATA_ROOT}/downloads
+    cat > "$PROJECT_DIR/.env" << EOF
 CONFIG_DIR=\${DATA_ROOT}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
@@ -1012,6 +1108,7 @@ ENABLE_TAUTULLI=${ENABLE_TAUTULLI:-true}
 ENABLE_SCANLY=${ENABLE_SCANLY:-true}
 ENABLE_CINESYNC=${ENABLE_CINESYNC:-false}
 ENABLE_PLACEHOLDARR=${ENABLE_PLACEHOLDARR:-false}
+ENABLE_GAPS=${ENABLE_GAPS:-true}
 ENABLE_WATCHTOWER=${ENABLE_WATCHTOWER:-true}
 ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-true}
 
@@ -1032,6 +1129,7 @@ KOMETA_PORT=5556
 PLEX_PORT=${PLEX_PORT:-32400}
 EMBY_PORT=${EMBY_PORT:-8096}
 JELLYFIN_PORT=${JELLYFIN_PORT:-8096}
+GAPS_PORT=${GAPS_PORT:-8484}
 
 # AUTOMATION
 WATCHTOWER_INTERVAL=${WATCHTOWER_INTERVAL:-86400}
@@ -1238,6 +1336,7 @@ display_final_access_info() {
     print_success "Surge is now running! Access your services:"
     echo ""
     echo "  📊 Homepage Dashboard: http://localhost:3000"
+    echo "  🖼️  Surge Logo: http://localhost:3000/assets/Surge.png"
     echo ""
     
     # Media Server
@@ -1257,6 +1356,11 @@ display_final_access_info() {
     echo "  🔍 Prowlarr (Indexer Manager): http://localhost:9696"
     echo "  🎥 Radarr (Movies): http://localhost:7878"
     echo "  📺 Sonarr (TV Shows): http://localhost:8989"
+
+    # GAPS
+    if [ "$ENABLE_GAPS" = "true" ]; then
+        echo "  🧩 GAPS (Plex Missing Movies): http://localhost:${GAPS_PORT:-8484}"
+    fi
     
     # Download clients
     if [ "$ENABLE_NZBGET" = "true" ]; then
@@ -1330,15 +1434,19 @@ mark_initialized() {
 # Detect new variables in updated containers
 detect_new_variables() {
     print_step "🔍 Checking for configuration updates..."
-    
     if [ ! -f "$PROJECT_DIR/.env" ]; then
+        echo ""
+        print_success "Welcome to Surge! Let's get your unified media stack set up."
         return 0
     fi
-    
     # Get current config version
-    current_version=$(grep "CONFIG_VERSION=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 || echo "0")
+    current_version=$(grep "CONFIG_VERSION=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2)
     expected_version="1.0"
-    
+    if [ -z "$current_version" ]; then
+        echo ""
+        print_success "Welcome to Surge! Let's get your unified media stack set up."
+        return 0
+    fi
     if [ "$current_version" != "$expected_version" ]; then
         echo ""
         print_warning "🆕 New Variable Detected!"
@@ -1350,7 +1458,6 @@ detect_new_variables() {
         echo "Expected version: $expected_version"
         echo ""
         read -p "Would you like to update your configuration? [Y/n]: " update_config
-        
         if [[ ! "$update_config" =~ ^[Nn]$ ]]; then
             echo ""
             print_info "Configuration update options:"
@@ -1358,7 +1465,6 @@ detect_new_variables() {
             echo "2) Backup current config and run full setup again"
             echo "3) Skip update (not recommended)"
             read -p "Choose option (1-3): " update_choice
-            
             case $update_choice in
                 1)
                     backup_and_merge_config
@@ -1414,7 +1520,7 @@ main() {
     
     # Check for configuration updates if already exists
     detect_new_variables
-    
+
     # If no config exists or user chose to reconfigure, gather preferences
     if [ ! -f "$PROJECT_DIR/.env" ] || [ "$1" = "--reconfigure" ]; then
         # Handle command line installation type selection
@@ -1426,38 +1532,103 @@ main() {
             # Choose installation type interactively
             choose_install_type
         fi
-        
+
         # Gather preferences based on chosen type
         if [ "$INSTALL_TYPE" = "auto" ]; then
             gather_auto_preferences
         else
             gather_custom_preferences
         fi
-        
+
         # Create configuration
         create_config
+
+        # Source .env to load STORAGE_PATH, PUID, PGID, etc.
+        source "$PROJECT_DIR/.env"
+        export STORAGE_PATH PUID PGID
+
+        # Create directories (now STORAGE_PATH is set)
+        create_directories
+
+        # Create service configs
+        create_service_configs
+
+        # Mark as initialized
+        mark_initialized
+
+        # Show next steps
+        show_next_steps
+
+        # Send welcome Discord notification if webhook is configured
+        if [ -n "$DISCORD_WEBHOOK_URL" ] && [ -f "$PROJECT_DIR/scripts/shared-config.sh" ]; then
+            print_step "Sending setup completion notification..."
+
+            # Source the .env to get variables
+            source "$PROJECT_DIR/.env"
+
+            # Test webhook with setup completion message
+            "$PROJECT_DIR/scripts/shared-config.sh" test-webhook
+        fi
+        return
     fi
-    
-    # Create directories
+
+    # For existing config, keep legacy flow
+    # Source .env and export needed variables before creating directories
+    if [ -f "$PROJECT_DIR/.env" ]; then
+        source "$PROJECT_DIR/.env"
+        export STORAGE_PATH PUID PGID
+        # Validate required variables before creating directories
+        missing_vars=false
+        if [ -z "$STORAGE_PATH" ]; then
+            print_warning "STORAGE_PATH is missing from your configuration."
+            echo "This is the main folder where Surge will store all media, downloads, and configs."
+            echo "Recommended default: /opt/surge"
+            read -p "Enter storage path [/opt/surge]: " storage_path
+            STORAGE_PATH=${storage_path:-/opt/surge}
+            missing_vars=true
+        fi
+        if [ -z "$PUID" ]; then
+            print_warning "PUID (user ID) is missing from your configuration."
+            echo "This should be the user ID that will own the files."
+            echo "Recommended: your current user ID ($(id -u))"
+            read -p "Enter user ID [$(id -u)]: " puid
+            PUID=${puid:-$(id -u)}
+            missing_vars=true
+        fi
+        if [ -z "$PGID" ]; then
+            print_warning "PGID (group ID) is missing from your configuration."
+            echo "This should be the group ID that will own the files."
+            echo "Recommended: your current group ID ($(id -g))"
+            read -p "Enter group ID [$(id -g)]: " pgid
+            PGID=${pgid:-$(id -g)}
+            missing_vars=true
+        fi
+        if [ "$missing_vars" = true ]; then
+            print_info "Updating .env with missing values..."
+            # Update .env file with new values
+            sed -i "/^STORAGE_PATH=/d" "$PROJECT_DIR/.env"
+            sed -i "/^PUID=/d" "$PROJECT_DIR/.env"
+            sed -i "/^PGID=/d" "$PROJECT_DIR/.env"
+            echo "STORAGE_PATH=$STORAGE_PATH" >> "$PROJECT_DIR/.env"
+            echo "PUID=$PUID" >> "$PROJECT_DIR/.env"
+            echo "PGID=$PGID" >> "$PROJECT_DIR/.env"
+            # Re-source .env to ensure variables are loaded
+            source "$PROJECT_DIR/.env"
+            export STORAGE_PATH PUID PGID
+            print_info "Debug: Loaded values after update:"
+            echo "  STORAGE_PATH=$STORAGE_PATH"
+            echo "  PUID=$PUID"
+            echo "  PGID=$PGID"
+            print_success "Configuration updated. Continuing setup..."
+        fi
+    fi
     create_directories
-    
-    # Create service configs
     create_service_configs
-    
-    # Mark as initialized
     mark_initialized
-    
-    # Show next steps
     show_next_steps
-    
-    # Send welcome Discord notification if webhook is configured
     if [ -n "$DISCORD_WEBHOOK_URL" ] && [ -f "$PROJECT_DIR/scripts/shared-config.sh" ]; then
         print_step "Sending setup completion notification..."
-        
-        # Source the .env to get variables
         source "$PROJECT_DIR/.env"
-        
-        # Test webhook with setup completion message
         "$PROJECT_DIR/scripts/shared-config.sh" test-webhook
     fi
 }
