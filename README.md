@@ -1,4 +1,3 @@
-
 <div align="center">
   <img src="assets/Surge.png" alt="Surge Logo" width="200"/>
 </div>
@@ -28,6 +27,7 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 - **[NZBGet](https://github.com/nzbgetcom/nzbget)** - Efficient Usenet downloader
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** - Real-Debrid torrent client
 - **[Zilean](https://github.com/iPromKnight/zilean)** - DebridMediaManager content search with Torznab support
+- **[GAPS](https://github.com/JasonHHouse/gaps)** - Finds missing movies in Plex libraries and integrates with Radarr
 - **[Zurg](https://github.com/debridmediamanager/zurg-testing)** - Real-Debrid integration testing tool
 - **[cli_debrid](https://github.com/godver3/cli_debrid)** - Command-line interface for debrid services management
 - **[Decypharr](https://github.com/sirrobot01/decypharr)** - QBittorrent API implementation with multiple debrid service support
@@ -320,6 +320,7 @@ All services can be configured through:
 | Bazarr | 6767 | Subtitle management |
 | NZBGet | 6789 | Usenet downloader |
 | Zilean | 8182 | DMM content search |
+| GAPS | 8484 | Plex missing movies integration |
 | RDT-Client | 6500 | Real-Debrid torrent client |
 | Decypharr | 8282 | QBittorrent API with debrid support |
 | Tautulli | 8181 | Media server stats |
@@ -431,6 +432,7 @@ This project stands on the shoulders of giants. Special thanks to all the amazin
 - **[NZBGet](https://github.com/nzbgetcom/nzbget)** team
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** by Roger Far
 - **[Zilean](https://github.com/iPromKnight/zilean)** by iPromKnight
+- **[GAPS](https://github.com/JasonHHouse/gaps)** by JasonHHouse
 - **[Zurg](https://github.com/debridmediamanager/zurg-testing)** by DebridMediaManager
 - **[cli_debrid](https://github.com/godver3/cli_debrid)** by godver3
 - **[Decypharr](https://github.com/sirrobot01/decypharr)** by sirrobot01
