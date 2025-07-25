@@ -1,0 +1,35 @@
+version: '3.8'
+
+# ===========================================
+# EMBY MEDIA SERVER CONFIGURATION  
+# ===========================================
+
+services:
+  emby:
+    image: emby/embyserver:latest
+    container_name: surge-emby
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - GIDLIST=${PGID:-1000}
+    volumes:
+      - emby-config:/config
+      - shared-assets:/config/metadata/assets
+      - ${MOVIES_DIR:-./data/media/movies}:/data/movies
+      - ${TV_SHOWS_DIR:-./data/media/tv}:/data/tv
+      - ${MUSIC_DIR:-./data/media/music}:/data/music
+    ports:
+      - "${EMBY_PORT:-8096}:8096"
+      - "8920:8920" # HTTPS
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    devices:
+      - /dev/dri:/dev/dri # For hardware transcoding (if available)
+    profiles:
+      - emby
+
+volumes:
+  emby-config:
+  shared-assets:  # Reference to shared volume from main compose

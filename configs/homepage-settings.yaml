@@ -1,0 +1,31 @@
+---
+# Homepage Configuration for Surge
+title: "Surge - Media Management Stack"
+subtitle: "Your unified media automation hub"
+logo: "https://raw.githubusercontent.com/gethomepage/homepage/main/public/logo.png"
+header: true
+favicon: "https://raw.githubusercontent.com/gethomepage/homepage/main/public/favicon.ico"
+
+background:
+  image: "https://images.unsplash.com/photo-1489599077397-773bc2be5b7f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+  blur: "sm"
+  saturate: 50
+  brightness: 50
+  opacity: 20
+
+theme: dark
+color: slate
+
+layout:
+  Media Servers:
+    style: row
+    columns: 3
+  Media Management:
+    style: row
+    columns: 4
+  Download Clients:
+    style: row
+    columns: 3
+  Monitoring:
+    style: row
+    columns: 2

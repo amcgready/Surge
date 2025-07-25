@@ -1,0 +1,65 @@
+name: Test Deployment
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  test-deployment:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        media-server: [plex, jellyfin, emby]
+        deployment-type: [minimal, full]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Setup environment
+      run: |
+        cp .env.example .env
+        # Set test-specific values
+        sed -i 's|DATA_ROOT=/opt/surge|DATA_ROOT=${{ github.workspace }}/test-data|g' .env
+        sed -i 's|PUID=1000|PUID=$(id -u)|g' .env
+        sed -i 's|PGID=1000|PGID=$(id -g)|g' .env
+        
+    - name: Create test directories
+      run: |
+        mkdir -p ${{ github.workspace }}/test-data/{media/{movies,tv,music},downloads,config,logs}
+        
+    - name: Test deployment - ${{ matrix.media-server }} (${{ matrix.deployment-type }})
+      run: |
+        if [ "${{ matrix.deployment-type }}" = "minimal" ]; then
+          ./scripts/deploy.sh ${{ matrix.media-server }} --minimal
+        else
+          ./scripts/deploy.sh ${{ matrix.media-server }}
+        fi
+        
+    - name: Wait for services to start
+      run: |
+        sleep 30
+        
+    - name: Check service health
+      run: |
+        ./scripts/maintenance.sh status
+        
+    - name: Test update process
+      run: |
+        ./scripts/update.sh --no-cleanup
+        
+    - name: Test maintenance functions
+      run: |
+        ./scripts/maintenance.sh health
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        docker compose down --volumes || true
+        docker system prune -af || true

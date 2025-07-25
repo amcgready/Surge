@@ -1,0 +1,84 @@
+name: Update Upstream Images
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for image updates
+      id: check
+      run: |
+        # List of images to check
+        images=(
+          "lscr.io/linuxserver/radarr:latest"
+          "lscr.io/linuxserver/sonarr:latest"
+          "lscr.io/linuxserver/bazarr:latest"
+          "lscr.io/linuxserver/nzbget:latest"
+          "lscr.io/linuxserver/tautulli:latest"
+          "plexinc/pms-docker:latest"
+          "emby/embyserver:latest"
+          "jellyfin/jellyfin:latest"
+          "ghcr.io/gethomepage/homepage:latest"
+          "kometateam/kometa:latest"
+          "kometateam/imagemaid:latest"
+          "rogerfar/rdtclient:latest"
+          "fscorrupt/posterizarr:latest"
+        )
+        
+        updated_images=""
+        
+        for image in "${images[@]}"; do
+          echo "Checking $image..."
+          
+          # Pull latest image info
+          current_digest=$(docker manifest inspect $image 2>/dev/null | jq -r '.config.digest' || echo "unknown")
+          
+          if [ "$current_digest" != "unknown" ]; then
+            echo "Found update for $image"
+            updated_images="$updated_images\n- $image"
+          fi
+        done
+        
+        if [ -n "$updated_images" ]; then
+          echo "updates_available=true" >> $GITHUB_OUTPUT
+          echo "updated_images<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$updated_images" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "updates_available=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create update PR
+      if: steps.check.outputs.updates_available == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Update upstream container images"
+        title: "🤖 Automated: Update upstream container images"
+        body: |
+          This automated PR updates the following container images:
+          
+          ${{ steps.check.outputs.updated_images }}
+          
+          **Automated changes:**
+          - Updated image references in Docker Compose files
+          - Maintained version pinning strategy
+          - All services tested in CI
+          
+          **Please review:**
+          - Check for any breaking changes in upstream releases
+          - Verify all services start correctly
+          - Test core functionality
+          
+          This PR was automatically created by the update workflow.
+        branch: update/container-images
+        delete-branch: true

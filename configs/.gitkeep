@@ -1,0 +1,2 @@
+# This file ensures the configs directory structure is preserved in Git
+# Custom indexer configurations for Prowlarr are automatically mounted here

@@ -1,0 +1,108 @@
+# Kometa Configuration Template
+# Copy this file to your kometa config volume and customize
+
+# ===========================================
+# KOMETA MAIN CONFIGURATION
+# ===========================================
+
+libraries:
+  Movies:
+    metadata_path:
+      - pmm: basic
+      - pmm: imdb
+      - pmm: studio
+      - pmm: genre
+      - pmm: actor
+      - pmm: director
+    operations:
+      mass_critic_rating_update: tmdb
+      mass_audience_rating_update: tmdb
+      mass_user_rating_update: imdb
+      mass_genre_update: tmdb
+      mass_content_rating_update: tmdb
+      mass_originally_available_update: tmdb
+      mass_imdb_parental_labels: without_rating
+
+  TV Shows:
+    metadata_path:
+      - pmm: basic
+      - pmm: imdb
+      - pmm: studio
+      - pmm: genre
+    operations:
+      mass_critic_rating_update: tmdb
+      mass_audience_rating_update: tmdb
+      mass_user_rating_update: imdb
+      mass_genre_update: tmdb
+      mass_content_rating_update: tmdb
+      mass_originally_available_update: tmdb
+      mass_episode_critic_rating_update: tmdb
+      mass_episode_audience_rating_update: tmdb
+
+# ===========================================
+# PLEX CONFIGURATION
+# ===========================================
+
+plex:
+  url: http://surge-plex:32400
+  token: YOUR_PLEX_TOKEN_HERE
+  timeout: 60
+  verify_ssl: false
+
+# ===========================================
+# TMDB CONFIGURATION
+# ===========================================
+
+tmdb:
+  apikey: YOUR_TMDB_API_KEY_HERE
+  language: en
+
+# ===========================================
+# TRAKT CONFIGURATION (OPTIONAL)
+# ===========================================
+
+# trakt:
+#   client_id: YOUR_TRAKT_CLIENT_ID
+#   client_secret: YOUR_TRAKT_CLIENT_SECRET
+#   pin: YOUR_TRAKT_PIN
+
+# ===========================================
+# SETTINGS
+# ===========================================
+
+settings:
+  cache: true
+  cache_expiration: 60
+  asset_directory: /config/assets
+  asset_folders: true
+  asset_depth: 0
+  create_asset_folders: true
+  dimensional_asset_rename: true
+  download_url_assets: true
+  show_missing_season_assets: false
+  show_missing_episode_assets: false
+  show_asset_not_needed: true
+  sync_mode: append
+  run_again_delay: 2
+  missing_only_released: false
+  only_filter_missing: false
+  show_unmanaged: true
+  show_unconfigured: true
+  show_filtered: false
+  show_missing: true
+  save_missing: true
+  tvdb_language: eng
+  ignore_ids:
+  ignore_imdb_ids:
+  playlist_sync_to_user: all
+  verify_ssl: true
+
+# ===========================================
+# WEBHOOKS (OPTIONAL)
+# ===========================================
+
+# webhooks:
+#   error: YOUR_ERROR_WEBHOOK_URL
+#   run_start: YOUR_START_WEBHOOK_URL
+#   run_end: YOUR_END_WEBHOOK_URL
+#   changes: YOUR_CHANGES_WEBHOOK_URL

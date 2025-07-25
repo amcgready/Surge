@@ -1,0 +1,122 @@
+---
+# Services Configuration for Homepage
+Media Servers:
+  - Plex:
+      icon: plex.png
+      href: http://localhost:32400/web
+      description: Stream your media collection
+      server: surge-plex
+      container: surge-plex
+      widget:
+        type: plex
+        url: http://surge-plex:32400
+        key: {{HOMEPAGE_VAR_PLEX_TOKEN}}
+
+  - Emby:
+      icon: emby.png
+      href: http://localhost:8096
+      description: Your personal media server
+      server: surge-emby
+      container: surge-emby
+      widget:
+        type: emby
+        url: http://surge-emby:8096
+        key: {{HOMEPAGE_VAR_EMBY_TOKEN}}
+
+  - Jellyfin:
+      icon: jellyfin.png
+      href: http://localhost:8096
+      description: Free software media system
+      server: surge-jellyfin
+      container: surge-jellyfin
+      widget:
+        type: jellyfin
+        url: http://surge-jellyfin:8096
+        key: {{HOMEPAGE_VAR_JELLYFIN_TOKEN}}
+
+Media Management:
+  - Radarr:
+      icon: radarr.png
+      href: http://localhost:7878
+      description: Movie collection manager
+      server: surge-radarr
+      container: surge-radarr
+      widget:
+        type: radarr
+        url: http://surge-radarr:7878
+        key: {{HOMEPAGE_VAR_RADARR_TOKEN}}
+
+  - Sonarr:
+      icon: sonarr.png
+      href: http://localhost:8989
+      description: TV series manager
+      server: surge-sonarr
+      container: surge-sonarr
+      widget:
+        type: sonarr
+        url: http://surge-sonarr:8989
+        key: {{HOMEPAGE_VAR_SONARR_TOKEN}}
+
+  - Bazarr:
+      icon: bazarr.png
+      href: http://localhost:6767
+      description: Subtitle management
+      server: surge-bazarr
+      container: surge-bazarr
+      widget:
+        type: bazarr
+        url: http://surge-bazarr:6767
+        key: {{HOMEPAGE_VAR_BAZARR_TOKEN}}
+
+  - Posterizarr:
+      icon: posterizarr.png
+      href: http://localhost:5060
+      description: Custom poster management
+      server: surge-posterizarr
+      container: surge-posterizarr
+
+Download Clients:
+  - NZBGet:
+      icon: nzbget.png
+      href: http://localhost:6789
+      description: Usenet downloader
+      server: surge-nzbget
+      container: surge-nzbget
+      widget:
+        type: nzbget
+        url: http://surge-nzbget:6789
+        username: {{HOMEPAGE_VAR_NZBGET_USER}}
+        password: {{HOMEPAGE_VAR_NZBGET_PASS}}
+
+  - RDT Client:
+      icon: rdtclient.png
+      href: http://localhost:6500
+      description: Real-Debrid client
+      server: surge-rdt-client
+      container: surge-rdt-client
+
+  - Zurg:
+      icon: zurg.png
+      description: Real-Debrid integration
+      server: surge-zurg
+      container: surge-zurg
+
+Monitoring:
+  - Tautulli:
+      icon: tautulli.png
+      href: http://localhost:8181
+      description: Media server statistics
+      server: surge-tautulli
+      container: surge-tautulli
+      widget:
+        type: tautulli
+        url: http://surge-tautulli:8181
+        key: {{HOMEPAGE_VAR_TAUTULLI_TOKEN}}
+
+  - System Monitor:
+      icon: glances.png
+      description: System resources
+      widget:
+        type: glances
+        url: http://localhost:61208
+        metric: cpu

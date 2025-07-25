@@ -1,0 +1,216 @@
+version: '3.8'
+
+# ===========================================
+# SURGE AUTOMATION & SCHEDULING
+# ===========================================
+
+services:
+  # Watchtower for automatic updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: surge-watchtower
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_INTERVAL:-86400}  # 24 hours
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_NOTIFICATION_URL=${DISCORD_WEBHOOK_URL:-}
+      - WATCHTOWER_NOTIFICATION_TEMPLATE={{range .}}{{.Message}}{{end}}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - watchtower
+      - auto-update
+
+  # Cron scheduler for sequential tasks
+  scheduler:
+    image: alpine:latest
+    container_name: surge-scheduler
+    environment:
+      - TZ=${TZ:-UTC}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - shared-logs:/logs
+    command: |
+      sh -c '
+        # Install docker client
+        apk add --no-cache docker-cli
+
+        # Create crontab for sequential execution
+        cat > /tmp/crontab << EOF
+        # ImageMaid -> Posterizarr -> Kometa sequence
+        # Run daily at 2 AM
+        ${ASSET_PROCESSING_SCHEDULE:-0 2 * * *} /usr/local/bin/run-sequence.sh >> /logs/scheduler.log 2>&1
+
+        # Check for updates and notify via Discord
+        # Run every 4 hours
+        0 */4 * * * /usr/local/bin/check-updates.sh >> /logs/update-check.log 2>&1
+        EOF
+
+        # Create sequence script
+        cat > /usr/local/bin/run-sequence.sh << "SCRIPT"
+        #!/bin/sh
+        echo "$(date): Starting asset processing sequence..."
+        
+        # Step 1: Run ImageMaid
+        echo "$(date): Running ImageMaid..."
+        docker run --rm --name surge-imagemaid-scheduled \
+          --network surge-network \
+          -v surge_imagemaid-config:/config \
+          -v surge_shared-assets:/assets \
+          -v surge_shared-logs:/logs \
+          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
+          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
+          -e PUID=${PUID:-1000} \
+          -e PGID=${PGID:-1000} \
+          -e TZ=${TZ:-UTC} \
+          kometateam/imagemaid:latest
+        
+        echo "$(date): ImageMaid completed"
+        
+        # Step 2: Run Posterizarr
+        echo "$(date): Running Posterizarr..."
+        docker run --rm --name surge-posterizarr-scheduled \
+          --network surge-network \
+          -v surge_posterizarr-config:/config \
+          -v surge_shared-assets:/assets \
+          -v surge_shared-logs:/logs \
+          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
+          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
+          -e PUID=${PUID:-1000} \
+          -e PGID=${PGID:-1000} \
+          -e TZ=${TZ:-UTC} \
+          fscorrupt/posterizarr:latest
+        
+        echo "$(date): Posterizarr completed"
+        
+        # Step 3: Run Kometa
+        echo "$(date): Running Kometa..."
+        docker run --rm --name surge-kometa-scheduled \
+          --network surge-network \
+          -v surge_kometa-config:/config \
+          -v surge_shared-assets:/assets \
+          -v surge_shared-logs:/config/logs \
+          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
+          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
+          -e PUID=${PUID:-1000} \
+          -e PGID=${PGID:-1000} \
+          -e TZ=${TZ:-UTC} \
+          -e KOMETA_CONFIG=/config/config.yml \
+          kometateam/kometa:latest
+        
+        echo "$(date): Kometa completed"
+        
+        # Send completion notification if webhook is configured and processing notifications enabled
+        if [ -n "${DISCORD_WEBHOOK_URL:-}" ] && [ "${DISCORD_NOTIFY_PROCESSING:-false}" = "true" ]; then
+            # Install curl if not present
+            if ! command -v curl > /dev/null; then
+                apk add --no-cache curl
+            fi
+            
+            curl -s -H "Content-Type: application/json" \
+                 -d "{\"content\": \"**${NOTIFICATION_TITLE_PREFIX:-Surge} - Asset Processing Complete**\\nSuccessfully completed:\\n• ImageMaid cleanup\\n• Posterizarr poster updates\\n• Kometa metadata refresh\"}" \
+                 "${DISCORD_WEBHOOK_URL}" > /dev/null 2>&1
+        fi
+        
+        echo "$(date): Asset processing sequence finished"
+        SCRIPT
+
+        # Create update check script
+        cat > /usr/local/bin/check-updates.sh << "SCRIPT"
+        #!/bin/sh
+        echo "$(date): Checking for container updates..."
+        
+        # Function to send Discord notification
+        send_discord_notification() {
+            local title="$1"
+            local description="$2"
+            local color="${3:-3447003}"
+            local webhook_url="${DISCORD_WEBHOOK_URL:-}"
+            
+            if [ -z "$webhook_url" ] || [ "${DISCORD_NOTIFY_UPDATES:-false}" != "true" ]; then
+                return 0
+            fi
+            
+            local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+            local hostname=$(hostname)
+            
+            # Install curl if not present
+            if ! command -v curl > /dev/null; then
+                apk add --no-cache curl
+            fi
+            
+            # Send notification with simple text
+            curl -s -H "Content-Type: application/json" \
+                 -d "{\"content\": \"**${NOTIFICATION_TITLE_PREFIX:-Surge} - $title**\\n$description\"}" \
+                 "$webhook_url" > /dev/null 2>&1
+        }
+        
+        # Get list of Surge containers
+        containers=$(docker ps --filter "name=surge-" --format "{{.Names}}" 2>/dev/null)
+        
+        if [ -z "$containers" ]; then
+            echo "$(date): No Surge containers found"
+            exit 0
+        fi
+        
+        updates_available=""
+        
+        # Check each container for updates
+        echo "$containers" | while read -r container; do
+            if [ -n "$container" ]; then
+                image=$(docker inspect "$container" --format='{{.Config.Image}}' 2>/dev/null)
+                
+                if [ -n "$image" ]; then
+                    echo "$(date): Checking updates for $container ($image)..."
+                    
+                    # Get current image ID
+                    current_id=$(docker inspect "$image" --format='{{.Id}}' 2>/dev/null)
+                    
+                    # Pull latest image quietly
+                    pull_output=$(docker pull "$image" 2>&1)
+                    
+                    # Check if image was actually updated
+                    if echo "$pull_output" | grep -q "Downloaded newer image"; then
+                        updates_available="$updates_available• $container\\n"
+                        echo "$(date): Update available for $container"
+                    fi
+                fi
+            fi
+        done
+        
+        # Send notification if updates are available
+        if [ -n "$updates_available" ]; then
+            send_discord_notification \
+                "Container Updates Available" \
+                "Updates are available for:\\n\\n$updates_available\\nUse ./surge update to apply updates."
+                
+            echo "$(date): Updates available - Discord notification sent"
+        else
+            echo "$(date): All containers are up to date"
+        fi
+        SCRIPT
+
+        chmod +x /usr/local/bin/run-sequence.sh
+        chmod +x /usr/local/bin/check-updates.sh
+        
+        # Install crontab
+        crontab /tmp/crontab
+        
+        # Start cron in foreground
+        crond -f -l 2
+      '
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - scheduler
+      - automation
+
+volumes:
+  shared-logs:
+  shared-assets:

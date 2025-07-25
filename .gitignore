@@ -1,0 +1,65 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Docker volumes and data
+data/
+volumes/
+backups/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+
+# Config files with secrets
+configs/**/config.yml
+configs/**/settings.json
+configs/**/*.db
+configs/**/*.sqlite
+
+# Backup files
+*.bak
+*.backup
+
+# Test data
+test-data/
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Node modules (if any)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Lock files
+package-lock.json
+yarn.lock
