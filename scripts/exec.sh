@@ -80,7 +80,22 @@ exec_in_service() {
                 -e KOMETA_CONFIG=/config/config.yml \
                 kometateam/kometa:latest $command
             ;;
-        radarr|sonarr|bazarr|nzbget|tautulli|plex|emby|jellyfin)
+        cli-debrid)
+            print_info "Running cli_debrid command: $command"
+            docker run --rm -it \
+                --name surge-cli-debrid-exec \
+                --network surge-network \
+                -v cli-debrid-config:/app/config \
+                -v "${DOWNLOADS_DIR:-./data/downloads}":/downloads \
+                -e PUID="${PUID:-1000}" \
+                -e PGID="${PGID:-1000}" \
+                -e TZ="${TZ:-UTC}" \
+                -e RD_API_KEY="${RD_API_TOKEN}" \
+                -e AD_API_KEY="${AD_API_TOKEN:-}" \
+                -e PREMIUMIZE_API_KEY="${PREMIUMIZE_API_TOKEN:-}" \
+                godver3/cli_debrid:latest $command
+            ;;
+        radarr|sonarr|bazarr|nzbget|tautulli|plex|emby|jellyfin|decypharr)
             print_info "Connecting to $service container..."
             docker exec -it "surge-$service" ${command:-/bin/bash}
             ;;

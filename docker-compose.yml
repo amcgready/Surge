@@ -28,6 +28,8 @@ volumes:
   imagemaid-config:
   prowlarr-config:
   zilean-config:
+  cli-debrid-config:
+  decypharr-config:
   # Shared data volumes
   shared-assets:
   shared-logs:
@@ -182,6 +184,45 @@ services:
       - surge-network
     profiles:
       - zilean
+
+  cli-debrid:
+    image: godver3/cli_debrid:latest
+    container_name: surge-cli-debrid
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - RD_API_KEY=${RD_API_TOKEN}
+      - AD_API_KEY=${AD_API_TOKEN:-}
+      - PREMIUMIZE_API_KEY=${PREMIUMIZE_API_TOKEN:-}
+    volumes:
+      - cli-debrid-config:/app/config
+      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - cli-debrid
+
+  decypharr:
+    image: sirrobot01/decypharr:latest
+    container_name: surge-decypharr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - decypharr-config:/app/config
+      - ${DOWNLOADS_DIR:-./data/downloads}:/mnt/downloads
+      - ${MOVIES_DIR:-./data/media/movies}:/mnt/movies
+      - ${TV_DIR:-./data/media/tv}:/mnt/tv
+    ports:
+      - "${DECYPHARR_PORT:-8282}:8282"
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - decypharr
 
   # ===========================================
   # CONTENT ENHANCEMENT & MANAGEMENT

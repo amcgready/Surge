@@ -24,6 +24,8 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** - Real-Debrid torrent client
 - **[Zilean](https://github.com/iPromKnight/zilean)** - DebridMediaManager content search with Torznab support
 - **[Zurg](https://github.com/debridmediamanager/zurg-testing)** - Real-Debrid integration testing tool
+- **[cli_debrid](https://github.com/godver3/cli_debrid)** - Command-line interface for debrid services management
+- **[Decypharr](https://github.com/sirrobot01/decypharr)** - QBittorrent API implementation with multiple debrid service support
 
 ### Content Enhancement
 - **[Kometa](https://github.com/Kometa-Team/Kometa)** - Metadata and collection management (formerly Plex Meta Manager)
@@ -313,10 +315,12 @@ All services can be configured through:
 | Bazarr | 6767 | Subtitle management |
 | NZBGet | 6789 | Usenet downloader |
 | Zilean | 8182 | DMM content search |
+| RDT-Client | 6500 | Real-Debrid torrent client |
+| Decypharr | 8282 | QBittorrent API with debrid support |
 | Tautulli | 8181 | Media server stats |
 | Posterizarr | 5060 | Custom poster management |
 
-**Note**: ImageMaid, Kometa, and Watchtower run as scheduled services without web interfaces.
+**Note**: ImageMaid, Kometa, Watchtower, and cli_debrid run as CLI/scheduled services without web interfaces.
 
 ## 🔄 Updates & Automation
 
@@ -373,10 +377,18 @@ Surge provides easy access to command-line tools:
 ./surge exec kometa shell       # Interactive shell
 ```
 
+### **cli_debrid (Debrid Management)**
+```bash
+./surge exec cli-debrid --help     # Show available commands
+./surge exec cli-debrid status     # Check debrid service status
+./surge exec cli-debrid shell      # Interactive shell
+```
+
 ### **Service Shell Access**
 ```bash
 ./surge exec radarr            # Access Radarr container
 ./surge exec plex              # Access Plex container
+./surge exec decypharr         # Access Decypharr container
 ./surge exec services          # Show all available services
 ```
 
@@ -415,6 +427,8 @@ This project stands on the shoulders of giants. Special thanks to all the amazin
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** by Roger Far
 - **[Zilean](https://github.com/iPromKnight/zilean)** by iPromKnight
 - **[Zurg](https://github.com/debridmediamanager/zurg-testing)** by DebridMediaManager
+- **[cli_debrid](https://github.com/godver3/cli_debrid)** by godver3
+- **[Decypharr](https://github.com/sirrobot01/decypharr)** by sirrobot01
 - **[Kometa](https://github.com/Kometa-Team/Kometa)** team (formerly Plex Meta Manager)
 - **[Scanly](https://github.com/amcgready/scanly)** by amcgready
 - **[CineSync](https://github.com/sureshfizzy/CineSync)** by sureshfizzy

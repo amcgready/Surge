@@ -209,6 +209,8 @@ gather_auto_preferences() {
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
     ENABLE_ZILEAN="false"
+    ENABLE_CLI_DEBRID="false"
+    ENABLE_DECYPHARR="false"
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
     DEPLOYMENT_TYPE="full"
@@ -332,6 +334,12 @@ gather_custom_preferences() {
         read -p "Enable Zilean (DMM content search)? [y/N]: " enable_zilean
         ENABLE_ZILEAN=$([[ "$enable_zilean" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
+        read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
+        ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        
+        read -p "Enable Decypharr (automated decryption)? [y/N]: " enable_decypharr
+        ENABLE_DECYPHARR=$([[ "$enable_decypharr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        
         read -p "Enable Kometa (metadata manager)? [Y/n]: " enable_kometa
         ENABLE_KOMETA=$([[ "$enable_kometa" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         
@@ -360,6 +368,8 @@ gather_custom_preferences() {
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
         ENABLE_ZILEAN="false"
+        ENABLE_CLI_DEBRID="false"
+        ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="false"
         ENABLE_POSTERIZARR="false"
         ENABLE_OVERSEERR="true"
@@ -374,6 +384,8 @@ gather_custom_preferences() {
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
         ENABLE_ZILEAN="false"
+        ENABLE_CLI_DEBRID="false"
+        ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="true"
         ENABLE_POSTERIZARR="true"
         ENABLE_OVERSEERR="true"
@@ -484,6 +496,475 @@ gather_custom_preferences() {
         read -p "Real-Debrid Username: " rd_username
         RD_USERNAME=${rd_username:-}
     fi
+    
+    # Enhanced API Keys for comprehensive setup
+    echo ""
+    print_info "Additional API Keys (Enhanced Integration)"
+    echo "These API keys enable full automation and advanced features:"
+    
+    if [ "$ENABLE_PROWLARR" = "true" ]; then
+        echo ""
+        echo "📡 Prowlarr will be auto-configured with:"
+        echo "• Torrentio indexer (requires Real-Debrid API key)"
+        if [ "$ENABLE_ZILEAN" = "true" ]; then
+            echo "• Zilean integration"
+        fi
+        echo "• Auto-connection to Radarr and Sonarr"
+        
+        if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ]; then
+            read -p "Real-Debrid API Token (for Torrentio) [optional]: " prowlarr_rd_token
+            RD_API_TOKEN=${prowlarr_rd_token:-}
+        fi
+        
+        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+            echo ""
+            echo "🔧 cli_debrid Configuration:"
+            if [ -z "$RD_API_TOKEN" ]; then
+                read -p "Real-Debrid API Token [optional]: " rd_token_cli
+                RD_API_TOKEN=${rd_token_cli:-}
+            fi
+            read -p "AllDebrid API Token [optional]: " ad_token
+            AD_API_TOKEN=${ad_token:-}
+            read -p "Premiumize API Token [optional]: " pm_token
+            PREMIUMIZE_API_TOKEN=${pm_token:-}
+        fi
+    fi
+    
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+        echo ""
+        echo "🎨 Posterizarr Enhanced Configuration:"
+        read -p "Fanart.tv API Key [optional]: " fanart_key
+        FANART_API_KEY=${fanart_key:-}
+        
+        read -p "TVDB API Key [optional]: " tvdb_key
+        TVDB_API_KEY=${tvdb_key:-}
+    fi
+}
+
+# Create download directories with proper permissions
+create_download_directories() {
+    print_step "Creating download directories..."
+    
+    # Create directory structure
+    mkdir -p "$STORAGE_PATH/downloads/"{nzbget,rdt-client,completed,incomplete}
+    mkdir -p "$STORAGE_PATH/downloads/completed/"{movies,tv}
+    mkdir -p "$STORAGE_PATH/downloads/incomplete/"{movies,tv}
+    
+    # Set proper permissions
+    chmod 755 "$STORAGE_PATH/downloads"
+    chmod 755 "$STORAGE_PATH/downloads"/*
+    
+    # Change ownership if running as root
+    if [ "$EUID" -eq 0 ]; then
+        chown -R "$PUID:$PGID" "$STORAGE_PATH/downloads"
+    fi
+    
+    print_success "Download directories created and configured"
+}
+
+# Comprehensive post-deployment configuration
+configure_services_post_deployment() {
+    print_step "🔧 Configuring service interconnections..."
+    
+    # Wait for services to start up
+    print_info "Waiting for services to initialize..."
+    sleep 30
+    
+    # Configure Prowlarr indexers and connections
+    if [ "$ENABLE_PROWLARR" = "true" ]; then
+        configure_prowlarr_comprehensive
+    fi
+    
+    # Configure download clients in Radarr/Sonarr
+    configure_arr_download_clients
+    
+    # Configure media server connections
+    configure_media_server_connections
+    
+    print_success "Service configuration completed!"
+}
+
+# Comprehensive Prowlarr configuration
+configure_prowlarr_comprehensive() {
+    print_info "🔍 Configuring Prowlarr with indexers and connections..."
+    
+    # Wait specifically for Prowlarr to be ready
+    wait_for_service "prowlarr" "9696" "/api/v1/system/status"
+    
+    # Get Prowlarr API key
+    PROWLARR_API_KEY=$(get_prowlarr_api_key)
+    
+    if [ -n "$PROWLARR_API_KEY" ]; then
+        # Add Torrentio indexer if Real-Debrid token is available
+        if [ -n "$RD_API_TOKEN" ]; then
+            add_torrentio_indexer
+        fi
+        
+        # Add Zilean indexer if enabled
+        if [ "$ENABLE_ZILEAN" = "true" ]; then
+            add_zilean_indexer
+        fi
+        
+        # Connect Prowlarr to Radarr and Sonarr
+        connect_prowlarr_to_arr_services
+    else
+        print_warning "Could not retrieve Prowlarr API key - manual configuration required"
+    fi
+}
+
+# Wait for a service to be ready
+wait_for_service() {
+    local service=$1
+    local port=$2
+    local endpoint=${3:-"/"}
+    local max_attempts=30
+    local attempt=1
+    
+    print_info "Waiting for $service to be ready..."
+    
+    while [ $attempt -le $max_attempts ]; do
+        if curl -s "http://localhost:$port$endpoint" > /dev/null 2>&1; then
+            print_success "$service is ready!"
+            return 0
+        fi
+        
+        printf "."
+        sleep 5
+        attempt=$((attempt + 1))
+    done
+    
+    print_warning "$service not ready after $((max_attempts * 5)) seconds"
+    return 1
+}
+
+# Get Prowlarr API key from config
+get_prowlarr_api_key() {
+    local config_file="$STORAGE_PATH/config/prowlarr/config.xml"
+    local attempt=1
+    local max_attempts=12
+    
+    while [ $attempt -le $max_attempts ]; do
+        if [ -f "$config_file" ]; then
+            # Extract API key from config.xml
+            local api_key=$(grep -o '<ApiKey>[^<]*</ApiKey>' "$config_file" 2>/dev/null | sed 's/<[^>]*>//g')
+            if [ -n "$api_key" ] && [ "$api_key" != "$(printf '0%.0s' {1..32})" ]; then
+                echo "$api_key"
+                return 0
+            fi
+        fi
+        
+        sleep 5
+        attempt=$((attempt + 1))
+    done
+    
+    return 1
+}
+
+# Add Torrentio indexer to Prowlarr
+add_torrentio_indexer() {
+    print_info "Adding Torrentio indexer to Prowlarr..."
+    
+    local indexer_data='{
+        "enable": true,
+        "name": "Torrentio",
+        "implementation": "Torrentio",
+        "implementationName": "Torrentio",
+        "protocol": "torrent",
+        "priority": 25,
+        "downloadClientId": 0,
+        "tags": [],
+        "fields": [
+            {
+                "name": "baseUrl",
+                "value": "https://torrentio.strem.fun"
+            },
+            {
+                "name": "apiKey",
+                "value": "'$RD_API_TOKEN'"
+            },
+            {
+                "name": "providers",
+                "value": "yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex"
+            }
+        ]
+    }'
+    
+    curl -s -X POST "http://localhost:9696/api/v1/indexer" \
+        -H "Content-Type: application/json" \
+        -H "X-Api-Key: $PROWLARR_API_KEY" \
+        -d "$indexer_data" > /dev/null
+    
+    if [ $? -eq 0 ]; then
+        print_success "Torrentio indexer added successfully"
+    else
+        print_warning "Failed to add Torrentio indexer"
+    fi
+}
+
+# Add Zilean indexer to Prowlarr
+add_zilean_indexer() {
+    print_info "Adding Zilean indexer to Prowlarr..."
+    
+    local indexer_data='{
+        "enable": true,
+        "name": "Zilean",
+        "implementation": "Torznab",
+        "implementationName": "Generic Torznab",
+        "protocol": "torrent",
+        "priority": 25,
+        "downloadClientId": 0,
+        "tags": [],
+        "fields": [
+            {
+                "name": "baseUrl",
+                "value": "http://surge-zilean:8182"
+            },
+            {
+                "name": "apiPath",
+                "value": "/torznab"
+            },
+            {
+                "name": "categories",
+                "value": "5000,5030,5040"
+            }
+        ]
+    }'
+    
+    curl -s -X POST "http://localhost:9696/api/v1/indexer" \
+        -H "Content-Type: application/json" \
+        -H "X-Api-Key: $PROWLARR_API_KEY" \
+        -d "$indexer_data" > /dev/null
+    
+    if [ $? -eq 0 ]; then
+        print_success "Zilean indexer added successfully"
+    else
+        print_warning "Failed to add Zilean indexer"
+    fi
+}
+
+# Connect Prowlarr to Radarr and Sonarr
+connect_prowlarr_to_arr_services() {
+    print_info "Connecting Prowlarr to Radarr and Sonarr..."
+    
+    # Get API keys for Radarr and Sonarr
+    local radarr_api_key=$(get_arr_api_key "radarr" "7878")
+    local sonarr_api_key=$(get_arr_api_key "sonarr" "8989")
+    
+    # Add Radarr connection
+    if [ -n "$radarr_api_key" ]; then
+        add_prowlarr_app_connection "radarr" "$radarr_api_key" "7878"
+    fi
+    
+    # Add Sonarr connection  
+    if [ -n "$sonarr_api_key" ]; then
+        add_prowlarr_app_connection "sonarr" "$sonarr_api_key" "8989"
+    fi
+}
+
+# Get API key from *arr service
+get_arr_api_key() {
+    local service=$1
+    local port=$2
+    local config_file="$STORAGE_PATH/config/$service/config.xml"
+    local attempt=1
+    local max_attempts=12
+    
+    # Wait for service and config file
+    wait_for_service "$service" "$port"
+    
+    while [ $attempt -le $max_attempts ]; do
+        if [ -f "$config_file" ]; then
+            local api_key=$(grep -o '<ApiKey>[^<]*</ApiKey>' "$config_file" 2>/dev/null | sed 's/<[^>]*>//g')
+            if [ -n "$api_key" ] && [ "$api_key" != "$(printf '0%.0s' {1..32})" ]; then
+                echo "$api_key"
+                return 0
+            fi
+        fi
+        
+        sleep 5
+        attempt=$((attempt + 1))
+    done
+    
+    return 1
+}
+
+# Add application connection to Prowlarr
+add_prowlarr_app_connection() {
+    local app_name=$1
+    local api_key=$2
+    local port=$3
+    
+    print_info "Adding $app_name connection to Prowlarr..."
+    
+    local connection_data='{
+        "name": "'$(echo $app_name | sed 's/./\U&/')' (Auto-configured)",
+        "implementation": "'$(echo $app_name | sed 's/./\U&/')'",
+        "implementationName": "'$(echo $app_name | sed 's/./\U&/')'",
+        "settings": {
+            "prowlarrUrl": "http://surge-prowlarr:9696",
+            "baseUrl": "http://surge-'$app_name':'$port'",
+            "apiKey": "'$api_key'",
+            "syncCategories": [5000, 5030, 5040, 2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060]
+        },
+        "syncLevel": "fullSync",
+        "tags": []
+    }'
+    
+    curl -s -X POST "http://localhost:9696/api/v1/applications" \
+        -H "Content-Type: application/json" \
+        -H "X-Api-Key: $PROWLARR_API_KEY" \
+        -d "$connection_data" > /dev/null
+    
+    if [ $? -eq 0 ]; then
+        print_success "$app_name connection added successfully"
+    else
+        print_warning "Failed to add $app_name connection"
+    fi
+}
+
+# Configure download clients in Radarr and Sonarr
+configure_arr_download_clients() {
+    print_info "Configuring download clients in Radarr and Sonarr..."
+    
+    # Configure NZBGet if enabled
+    if [ "$ENABLE_NZBGET" = "true" ]; then
+        configure_nzbget_in_arr "radarr" "7878"
+        configure_nzbget_in_arr "sonarr" "8989"
+    fi
+    
+    # Configure RDT-Client if enabled
+    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+        configure_rdt_client_in_arr "radarr" "7878"
+        configure_rdt_client_in_arr "sonarr" "8989"
+    fi
+}
+
+# Configure NZBGet in *arr service
+configure_nzbget_in_arr() {
+    local service=$1
+    local port=$2
+    local api_key=$(get_arr_api_key "$service" "$port")
+    
+    if [ -n "$api_key" ]; then
+        print_info "Adding NZBGet to $service..."
+        
+        local download_client_data='{
+            "enable": true,
+            "protocol": "usenet",
+            "priority": 1,
+            "removeCompletedDownloads": true,
+            "removeFailedDownloads": true,
+            "name": "NZBGet",
+            "fields": [
+                {"name": "host", "value": "surge-nzbget"},
+                {"name": "port", "value": 6789},
+                {"name": "username", "value": "'$NZBGET_USER'"},
+                {"name": "password", "value": "'$NZBGET_PASS'"},
+                {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
+                {"name": "useSsl", "value": false}
+            ],
+            "implementationName": "NZBGet",
+            "implementation": "Nzbget",
+            "configContract": "NzbgetSettings",
+            "tags": []
+        }'
+        
+        curl -s -X POST "http://localhost:$port/api/v3/downloadclient" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: $api_key" \
+            -d "$download_client_data" > /dev/null
+    fi
+}
+
+# Configure RDT-Client in *arr service
+configure_rdt_client_in_arr() {
+    local service=$1
+    local port=$2
+    local api_key=$(get_arr_api_key "$service" "$port")
+    
+    if [ -n "$api_key" ]; then
+        print_info "Adding RDT-Client to $service..."
+        
+        local download_client_data='{
+            "enable": true,
+            "protocol": "torrent",
+            "priority": 1,
+            "removeCompletedDownloads": true,
+            "removeFailedDownloads": true,
+            "name": "RDT-Client",
+            "fields": [
+                {"name": "host", "value": "surge-rdt-client"},
+                {"name": "port", "value": 6500},
+                {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
+                {"name": "useSsl", "value": false}
+            ],
+            "implementationName": "rTorrent",
+            "implementation": "RTorrent",
+            "configContract": "RTorrentSettings",
+            "tags": []
+        }'
+        
+        curl -s -X POST "http://localhost:$port/api/v3/downloadclient" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: $api_key" \
+            -d "$download_client_data" > /dev/null
+    fi
+}
+
+# Configure media server connections for various services
+configure_media_server_connections() {
+    print_info "Configuring media server connections..."
+    
+    # Configure Overseerr connection to media server
+    if [ "$ENABLE_OVERSEERR" = "true" ]; then
+        configure_overseerr_media_server
+    fi
+    
+    # Configure Tautulli connection
+    if [ "$ENABLE_TAUTULLI" = "true" ]; then
+        configure_tautulli_media_server
+    fi
+}
+
+# Configure Overseerr media server connection
+configure_overseerr_media_server() {
+    print_info "Configuring Overseerr connection to $MEDIA_SERVER..."
+    
+    wait_for_service "overseerr" "5055"
+    
+    case $MEDIA_SERVER in
+        plex)
+            # Overseerr will need manual Plex token configuration
+            print_warning "Overseerr requires manual Plex token configuration"
+            print_info "Visit http://localhost:5055/setup to complete Plex integration"
+            ;;
+        jellyfin)
+            print_info "Jellyfin integration will be available in Overseerr setup"
+            ;;
+        emby)
+            print_info "Emby integration will be available in Overseerr setup"
+            ;;
+    esac
+}
+
+# Configure Tautulli media server connection
+configure_tautulli_media_server() {
+    print_info "Configuring Tautulli connection to $MEDIA_SERVER..."
+    
+    wait_for_service "tautulli" "8181"
+    
+    print_info "Tautulli setup: http://localhost:8181/setup"
+    case $MEDIA_SERVER in
+        plex)
+            print_info "Use Plex server: http://surge-plex:32400"
+            ;;
+        jellyfin)
+            print_info "Use Jellyfin server: http://surge-jellyfin:8096"
+            ;;
+        emby)
+            print_info "Use Emby server: http://surge-emby:8096"
+            ;;
+    esac
 }
 
 # Create configuration file
@@ -507,6 +988,12 @@ TV_SHOWS_DIR=\${DATA_ROOT}/media/tv
 DOWNLOADS_DIR=\${DATA_ROOT}/downloads
 CONFIG_DIR=\${DATA_ROOT}/config
 
+# DOWNLOAD CLIENT PATHS (Accessible by all containers)
+NZBGET_DOWNLOADS=\${DOWNLOADS_DIR}/nzbget
+RDT_DOWNLOADS=\${DOWNLOADS_DIR}/rdt-client
+COMPLETE_DOWNLOADS=\${DOWNLOADS_DIR}/completed
+INCOMPLETE_DOWNLOADS=\${DOWNLOADS_DIR}/incomplete
+
 # MEDIA SERVER SELECTION
 MEDIA_SERVER=$MEDIA_SERVER
 
@@ -516,6 +1003,8 @@ ENABLE_PROWLARR=${ENABLE_PROWLARR:-true}
 ENABLE_NZBGET=${ENABLE_NZBGET:-true}
 ENABLE_RDT_CLIENT=${ENABLE_RDT_CLIENT:-false}
 ENABLE_ZILEAN=${ENABLE_ZILEAN:-false}
+ENABLE_CLI_DEBRID=${ENABLE_CLI_DEBRID:-false}
+ENABLE_DECYPHARR=${ENABLE_DECYPHARR:-false}
 ENABLE_KOMETA=${ENABLE_KOMETA:-true}
 ENABLE_POSTERIZARR=${ENABLE_POSTERIZARR:-true}
 ENABLE_OVERSEERR=${ENABLE_OVERSEERR:-true}
@@ -534,6 +1023,7 @@ PROWLARR_PORT=9696
 BAZARR_PORT=6767
 NZBGET_PORT=6789
 ZILEAN_PORT=8182
+DECYPHARR_PORT=8282
 TAUTULLI_PORT=8181
 OVERSEERR_PORT=5055
 SCANLY_PORT=8183
@@ -551,6 +1041,8 @@ ASSET_PROCESSING_SCHEDULE=${ASSET_PROCESSING_SCHEDULE:-"0 2 * * *"}
 TMDB_API_KEY=${TMDB_API_KEY:-}
 TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
 TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
+FANART_API_KEY=${FANART_API_KEY:-}
+TVDB_API_KEY=${TVDB_API_KEY:-}
 
 # NOTIFICATIONS & WEBHOOKS
 DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
@@ -565,6 +1057,8 @@ DISCORD_NOTIFY_SYSTEM=${DISCORD_NOTIFY_SYSTEM:-false}
 NZBGET_USER=${NZBGET_USER:-admin}
 NZBGET_PASS=${NZBGET_PASS:-tegbzn6789}
 RD_API_TOKEN=${RD_API_TOKEN:-}
+AD_API_TOKEN=${AD_API_TOKEN:-}
+PREMIUMIZE_API_TOKEN=${PREMIUMIZE_API_TOKEN:-}
 RD_USERNAME=${RD_USERNAME:-}
 
 # DEPLOYMENT TYPE
@@ -577,6 +1071,9 @@ CONFIG_VERSION=1.0
 EOF
 
     print_success "Configuration file created"
+    
+    # Create download directories
+    create_download_directories
     
     # Propagate shared configuration to all services
     if [ -f "$PROJECT_DIR/scripts/shared-config.sh" ]; then
@@ -643,50 +1140,186 @@ show_next_steps() {
     echo ""
     print_success "🎉 Surge setup completed!"
     echo ""
-    print_info "Next steps:"
+    print_info "Configuration saved to .env file"
+    print_info "Service configurations created in config directories"
     echo ""
-    echo "1. Deploy Surge:"
-    echo "   ./surge deploy $MEDIA_SERVER"
-    echo ""
-    echo "2. Access your services:"
-    echo "   - Homepage Dashboard: http://localhost:3000"
     
-    case $MEDIA_SERVER in
+    print_info "Would you like to deploy Surge now? (y/n)"
+    read -r deploy_now
+    
+    if [ "$deploy_now" = "y" ] || [ "$deploy_now" = "Y" ]; then
+        deploy_stack "$MEDIA_SERVER"
+    else
+        echo ""
+        print_info "To deploy later, run:"
+        echo "   cd '$PROJECT_DIR'"
+        echo "   bash scripts/deploy.sh $MEDIA_SERVER"
+        echo ""
+        print_info "After deployment, you can access your services:"
+        echo "   - Homepage Dashboard: http://localhost:3000"
+        
+        case $MEDIA_SERVER in
+            plex)
+                echo "   - Plex Media Server: http://localhost:32400/web"
+                ;;
+            emby)
+                echo "   - Emby Server: http://localhost:8096"
+                ;;
+            jellyfin)
+                echo "   - Jellyfin Server: http://localhost:8096"
+                ;;
+        esac
+        
+        echo "   - Radarr: http://localhost:7878"
+        echo "   - Sonarr: http://localhost:8989"
+        echo "   - Prowlarr: http://localhost:9696"
+        
+        if [ "$ENABLE_BAZARR" = "true" ]; then
+            echo "   - Bazarr: http://localhost:6767"
+        fi
+        
+        if [ "$ENABLE_NZBGET" = "true" ]; then
+            echo "   - NZBGet: http://localhost:6789"
+        fi
+        
+        if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+            echo "   - RDT-Client: http://localhost:6500"
+        fi
+        
+        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+            echo "   - cli_debrid: Available via CLI"
+        fi
+        
+        if [ "$ENABLE_DECYPHARR" = "true" ]; then
+            echo "   - Decypharr: http://localhost:8282"
+        fi
+        
+        echo ""
+        print_warning "Important: All service interconnections will be configured automatically during deployment!"
+    fi
+}
+
+# Deploy the stack and configure services
+deploy_stack() {
+    local media_server=$1
+    
+    print_step "🚀 Deploying Surge stack with $media_server..."
+    
+    cd "$PROJECT_DIR"
+    
+    # Run the deployment script
+    if [ -f "$SCRIPT_DIR/deploy.sh" ]; then
+        bash "$SCRIPT_DIR/deploy.sh" "$media_server"
+        
+        if [ $? -eq 0 ]; then
+            print_success "Surge stack deployed successfully!"
+            
+            # Run comprehensive post-deployment configuration
+            configure_services_post_deployment
+            
+            display_final_access_info "$media_server"
+        else
+            print_error "Failed to deploy Surge stack"
+            exit 1
+        fi
+    else
+        print_error "Deploy script not found: $SCRIPT_DIR/deploy.sh"
+        exit 1
+    fi
+}
+
+# Display final access information
+display_final_access_info() {
+    local media_server=$1
+    
+    echo ""
+    print_step "🌐 Access Information"
+    echo ""
+    print_success "Surge is now running! Access your services:"
+    echo ""
+    echo "  📊 Homepage Dashboard: http://localhost:3000"
+    echo ""
+    
+    # Media Server
+    case $media_server in
         plex)
-            echo "   - Plex Media Server: http://localhost:32400/web"
+            echo "  🎬 Plex Media Server: http://localhost:32400/web"
             ;;
         emby)
-            echo "   - Emby Server: http://localhost:8096"
+            echo "  🎬 Emby Server: http://localhost:8096"
             ;;
         jellyfin)
-            echo "   - Jellyfin Server: http://localhost:8096"
+            echo "  🎬 Jellyfin Server: http://localhost:8096"
             ;;
     esac
     
-    echo "   - Radarr: http://localhost:7878"
-    echo "   - Sonarr: http://localhost:8989"
+    # Core services
+    echo "  🔍 Prowlarr (Indexer Manager): http://localhost:9696"
+    echo "  🎥 Radarr (Movies): http://localhost:7878"
+    echo "  📺 Sonarr (TV Shows): http://localhost:8989"
     
-    if [ "$ENABLE_BAZARR" = "true" ]; then
-        echo "   - Bazarr: http://localhost:6767"
-    fi
-    
+    # Download clients
     if [ "$ENABLE_NZBGET" = "true" ]; then
-        echo "   - NZBGet: http://localhost:6789"
+        echo "  📥 NZBGet (Usenet): http://localhost:6789"
+    fi
+    
+    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+        echo "  🌐 RDT-Client (Real-Debrid): http://localhost:6500"
+    fi
+    
+    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        echo "  🔧 cli_debrid (Debrid CLI): Available via CLI"
+    fi
+    
+    if [ "$ENABLE_DECYPHARR" = "true" ]; then
+        echo "  🔓 Decypharr (Decryption): http://localhost:8080"
+    fi
+    
+    # Optional services
+    if [ "$ENABLE_BAZARR" = "true" ]; then
+        echo "  💬 Bazarr (Subtitles): http://localhost:6767"
+    fi
+    
+    if [ "$ENABLE_OVERSEERR" = "true" ]; then
+        echo "  🎫 Overseerr (Requests): http://localhost:5055"
+    fi
+    
+    if [ "$ENABLE_TAUTULLI" = "true" ]; then
+        echo "  📈 Tautulli (Analytics): http://localhost:8181"
+    fi
+    
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+        echo "  🖼️  Posterizarr (Posters): http://localhost:9876"
     fi
     
     echo ""
-    echo "3. Command-line tools:"
-    echo "   - Run Scanly: ./surge exec scanly"
-    echo "   - Asset processing: ./surge process sequence"
-    echo "   - View logs: ./surge logs"
-    echo ""
-    echo "4. Configuration:"
-    echo "   - Edit .env file for advanced settings"
-    echo "   - Get TMDB API key: https://www.themoviedb.org/settings/api"
-    echo "   - Configure indexers in Radarr/Sonarr"
+    print_info "🔧 Automatic Configuration Completed:"
+    if [ -n "$RD_API_TOKEN" ]; then
+        echo "  ✅ Torrentio indexer auto-configured with your Real-Debrid token"
+    fi
+    
+    if [ "$ENABLE_ZILEAN" = "true" ]; then
+        echo "  ✅ Zilean indexer auto-configured in Prowlarr"
+    fi
+    
+    echo "  ✅ Prowlarr connected to Radarr and Sonarr"
+    echo "  ✅ Download clients configured in Radarr and Sonarr"
+    echo "  ✅ Download paths configured for container accessibility"
     echo ""
     
-    print_warning "Important: Configure your download clients and indexers after deployment!"
+    if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+        echo "  📱 Discord notifications configured"
+    fi
+    
+    echo ""
+    print_success "🎊 Setup complete! Enjoy your fully automated media management stack!"
+    echo ""
+    print_info "💡 Pro Tips:"
+    echo "  - Check the Homepage dashboard for service status"
+    echo "  - Prowlarr will automatically sync indexers to Radarr/Sonarr"
+    echo "  - Download clients are pre-configured and ready to use"
+    echo "  - Monitor everything through Tautulli if enabled"
+    echo ""
 }
 
 # Mark as initialized
