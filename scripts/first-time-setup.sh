@@ -224,7 +224,7 @@ gather_auto_preferences() {
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
-    ENABLE_ZILEAN="false"
+    ENABLE_ZILEAN="true"  # Always enable Zilean
     ENABLE_CLI_DEBRID="false"
     ENABLE_DECYPHARR="false"
     ENABLE_WATCHTOWER="true"
@@ -348,8 +348,7 @@ gather_custom_preferences() {
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
-        read -p "Enable Zilean (DMM content search)? [y/N]: " enable_zilean
-        ENABLE_ZILEAN=$([[ "$enable_zilean" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        ENABLE_ZILEAN="true"  # Always enable Zilean
         
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
         ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
@@ -384,7 +383,7 @@ gather_custom_preferences() {
         ENABLE_PROWLARR="true"
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
-        ENABLE_ZILEAN="false"
+        ENABLE_ZILEAN="true"  # Always enable Zilean
         ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="false"
@@ -400,7 +399,7 @@ gather_custom_preferences() {
         ENABLE_PROWLARR="true"
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
-        ENABLE_ZILEAN="false"
+        ENABLE_ZILEAN="true"  # Always enable Zilean
         ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="true"
@@ -813,8 +812,6 @@ add_torrentio_indexer() {
 
 # Add Zilean indexer to Prowlarr
 add_zilean_indexer() {
-        read -p "Enable GAPS (Plex missing movies)? [Y/n]: " enable_gaps
-        ENABLE_GAPS=$([[ "$enable_gaps" =~ ^[Nn]$ ]] && echo "false" || echo "true")
     print_info "Adding Zilean indexer to Prowlarr..."
     
     local indexer_data='{
@@ -1097,7 +1094,6 @@ PGID=$PGID
 DATA_ROOT=$STORAGE_PATH
 MOVIES_DIR=\${DATA_ROOT}/media/movies
 TV_SHOWS_DIR=\${DATA_ROOT}/media/tv
-    cat > "$PROJECT_DIR/.env" << EOF
 CONFIG_DIR=\${DATA_ROOT}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
@@ -1114,7 +1110,7 @@ ENABLE_BAZARR=${ENABLE_BAZARR:-true}
 ENABLE_PROWLARR=${ENABLE_PROWLARR:-true}
 ENABLE_NZBGET=${ENABLE_NZBGET:-true}
 ENABLE_RDT_CLIENT=${ENABLE_RDT_CLIENT:-false}
-ENABLE_ZILEAN=${ENABLE_ZILEAN:-false}
+ENABLE_ZILEAN=${ENABLE_ZILEAN:-true}
 ENABLE_CLI_DEBRID=${ENABLE_CLI_DEBRID:-false}
 ENABLE_DECYPHARR=${ENABLE_DECYPHARR:-false}
 ENABLE_KOMETA=${ENABLE_KOMETA:-true}
@@ -1388,7 +1384,7 @@ display_final_access_info() {
     fi
     
     if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-        echo "  🔧 cli_debrid (Debrid CLI): Available via CLI"
+        echo "  🔧 cli_debrid: Available via CLI"
     fi
     
     if [ "$ENABLE_DECYPHARR" = "true" ]; then
