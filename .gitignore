@@ -63,3 +63,11 @@ venv/
 # Lock files
 package-lock.json
 yarn.lock
+test-keys.sh
+config/kometa/config.yml
+config/posterizarr/config.yml
+config/prowlarr/config.xml
+config/radarr/config.xml
+config/scanly/config.yml
+config/sonarr/config.xml
+config/tautulli/config.ini

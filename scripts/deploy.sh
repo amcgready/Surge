@@ -160,7 +160,7 @@ deploy_services() {
     if [ "$deployment_type" = "minimal" ]; then
         export COMPOSE_PROFILES="$media_server,homepage"
     else
-        export COMPOSE_PROFILES="$media_server,bazarr,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler"
+        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler"
     fi
     
     # Deploy

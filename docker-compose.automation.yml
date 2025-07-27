@@ -1,10 +1,71 @@
-version: '3.8'
-
 # ===========================================
 # SURGE AUTOMATION & SCHEDULING
 # ===========================================
 
 services:
+  imagemaid:
+    image: kometateam/imagemaid:latest
+    container_name: surge-imagemaid
+    environment:
+      - TZ=${TZ:-UTC}
+      - PLEX_PATH=${PLEX_PATH:-/plex}
+      - MODE=${IMAGEMAID_MODE:-remove}
+      - PLEX_URL=${PLEX_URL:-http://localhost:32400}
+      - PLEX_TOKEN=${PLEX_TOKEN:-changeme}
+      - DISCORD=${DISCORD_WEBHOOK_URL}
+    volumes:
+      - imagemaid-config:/config
+      - ${PLEX_CONFIG_DIR:-/config/plex}:/plex
+    restart: unless-stopped
+    networks:
+      - surge-network
+  kometa:
+    image: kometateam/kometa:latest
+    container_name: surge-kometa
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - KOMETA_CONFIG=/config/config.yml
+    volumes:
+      - ./initial-configs/kometa-config.yml:/config/config.yml
+      - shared-assets:/assets
+      - shared-logs:/config/logs
+      - ${MOVIES_DIR:-./data/media/movies}:/movies
+      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
+    restart: "no"
+    networks:
+      - surge-network
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+  rdt-client:
+    image: rogerfar/rdtclient:latest
+  zurg:
+    image: ghcr.io/debridmediamanager/zurg-testing:latest
+  zilean:
+    image: ipromknight/zilean:latest
+  cli-debrid:
+    image: godver3/cli_debrid:latest
+  decypharr:
+    image: cy01/blackhole:latest
+  cinesync:
+    image: sureshfizzy/cinesync:latest
+  placeholdarr:
+    image: ghcr.io/theindiearmy/placeholdarr:queue_monitoring-latest
+  overseerr:
+    image: sctx/overseerr:latest
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
   # Watchtower for automatic updates
   watchtower:
     image: containrrr/watchtower:latest
@@ -14,8 +75,6 @@ services:
       - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_INTERVAL:-86400}  # 24 hours
       - WATCHTOWER_INCLUDE_STOPPED=true
       - WATCHTOWER_INCLUDE_RESTARTING=true
-      - WATCHTOWER_NOTIFICATION_URL=${DISCORD_WEBHOOK_URL:-}
-      - WATCHTOWER_NOTIFICATION_TEMPLATE={{range .}}{{.Message}}{{end}}
       - TZ=${TZ:-UTC}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -23,7 +82,6 @@ services:
     networks:
       - surge-network
     profiles:
-      - watchtower
       - auto-update
 
   # Cron scheduler for sequential tasks
@@ -42,9 +100,9 @@ services:
 
         # Create crontab for sequential execution
         cat > /tmp/crontab << EOF
-        # ImageMaid -> Posterizarr -> Kometa sequence
+        # Posterizarr
         # Run daily at 2 AM
-        ${ASSET_PROCESSING_SCHEDULE:-0 2 * * *} /usr/local/bin/run-sequence.sh >> /logs/scheduler.log 2>&1
+            $${ASSET_PROCESSING_SCHEDULE:-0 2 * * *} /usr/local/bin/run-sequence.sh >> /logs/scheduler.log 2>&1
 
         # Check for updates and notify via Discord
         # Run every 4 hours
@@ -56,65 +114,30 @@ services:
         #!/bin/sh
         echo "$(date): Starting asset processing sequence..."
         
-        # Step 1: Run ImageMaid
-        echo "$(date): Running ImageMaid..."
-        docker run --rm --name surge-imagemaid-scheduled \
-          --network surge-network \
-          -v surge_imagemaid-config:/config \
-          -v surge_shared-assets:/assets \
-          -v surge_shared-logs:/logs \
-          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
-          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
-          -e PUID=${PUID:-1000} \
-          -e PGID=${PGID:-1000} \
-          -e TZ=${TZ:-UTC} \
-          kometateam/imagemaid:latest
-        
-        echo "$(date): ImageMaid completed"
-        
-        # Step 2: Run Posterizarr
+        # Step 1: Run Posterizarr
         echo "$(date): Running Posterizarr..."
         docker run --rm --name surge-posterizarr-scheduled \
           --network surge-network \
           -v surge_posterizarr-config:/config \
           -v surge_shared-assets:/assets \
           -v surge_shared-logs:/logs \
-          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
-          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
-          -e PUID=${PUID:-1000} \
-          -e PGID=${PGID:-1000} \
-          -e TZ=${TZ:-UTC} \
-          fscorrupt/posterizarr:latest
+          -v $${MOVIES_DIR:-./data/media/movies}:/movies \
+          -v $${TV_SHOWS_DIR:-./data/media/tv}:/tv \
+          -e PUID=$${PUID:-1000} \
+          -e PGID=$${PGID:-1000} \
+          -e TZ=$${TZ:-UTC} \
+          ghcr.io/fscorrupt/posterizarr:latest
         
         echo "$(date): Posterizarr completed"
         
-        # Step 3: Run Kometa
-        echo "$(date): Running Kometa..."
-        docker run --rm --name surge-kometa-scheduled \
-          --network surge-network \
-          -v surge_kometa-config:/config \
-          -v surge_shared-assets:/assets \
-          -v surge_shared-logs:/config/logs \
-          -v ${MOVIES_DIR:-./data/media/movies}:/movies \
-          -v ${TV_SHOWS_DIR:-./data/media/tv}:/tv \
-          -e PUID=${PUID:-1000} \
-          -e PGID=${PGID:-1000} \
-          -e TZ=${TZ:-UTC} \
-          -e KOMETA_CONFIG=/config/config.yml \
-          kometateam/kometa:latest
-        
-        echo "$(date): Kometa completed"
-        
         # Send completion notification if webhook is configured and processing notifications enabled
-        if [ -n "${DISCORD_WEBHOOK_URL:-}" ] && [ "${DISCORD_NOTIFY_PROCESSING:-false}" = "true" ]; then
+        # Discord notification only if webhook is configured and processing notifications enabled
+        if [ -n "$${DISCORD_NOTIFY_PROCESSING:-false}" ] && [ "$${DISCORD_NOTIFY_PROCESSING:-false}" = "true" ]; then
             # Install curl if not present
             if ! command -v curl > /dev/null; then
                 apk add --no-cache curl
             fi
             
-            curl -s -H "Content-Type: application/json" \
-                 -d "{\"content\": \"**${NOTIFICATION_TITLE_PREFIX:-Surge} - Asset Processing Complete**\\nSuccessfully completed:\\n• ImageMaid cleanup\\n• Posterizarr poster updates\\n• Kometa metadata refresh\"}" \
-                 "${DISCORD_WEBHOOK_URL}" > /dev/null 2>&1
         fi
         
         echo "$(date): Asset processing sequence finished"
@@ -129,10 +152,9 @@ services:
         send_discord_notification() {
             local title="$1"
             local description="$2"
-            local color="${3:-3447003}"
-            local webhook_url="${DISCORD_WEBHOOK_URL:-}"
+            local color="$${3:-3447003}"
             
-            if [ -z "$webhook_url" ] || [ "${DISCORD_NOTIFY_UPDATES:-false}" != "true" ]; then
+            if [ "$${DISCORD_NOTIFY_UPDATES:-false}" != "true" ]; then
                 return 0
             fi
             
@@ -145,9 +167,6 @@ services:
             fi
             
             # Send notification with simple text
-            curl -s -H "Content-Type: application/json" \
-                 -d "{\"content\": \"**${NOTIFICATION_TITLE_PREFIX:-Surge} - $title**\\n$description\"}" \
-                 "$webhook_url" > /dev/null 2>&1
         }
         
         # Get list of Surge containers
@@ -211,6 +230,57 @@ services:
       - scheduler
       - automation
 
+
+
+  posterizarr:
+    image: ghcr.io/fscorrupt/posterizarr:latest
+    container_name: surge-posterizarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - posterizarr-config:/config
+      - shared-assets:/assets
+      - shared-logs:/logs
+      - ${MOVIES_DIR:-./data/media/movies}:/movies
+      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
+    ports:
+      - "${POSTERIZARR_PORT:-5060}:5060"
+    restart: "no"
+    networks:
+      - surge-network
+    profiles:
+      - posterizarr
+
 volumes:
   shared-logs:
   shared-assets:
+  homepage-config:
+  decypharr-config:
+  cli-debrid-config:
+  cinesync-config:
+  placeholdarr-config:
+  posterizarr-config:
+  radarr-config:
+  sonarr-config:
+  bazarr-config:
+  prowlarr-config:
+  nzbget-config:
+  rdt-client-config:
+  zurg-config:
+  zilean-config:
+  overseerr-config:
+  tautulli-config:
+  emby-config:
+  jellyfin-config:
+  plex-config:
+  imagemaid-config:
+  kometa-config:
+  watchtower-config:
+  scheduler-config:
+
+networks:
+  surge-network:
+    name: surge-network
+    driver: bridge

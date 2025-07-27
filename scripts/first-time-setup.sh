@@ -27,7 +27,6 @@ print_banner() {
     printf "\033[38;5;32m  ███████║╚██████╔╝██║  ██║╚██████╔╝\033[0;36m███████╗\033[0m\n"
     printf "\033[38;5;32m  ╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ \033[0;36m╚══════╝\033[0m\n"
     printf "\n"
-    printf "  🌊 First Time Setup Wizard\n"
     printf "\n"
 }
 
@@ -127,6 +126,23 @@ choose_install_type() {
     echo "   ✅ Complete control over every setting"
     echo "   ✅ Choose specific services to deploy"
     echo "   ✅ Configure all environment variables"
+    # Auto-detect imagemaid variables
+    PLEX_CONFIG_DIR="${DATA_ROOT}/config/plex"
+    IMAGEMAID_MODE="remove"
+    # Try to auto-detect Plex token from Kometa config if available
+    if [ -f "$PROJECT_DIR/initial-configs/kometa-config.yml" ]; then
+        PLEX_TOKEN=$(grep 'token:' "$PROJECT_DIR/initial-configs/kometa-config.yml" | awk '{print $2}')
+    fi
+    PLEX_TOKEN=${PLEX_TOKEN:-changeme}
+    PLEX_URL="http://localhost:${PLEX_PORT:-32400}"
+    # Append imagemaid variables to .env
+    echo "" >> "$PROJECT_DIR/.env"
+    echo "# ImageMaid Integration" >> "$PROJECT_DIR/.env"
+    echo "IMAGEMAID_MODE=$IMAGEMAID_MODE" >> "$PROJECT_DIR/.env"
+    echo "PLEX_PATH=/plex" >> "$PROJECT_DIR/.env"
+    echo "PLEX_URL=$PLEX_URL" >> "$PROJECT_DIR/.env"
+    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
+    echo "PLEX_CONFIG_DIR=$PLEX_CONFIG_DIR" >> "$PROJECT_DIR/.env"
     echo "   ✅ Perfect for power users"
     echo ""
     read -p "Enter choice (1-2): " install_choice

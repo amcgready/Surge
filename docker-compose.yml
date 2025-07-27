@@ -1,44 +1,4 @@
-version: '3.8'
-
-# ===========================================
-# SURGE - Unified Media Management Stack
-# ===========================================
-
-networks:
-  surge-network:
-    name: ${NETWORK_NAME:-surge-network}
-    driver: bridge
-
-volumes:
-  # Shared configuration volumes
-  radarr-config:
-  sonarr-config:
-  bazarr-config:
-  nzbget-config:
-  rdt-client-config:
-  kometa-config:
-  posterizarr-config:
-  tautulli-config:
-  overseerr-config:
-  homepage-config:
-  scanly-config:
-  cinesync-config:
-  placeholdarr-config:
-  zurg-config:
-  imagemaid-config:
-  prowlarr-config:
-  zilean-config:
-  cli-debrid-config:
-  decypharr-config:
-  # Shared data volumes
-  shared-assets:
-  shared-logs:
-
 services:
-  # ===========================================
-  # MEDIA AUTOMATION
-  # ===========================================
-  
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: surge-radarr
@@ -89,8 +49,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - bazarr
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -107,12 +65,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - prowlarr
-
-  # ===========================================
-  # DOWNLOAD CLIENTS
-  # ===========================================
 
   nzbget:
     image: lscr.io/linuxserver/nzbget:latest
@@ -131,8 +83,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - nzbget
 
   rdt-client:
     image: rogerfar/rdtclient:latest
@@ -149,8 +99,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - rdt-client
 
   zurg:
     image: ghcr.io/debridmediamanager/zurg-testing:latest
@@ -165,8 +113,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - zurg
 
   zilean:
     image: ipromknight/zilean:latest
@@ -182,8 +128,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - zilean
 
   cli-debrid:
     image: godver3/cli_debrid:latest
@@ -201,8 +145,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - cli-debrid
 
   decypharr:
     image: sirrobot01/decypharr:latest
@@ -221,56 +163,9 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - decypharr
-
-  # ===========================================
-  # CONTENT ENHANCEMENT & MANAGEMENT
-  # ===========================================
-
-  kometa:
-    image: kometateam/kometa:latest
-    container_name: surge-kometa
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-      - KOMETA_CONFIG=/config/config.yml
-    volumes:
-      - kometa-config:/config
-      - shared-assets:/assets
-      - shared-logs:/config/logs
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
-    depends_on:
-      - posterizarr
-    restart: "no"  # Run on-demand via scheduling
-    networks:
-      - surge-network
-    profiles:
-      - kometa
-
-  imagemaid:
-    image: kometateam/imagemaid:latest
-    container_name: surge-imagemaid
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - imagemaid-config:/config
-      - shared-assets:/assets
-      - shared-logs:/logs
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
-    restart: "no"  # Run on-demand via scheduling
-    networks:
-      - surge-network
-    profiles:
-      - imagemaid
 
   posterizarr:
-    image: fscorrupt/posterizarr:latest
+    image: ghcr.io/fscorrupt/posterizarr:latest
     container_name: surge-posterizarr
     environment:
       - PUID=${PUID:-1000}
@@ -282,36 +177,11 @@ services:
       - shared-logs:/logs
       - ${MOVIES_DIR:-./data/media/movies}:/movies
       - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
-    depends_on:
-      - imagemaid
     ports:
       - "${POSTERIZARR_PORT:-5060}:5060"
-    restart: "no"  # Run on-demand via scheduling
+    restart: "no"
     networks:
       - surge-network
-    profiles:
-      - posterizarr
-
-  scanly:
-    image: amcgready/scanly:latest
-    container_name: surge-scanly
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - scanly-config:/config
-      - shared-assets:/assets
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
-    # Note: Scanly is primarily a command-line tool
-    # Use './surge exec scanly' to run commands
-    command: ["tail", "-f", "/dev/null"]  # Keep container running for exec access
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-    profiles:
-      - scanly
 
   cinesync:
     image: sureshfizzy/cinesync:latest
@@ -325,8 +195,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - cinesync
 
   placeholdarr:
     image: theindlearmy/placeholdarr:latest
@@ -340,12 +208,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - placeholdarr
-
-  # ===========================================
-  # MONITORING & STATISTICS
-  # ===========================================
 
   overseerr:
     image: sctx/overseerr:latest
@@ -361,8 +223,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - overseerr
 
   tautulli:
     image: lscr.io/linuxserver/tautulli:latest
@@ -378,12 +238,6 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - tautulli
-
-  # ===========================================
-  # DASHBOARD & INTERFACE
-  # ===========================================
 
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
@@ -400,5 +254,3 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
-    profiles:
-      - homepage
