@@ -862,72 +862,47 @@ connect_prowlarr_to_arr_services() {
     # Add Radarr connection
     if [ -n "$radarr_api_key" ]; then
         add_prowlarr_app_connection "radarr" "$radarr_api_key" "7878"
+        add_prowlarr_to_arr "radarr" "7878"
     fi
     
     # Add Sonarr connection  
     if [ -n "$sonarr_api_key" ]; then
         add_prowlarr_app_connection "sonarr" "$sonarr_api_key" "8989"
+        add_prowlarr_to_arr "sonarr" "8989"
     fi
 }
 
-# Get API key from *arr service
-get_arr_api_key() {
+# Add Prowlarr as an indexer in Sonarr and Radarr
+add_prowlarr_to_arr() {
     local service=$1
     local port=$2
-    local config_file="$STORAGE_PATH/config/$service/config.xml"
-    local attempt=1
-    local max_attempts=12
-    
-    # Wait for service and config file
-    wait_for_service "$service" "$port"
-    
-    while [ $attempt -le $max_attempts ]; do
-        if [ -f "$config_file" ]; then
-            local api_key=$(grep -o '<ApiKey>[^<]*</ApiKey>' "$config_file" 2>/dev/null | sed 's/<[^>]*>//g')
-            if [ -n "$api_key" ] && [ "$api_key" != "$(printf '0%.0s' {1..32})" ]; then
-                echo "$api_key"
-                return 0
-            fi
+    local api_key=$(get_arr_api_key "$service" "$port")
+    local prowlarr_api_key=$(get_prowlarr_api_key)
+    if [ -n "$api_key" ] && [ -n "$prowlarr_api_key" ]; then
+        print_info "Adding Prowlarr as indexer in $service..."
+        local indexer_data='{
+            "enable": true,
+            "name": "Prowlarr",
+            "protocol": "torrent",
+            "priority": 1,
+            "fields": [
+                {"name": "baseUrl", "value": "http://surge-prowlarr:9696"},
+                {"name": "apiKey", "value": "'$prowlarr_api_key'"}
+            ],
+            "implementation": "Prowlarr",
+            "implementationName": "Prowlarr",
+            "configContract": "ProwlarrSettings",
+            "tags": []
+        }'
+        curl -s -X POST "http://localhost:$port/api/v3/indexer" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: $api_key" \
+            -d "$indexer_data" > /dev/null
+        if [ $? -eq 0 ]; then
+            print_success "Prowlarr indexer added to $service"
+        else
+            print_warning "Failed to add Prowlarr indexer to $service"
         fi
-        
-        sleep 5
-        attempt=$((attempt + 1))
-    done
-    
-    return 1
-}
-
-# Add application connection to Prowlarr
-add_prowlarr_app_connection() {
-    local app_name=$1
-    local api_key=$2
-    local port=$3
-    
-    print_info "Adding $app_name connection to Prowlarr..."
-    
-    local connection_data='{
-        "name": "'$(echo $app_name | sed 's/./\U&/')' (Auto-configured)",
-        "implementation": "'$(echo $app_name | sed 's/./\U&/')'",
-        "implementationName": "'$(echo $app_name | sed 's/./\U&/')'",
-        "settings": {
-            "prowlarrUrl": "http://surge-prowlarr:9696",
-            "baseUrl": "http://surge-'$app_name':'$port'",
-            "apiKey": "'$api_key'",
-            "syncCategories": [5000, 5030, 5040, 2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060]
-        },
-        "syncLevel": "fullSync",
-        "tags": []
-    }'
-    
-    curl -s -X POST "http://localhost:9696/api/v1/applications" \
-        -H "Content-Type: application/json" \
-        -H "X-Api-Key: $PROWLARR_API_KEY" \
-        -d "$connection_data" > /dev/null
-    
-    if [ $? -eq 0 ]; then
-        print_success "$app_name connection added successfully"
-    else
-        print_warning "Failed to add $app_name connection"
     fi
 }
 
