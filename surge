@@ -54,7 +54,6 @@ show_help() {
     echo "Command-Line Access:"
     echo "  exec <service>   - Execute commands in service containers"
     echo "                     Examples:"
-    echo "                       ./surge exec scanly scan"
     echo "                       ./surge exec scanly shell"
     echo "                       ./surge exec radarr"
     echo ""

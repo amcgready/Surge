@@ -1073,10 +1073,6 @@ TV_SHOWS_DIR=\${DATA_ROOT}/media/tv
 CONFIG_DIR=\${DATA_ROOT}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
-NZBGET_DOWNLOADS=\${DOWNLOADS_DIR}/nzbget
-RDT_DOWNLOADS=\${DOWNLOADS_DIR}/rdt-client
-COMPLETE_DOWNLOADS=\${DOWNLOADS_DIR}/completed
-INCOMPLETE_DOWNLOADS=\${DOWNLOADS_DIR}/incomplete
 
 # MEDIA SERVER SELECTION
 MEDIA_SERVER=$MEDIA_SERVER
@@ -1093,7 +1089,6 @@ ENABLE_KOMETA=${ENABLE_KOMETA:-true}
 ENABLE_POSTERIZARR=${ENABLE_POSTERIZARR:-true}
 ENABLE_OVERSEERR=${ENABLE_OVERSEERR:-true}
 ENABLE_TAUTULLI=${ENABLE_TAUTULLI:-true}
-ENABLE_SCANLY=${ENABLE_SCANLY:-true}
 ENABLE_CINESYNC=${ENABLE_CINESYNC:-false}
 ENABLE_PLACEHOLDARR=${ENABLE_PLACEHOLDARR:-false}
 ENABLE_GAPS=${ENABLE_GAPS:-true}
@@ -1111,7 +1106,6 @@ ZILEAN_PORT=8182
 DECYPHARR_PORT=8282
 TAUTULLI_PORT=8181
 OVERSEERR_PORT=5055
-SCANLY_PORT=8183
 RDT_CLIENT_PORT=6500
 KOMETA_PORT=5556
 PLEX_PORT=${PLEX_PORT:-32400}
@@ -1188,7 +1182,6 @@ create_service_directories() {
         [Posterizarr]="config"
         [Overseerr]="config"
         [Tautulli]="config"
-        [Scanly]="config"
         [CineSync]="config"
         [Placeholdarr]="config"
         [GAPS]="config"
@@ -1198,7 +1191,7 @@ create_service_directories() {
     )
 
     # Only create folders for enabled services
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zilean" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "Scanly" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zilean" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         # shellcheck disable=SC2154

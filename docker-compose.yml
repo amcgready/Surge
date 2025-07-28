@@ -92,8 +92,8 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - rdt-client-config:/data/db
-      - ${DOWNLOADS_DIR:-./data/downloads}:/data/downloads
+      - ${STORAGE_PATH}/RDT-Client/config:/data/db
+      - ${STORAGE_PATH}/RDT-Client/downloads:/data/downloads
     ports:
       - "${RDT_CLIENT_PORT:-6500}:6500"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -108,8 +108,8 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - zurg-config:/app/config
-      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+      - ${STORAGE_PATH}/Zurg/config:/app/config
+      - ${STORAGE_PATH}/Zurg/downloads:/downloads
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
@@ -122,7 +122,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - zilean-config:/app/data
+      - ${STORAGE_PATH}/Zilean/config:/app/data
     ports:
       - "${ZILEAN_PORT:-8182}:8181"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -140,24 +140,24 @@ services:
       - AD_API_KEY=${AD_API_TOKEN:-}
       - PREMIUMIZE_API_KEY=${PREMIUMIZE_API_TOKEN:-}
     volumes:
-      - cli-debrid-config:/app/config
-      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+      - ${STORAGE_PATH}/cli_debrid/config:/app/config
+      - ${STORAGE_PATH}/cli_debrid/downloads:/downloads
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
 
   decypharr:
-    image: sirrobot01/decypharr:latest
+    image: cy01/blackhole:latest
     container_name: surge-decypharr
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - decypharr-config:/app/config
-      - ${DOWNLOADS_DIR:-./data/downloads}:/mnt/downloads
-      - ${MOVIES_DIR:-./data/media/movies}:/mnt/movies
-      - ${TV_DIR:-./data/media/tv}:/mnt/tv
+      - ${STORAGE_PATH}/Decypharr/config:/app/config
+      - ${STORAGE_PATH}/Decypharr/downloads:/mnt/downloads
+      - ${STORAGE_PATH}/Decypharr/movies:/mnt/movies
+      - ${STORAGE_PATH}/Decypharr/tv:/mnt/tv
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -172,11 +172,11 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - posterizarr-config:/config
-      - shared-assets:/assets
-      - shared-logs:/logs
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
+      - ${STORAGE_PATH}/Posterizarr/config:/config
+      - ${STORAGE_PATH}/Posterizarr/assets:/assets
+      - ${STORAGE_PATH}/Posterizarr/logs:/logs
+      - ${STORAGE_PATH}/Posterizarr/movies:/movies
+      - ${STORAGE_PATH}/Posterizarr/tv:/tv
     ports:
       - "${POSTERIZARR_PORT:-5060}:5060"
     restart: "no"
@@ -191,20 +191,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - cinesync-config:/config
+      - ${STORAGE_PATH}/Cinesync/config:/config
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
 
   placeholdarr:
-    image: theindlearmy/placeholdarr:latest
+    image: ghcr.io/theindiearmy/placeholdarr:queue_monitoring-latest
     container_name: surge-placeholdarr
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - placeholdarr-config:/config
+      - ${STORAGE_PATH}/Placeholdarr/config:/config
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
@@ -217,7 +217,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - overseerr-config:/app/config
+      - ${STORAGE_PATH}/Overseerr/config:/app/config
     ports:
       - "${OVERSEERR_PORT:-5055}:5055"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -232,7 +232,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - tautulli-config:/config
+      - ${STORAGE_PATH}/Tautulli/config:/config
     ports:
       - "${TAUTULLI_PORT:-8181}:8181"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -247,7 +247,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - homepage-config:/app/config
+      - ${STORAGE_PATH}/Homepage/config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "${HOMEPAGE_PORT:-3000}:3000"

@@ -19,7 +19,6 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 - **[Prowlarr](https://github.com/Prowlarr/Prowlarr)** - Indexer manager/proxy for torrent trackers and Usenet indexers
   - Includes **[Torrentio](https://github.com/dreulavelle/Prowlarr-Indexers)** custom indexer for Real-Debrid integration
 - **[Bazarr](https://github.com/morpheus65535/bazarr)** - Subtitle management for Radarr and Sonarr
-- **[Scanly](https://github.com/amcgready/scanly)** - Advanced media scanner and organizer
 - **[CineSync](https://github.com/sureshfizzy/CineSync)** - Comprehensive media library management system for Movies & TV shows
 - **[Placeholdarr](https://github.com/TheIndieArmy/placeholdarr)** - Creates placeholder files for undownloaded media in Plex/Jellyfin libraries
 
@@ -206,7 +205,6 @@ Surge uses a unified configuration system that automatically propagates shared s
 
 #### **Shared Variables Include:**
 - **Discord Webhooks** - Notifications from all services
-- **TMDB API Keys** - Metadata for Kometa, Posterizarr, Scanly
 - **Trakt Integration** - List management and tracking
 - **User/Group IDs** - Consistent permissions across containers
 - **Timezone Settings** - Synchronized scheduling
@@ -214,7 +212,6 @@ Surge uses a unified configuration system that automatically propagates shared s
 #### **Auto-Propagation**
 When you configure shared variables, they're automatically applied to:
 - **Kometa** - Webhook notifications + metadata sources
-- **Scanly** - Discord alerts + TMDB integration  
 - **Posterizarr** - Notifications + poster sources
 - **Tautulli** - Discord integration for play/stop events
 - **Radarr/Sonarr** - Notification configurations
@@ -249,8 +246,6 @@ Surge provides granular control over Discord notifications. You can enable/disab
 - **⚠️ Error Alerts** - Critical errors from any service
 - **🎬 Media Events** - Playback events via Tautulli (play/stop/pause)
 - **🔧 System Status** - Configuration changes, service starts/stops
-- **📂 Media Detection** - New media files discovered by Scanly
-- **🔗 Symlink Events** - Symlink creation and organization by Scanly
 
 #### **Configuration:**
 ```bash
@@ -279,8 +274,6 @@ When configured, Discord webhooks provide real-time notifications for:
 - ⚠️ **Error Alerts** from any service
 - 🎬 **Media Events** (via Tautulli integration)
 - 🔧 **Configuration Changes**
-- 📂 **New Media Detection** (via Scanly scanning)
-- 🔗 **Symlink Creation** (via Scanly organization)
 
 ## �📁 Directory Structure
 
@@ -369,12 +362,7 @@ All services share the same assets folder ensuring:
 
 Surge provides easy access to command-line tools:
 
-### **Scanly (Media Scanner)**
 ```bash
-./surge exec scanly scan        # Scan your media files
-./surge exec scanly organize    # Organize files
-./surge exec scanly config      # Configure settings
-./surge exec scanly shell       # Interactive shell
 ```
 
 ### **Kometa (Metadata Manager)**
@@ -437,7 +425,6 @@ This project stands on the shoulders of giants. Special thanks to all the amazin
 - **[cli_debrid](https://github.com/godver3/cli_debrid)** by godver3
 - **[Decypharr](https://github.com/sirrobot01/decypharr)** by sirrobot01
 - **[Kometa](https://github.com/Kometa-Team/Kometa)** team (formerly Plex Meta Manager)
-- **[Scanly](https://github.com/amcgready/scanly)** by amcgready
 - **[CineSync](https://github.com/sureshfizzy/CineSync)** by sureshfizzy
 - **[Placeholdarr](https://github.com/TheIndieArmy/placeholdarr)** by TheIndieArmy
 - **[Posterizarr](https://github.com/fscorrupt/posterizarr)** by fscorrupt

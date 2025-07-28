@@ -35,7 +35,7 @@ services:
     networks:
       - surge-network
     devices:
-      - /dev/dri:/dev/dri # For hardware transcoding (if available)
+      - /dev/dri:/dev/dri # For hardware tranoding (if available)
     profiles:
       - plex
 

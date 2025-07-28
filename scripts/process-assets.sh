@@ -60,24 +60,6 @@ run_sequential_processing() {
     }
     print_success "ImageMaid completed"
     
-    # Step 2: Posterizarr
-    print_info "Step 2/3: Running Posterizarr..."
-    docker run --rm --name surge-posterizarr-manual \
-        --network surge-network \
-        -v surge_posterizarr-config:/config \
-        -v surge_shared-assets:/assets \
-        -v surge_shared-logs:/logs \
-        -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-        -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
-        -e PUID="${PUID:-1000}" \
-        -e PGID="${PGID:-1000}" \
-        -e TZ="${TZ:-UTC}" \
-        fscorrupt/posterizarr:latest || {
-        print_error "Posterizarr failed"
-        exit 1
-    }
-    print_success "Posterizarr completed"
-    
     # Step 3: Kometa
     print_info "Step 3/3: Running Kometa..."
     docker run --rm --name surge-kometa-manual \

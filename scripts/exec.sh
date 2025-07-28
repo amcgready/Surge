@@ -29,36 +29,6 @@ print_warning() {
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Load environment
-load_environment() {
-    if [ -f "$PROJECT_DIR/.env" ]; then
-        export $(grep -v '^#' "$PROJECT_DIR/.env" | xargs)
-    else
-        print_error ".env file not found. Run './surge setup' first."
-        exit 1
-    fi
-}
-
-# Execute command in service container
-exec_in_service() {
-    local service=$1
-    shift
-    local command="$*"
-    
-    cd "$PROJECT_DIR"
-    
-    case $service in
-        scanly)
-            print_info "Running Scanly command: $command"
-            docker run --rm -it \
-                --name surge-scanly-exec \
-                --network surge-network \
-                -v scanly-config:/config \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
                 -v surge_shared-assets:/assets \
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
@@ -86,7 +56,6 @@ exec_in_service() {
                 --name surge-cli-debrid-exec \
                 --network surge-network \
                 -v cli-debrid-config:/app/config \
-                -v "${DOWNLOADS_DIR:-./data/downloads}":/downloads \
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
                 -e TZ="${TZ:-UTC}" \

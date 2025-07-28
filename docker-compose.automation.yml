@@ -1,58 +1,51 @@
-version: '3.8'
 services:
   tautulli:
     image: lscr.io/linuxserver/tautulli:latest
     container_name: surge-tautulli
     volumes:
-      - /mnt/mycloudpr4100/Surge/Tautulli:/config
+      - ${STORAGE_PATH}/Tautulli/config:/config
     restart: unless-stopped
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: surge-bazarr
     volumes:
-      - /mnt/mycloudpr4100/Surge/Bazarr:/config
+      - ${STORAGE_PATH}/Bazarr/config:/config
     restart: unless-stopped
   nzbget:
     image: lscr.io/linuxserver/nzbget:latest
     container_name: surge-nzbget
     volumes:
-      - /mnt/mycloudpr4100/Surge/NZBGet:/config
+      - ${STORAGE_PATH}/NZBGet/config:/config
     restart: unless-stopped
   gaps:
     image: housewrecker/gaps:latest
     container_name: surge-gaps
     volumes:
-      - /mnt/mycloudpr4100/Surge/GAPS:/config
+      - ${STORAGE_PATH}/GAPS/config:/config
     restart: unless-stopped
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: surge-prowlarr
     volumes:
-      - /mnt/mycloudpr4100/Surge/Prowlarr:/config
+      - ${STORAGE_PATH}/Prowlarr/config:/config
     restart: unless-stopped
   overseerr:
     image: sctx/overseerr:latest
     container_name: surge-overseerr
     volumes:
-      - /mnt/mycloudpr4100/Surge/Overseerr:/config
+      - ${STORAGE_PATH}/Overseerr/config:/config
     restart: unless-stopped
   posterizarr:
     image: ghcr.io/fscorrupt/posterizarr:latest
     container_name: surge-posterizarr
     volumes:
-      - /mnt/mycloudpr4100/Surge/Posterizarr:/config
-    restart: unless-stopped
-  scanly:
-    image: scanly/scanly:latest
-    container_name: surge-scanly
-    volumes:
-      - /mnt/mycloudpr4100/Surge/Scanly:/config
+      - ${STORAGE_PATH}/Posterizarr/config:/config
     restart: unless-stopped
   kometa:
     image: kometateam/kometa:latest
     container_name: surge-kometa
     volumes:
-      - /mnt/mycloudpr4100/Surge/Kometa:/config
+      - ${STORAGE_PATH}/Kometa/config:/config
     restart: unless-stopped
 networks:
   surge-network:
