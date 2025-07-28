@@ -13,12 +13,11 @@ services:
       - TZ=${TZ:-UTC}
       - JELLYFIN_PublishedServerUrl=${JELLYFIN_PUBLISHED_SERVER_URL:-}
     volumes:
-      - jellyfin-config:/config
-      - jellyfin-cache:/cache
-      - shared-assets:/config/metadata/assets
-      - ${MOVIES_DIR:-./data/media/movies}:/data/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/data/tv
-      - ${MUSIC_DIR:-./data/media/music}:/data/music
+      - ${STORAGE_PATH}/Jellyfin/config:/config
+      - ${STORAGE_PATH}/Jellyfin/cache:/cache
+      - ${STORAGE_PATH}/Jellyfin/media/movies:/media/movies
+      - ${STORAGE_PATH}/Jellyfin/media/tv:/media/tv
+      - ${STORAGE_PATH}/Jellyfin/media/music:/media/music
     ports:
       - "${JELLYFIN_PORT:-8096}:8096"
       - "8920:8920" # HTTPS
@@ -31,8 +30,4 @@ services:
       - /dev/dri:/dev/dri # For hardware transcoding (if available)
     profiles:
       - jellyfin
-
-volumes:
-  jellyfin-config:
-  jellyfin-cache:
-  shared-assets:  # Reference to shared volume from main compose
+  # The following volumes are replaced with explicit host paths

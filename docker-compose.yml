@@ -7,9 +7,9 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - radarr-config:/config
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+      - ${STORAGE_PATH}/Radarr/config:/config
+      - ${STORAGE_PATH}/Radarr/media:/movies
+      - ${STORAGE_PATH}/Radarr/downloads:/downloads
     ports:
       - "${RADARR_PORT:-7878}:7878"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -24,9 +24,9 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - sonarr-config:/config
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
-      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+      - ${STORAGE_PATH}/Sonarr/config:/config
+      - ${STORAGE_PATH}/Sonarr/media:/tv
+      - ${STORAGE_PATH}/Sonarr/downloads:/downloads
     ports:
       - "${SONARR_PORT:-8989}:8989"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -41,9 +41,9 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - bazarr-config:/config
-      - ${MOVIES_DIR:-./data/media/movies}:/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/tv
+      - ${STORAGE_PATH}/Bazarr/config:/config
+      - ${STORAGE_PATH}/Bazarr/media/movies:/movies
+      - ${STORAGE_PATH}/Bazarr/media/tv:/tv
     ports:
       - "${BAZARR_PORT:-6767}:6767"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -58,7 +58,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - prowlarr-config:/config
+      - ${STORAGE_PATH}/Prowlarr/config:/config
       - ./configs/prowlarr/indexers:/config/Definitions/Custom
     ports:
       - "${PROWLARR_PORT:-9696}:9696"
@@ -76,8 +76,8 @@ services:
       - NZBGET_USER=${NZBGET_USER:-admin}
       - NZBGET_PASS=${NZBGET_PASS:-tegbzn6789}
     volumes:
-      - nzbget-config:/config
-      - ${DOWNLOADS_DIR:-./data/downloads}:/downloads
+      - ${STORAGE_PATH}/NZBGet/config:/config
+      - ${STORAGE_PATH}/NZBGet/downloads:/downloads
     ports:
       - "${NZBGET_PORT:-6789}:6789"
     restart: ${RESTART_POLICY:-unless-stopped}

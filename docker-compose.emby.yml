@@ -13,11 +13,10 @@ services:
       - TZ=${TZ:-UTC}
       - GIDLIST=${PGID:-1000}
     volumes:
-      - emby-config:/config
-      - shared-assets:/config/metadata/assets
-      - ${MOVIES_DIR:-./data/media/movies}:/data/movies
-      - ${TV_SHOWS_DIR:-./data/media/tv}:/data/tv
-      - ${MUSIC_DIR:-./data/media/music}:/data/music
+      - ${STORAGE_PATH}/Emby/config:/config
+      - ${STORAGE_PATH}/Emby/media/movies:/mnt/movies
+      - ${STORAGE_PATH}/Emby/media/tv:/mnt/tv
+      - ${STORAGE_PATH}/Emby/media/music:/mnt/music
     ports:
       - "${EMBY_PORT:-8096}:8096"
       - "8920:8920" # HTTPS

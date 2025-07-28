@@ -71,3 +71,4 @@ config/radarr/config.xml
 config/scanly/config.yml
 config/sonarr/config.xml
 config/tautulli/config.ini
+.env.backup.20250727_183050

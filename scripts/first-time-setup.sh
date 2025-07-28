@@ -1055,6 +1055,7 @@ configure_tautulli_media_server() {
 create_config() {
     print_step "Creating configuration file..."
     
+
     cat > "$PROJECT_DIR/.env" << EOF
 # ===========================================
 # SURGE CONFIGURATION - Generated $(date)
@@ -1120,7 +1121,7 @@ GAPS_PORT=${GAPS_PORT:-8484}
 
 # AUTOMATION
 WATCHTOWER_INTERVAL=${WATCHTOWER_INTERVAL:-86400}
-ASSET_PROCESSING_SCHEDULE=${ASSET_PROCESSING_SCHEDULE:-"0 2 * * *"}
+ASSET_PROCESSING_SCHEDULE="${ASSET_PROCESSING_SCHEDULE:-0 2 * * *}"
 
 # EXTERNAL SERVICES (OPTIONAL)
 TMDB_API_KEY=${TMDB_API_KEY:-}
@@ -1151,7 +1152,7 @@ DEPLOYMENT_TYPE=${DEPLOYMENT_TYPE:-full}
 INSTALL_TYPE=${INSTALL_TYPE:-auto}
 
 # GENERATED TIMESTAMP
-CONFIG_GENERATED=$(date '+%Y-%m-%d %H:%M:%S')
+CONFIG_GENERATED="$(date '+%Y-%m-%d %H:%M:%S')"
 CONFIG_VERSION=1.0
 EOF
 
@@ -1167,14 +1168,71 @@ EOF
     fi
 }
 
-# Create directory structure
+# Create per-container directory structure
+create_service_directories() {
+    print_step "Creating per-service directory structure..."
+
+    # List of services and their required subfolders
+    declare -A service_folders
+    service_folders=(
+        [Bazarr]="config media"
+        [Radarr]="config media"
+        [Sonarr]="config media"
+        [Prowlarr]="config"
+        [NZBGet]="config downloads"
+        [RDT-Client]="config downloads"
+        [Zilean]="config"
+        [cli_debrid]="config"
+        [Decypharr]="config"
+        [Kometa]="config"
+        [Posterizarr]="config"
+        [Overseerr]="config"
+        [Tautulli]="config"
+        [Scanly]="config"
+        [CineSync]="config"
+        [Placeholdarr]="config"
+        [GAPS]="config"
+        [Plex]="config media"
+        [Emby]="config media"
+        [Jellyfin]="config media"
+    )
+
+    # Only create folders for enabled services
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zilean" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "Scanly" "CineSync" "Placeholdarr" "GAPS"; do
+        var_name="ENABLE_${service^^}"
+        var_name="${var_name//-/_}"
+        # shellcheck disable=SC2154
+        if [ "${!var_name}" = "true" ]; then
+            for sub in ${service_folders[$service]}; do
+                mkdir -p "$STORAGE_PATH/$service/$sub"
+            done
+        fi
+    done
+
+    # Always create media server folders for the selected server
+    case "$MEDIA_SERVER" in
+        plex|Plex)
+            mkdir -p "$STORAGE_PATH/Plex/config" "$STORAGE_PATH/Plex/media"
+            ;;
+        emby|Emby)
+            mkdir -p "$STORAGE_PATH/Emby/config" "$STORAGE_PATH/Emby/media"
+            ;;
+        jellyfin|Jellyfin)
+            mkdir -p "$STORAGE_PATH/Jellyfin/config" "$STORAGE_PATH/Jellyfin/media"
+            ;;
+    esac
+
+    # Set permissions
+    sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
+    print_success "Per-service directory structure created at $STORAGE_PATH"
+}
+
+# Create directory structure (legacy, for shared folders)
 create_directories() {
     print_step "Creating directory structure..."
-    
-    # Create directories with proper permissions
+    # Create shared folders for media, downloads, config, logs
     sudo mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
     sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
-    
     print_success "Directory structure created at $STORAGE_PATH"
 }
 
@@ -1534,7 +1592,10 @@ main() {
         source "$PROJECT_DIR/.env"
         export STORAGE_PATH PUID PGID
 
-        # Create directories (now STORAGE_PATH is set)
+
+        # Create per-service directories (now STORAGE_PATH is set)
+        create_service_directories
+        # Create shared directories (legacy, for backwards compatibility)
         create_directories
 
         # Create service configs
