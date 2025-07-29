@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # ===========================================
 #!/bin/bash
 
@@ -586,20 +587,46 @@ configure_services_post_deployment() {
     print_info "Waiting for services to initialize..."
     sleep 30
     
+    # Skipping browser prompt and user authentication confirmation; proceeding directly to API key extraction and configuration
+
+
+    # Always extract API keys from config.xml files (no user prompt), using robust retry logic for Prowlarr
+    PROWLARR_API_KEY=$(get_prowlarr_api_key)
+    RADARR_CONFIG="$STORAGE_PATH/Radarr/config/config.xml"
+    SONARR_CONFIG="$STORAGE_PATH/Sonarr/config/config.xml"
+    RADARR_API_KEY=$(grep -oP '(?<=<ApiKey>)[^<]+' "$RADARR_CONFIG" 2>/dev/null || echo "")
+    SONARR_API_KEY=$(grep -oP '(?<=<ApiKey>)[^<]+' "$SONARR_CONFIG" 2>/dev/null || echo "")
+
+    if [ -z "$PROWLARR_API_KEY" ] || [ -z "$RADARR_API_KEY" ] || [ -z "$SONARR_API_KEY" ]; then
+        print_warning "Could not automatically extract all API keys. Please ensure you have completed initial setup in the web UI for each service."
+        print_warning "You must complete the initial setup in the web UI for Prowlarr, Radarr, and Sonarr before running this script."
+        exit 1
+    fi
+    export PROWLARR_API_KEY RADARR_API_KEY SONARR_API_KEY
+
     # Configure Prowlarr indexers and connections
     if [ "$ENABLE_PROWLARR" = "true" ]; then
         configure_prowlarr_comprehensive
+        if [ $? -ne 0 ]; then
+            print_error "Failed to add Prowlarr connections or indexers! Please check your authentication and try again."
+        fi
     fi
-    
+
     # Configure download clients in Radarr/Sonarr
     configure_arr_download_clients
-    
+
     # Configure media server connections
     configure_media_server_connections
 
     # Configure homepage widgets for all enabled services
     configure_homepage_widgets
-    
+
+    # Prompt for sudo password and fix ownership of storage path (removes locks)
+    echo "\nTo ensure you have access to all files, your sudo password may be required to fix permissions and remove any locks."
+    sudo -v
+    sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
+    print_success "All files and folders in $STORAGE_PATH are now owned by $PUID:$PGID. (Locks removed)"
+
     print_success "Service configuration completed!"
 }
 # Generate homepage.yaml widgets for all enabled services
@@ -691,164 +718,6 @@ configure_homepage_widgets() {
     fi
 
     print_success "Homepage widgets configured in homepage.yaml"
-}
-
-# Comprehensive Prowlarr configuration
-configure_prowlarr_comprehensive() {
-    print_info "🔍 Configuring Prowlarr with indexers and connections..."
-    
-    # Wait specifically for Prowlarr to be ready
-    wait_for_service "prowlarr" "9696" "/api/v1/system/status"
-    
-    # Get Prowlarr API key
-    PROWLARR_API_KEY=$(get_prowlarr_api_key)
-    
-    if [ -n "$PROWLARR_API_KEY" ]; then
-        # Add Torrentio indexer if Real-Debrid token is available
-        if [ -n "$RD_API_TOKEN" ]; then
-            add_torrentio_indexer
-        fi
-        
-        # Add Zilean indexer if enabled
-        if [ "$ENABLE_ZILEAN" = "true" ]; then
-            add_zilean_indexer
-        fi
-        
-        # Connect Prowlarr to Radarr and Sonarr
-        connect_prowlarr_to_arr_services
-    else
-        print_warning "Could not retrieve Prowlarr API key - manual configuration required"
-    fi
-}
-
-# Wait for a service to be ready
-wait_for_service() {
-    local service=$1
-    local port=$2
-    local endpoint=${3:-"/"}
-    local max_attempts=30
-    local attempt=1
-    
-    print_info "Waiting for $service to be ready..."
-    
-    while [ $attempt -le $max_attempts ]; do
-        if curl -s "http://localhost:$port$endpoint" > /dev/null 2>&1; then
-            print_success "$service is ready!"
-            return 0
-        fi
-        
-        printf "."
-        sleep 5
-        attempt=$((attempt + 1))
-    done
-    
-    print_warning "$service not ready after $((max_attempts * 5)) seconds"
-    return 1
-}
-
-# Get Prowlarr API key from config
-get_prowlarr_api_key() {
-    local config_file="$STORAGE_PATH/config/prowlarr/config.xml"
-    local attempt=1
-    local max_attempts=12
-    
-    while [ $attempt -le $max_attempts ]; do
-        if [ -f "$config_file" ]; then
-            # Extract API key from config.xml
-            local api_key=$(grep -o '<ApiKey>[^<]*</ApiKey>' "$config_file" 2>/dev/null | sed 's/<[^>]*>//g')
-            if [ -n "$api_key" ] && [ "$api_key" != "$(printf '0%.0s' {1..32})" ]; then
-                echo "$api_key"
-                return 0
-            fi
-        fi
-        
-        sleep 5
-        attempt=$((attempt + 1))
-    done
-    
-    return 1
-}
-
-# Add Torrentio indexer to Prowlarr
-add_torrentio_indexer() {
-    print_info "Adding Torrentio indexer to Prowlarr..."
-    
-    local indexer_data='{
-        "enable": true,
-        "name": "Torrentio",
-        "implementation": "Torrentio",
-        "implementationName": "Torrentio",
-        "protocol": "torrent",
-        "priority": 25,
-        "downloadClientId": 0,
-        "tags": [],
-        "fields": [
-            {
-                "name": "baseUrl",
-                "value": "https://torrentio.strem.fun"
-            },
-            {
-                "name": "apiKey",
-                "value": "'$RD_API_TOKEN'"
-            },
-            {
-                "name": "providers",
-                "value": "yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex"
-            }
-        ]
-    }'
-    
-    curl -s -X POST "http://localhost:9696/api/v1/indexer" \
-        -H "Content-Type: application/json" \
-        -H "X-Api-Key: $PROWLARR_API_KEY" \
-        -d "$indexer_data" > /dev/null
-    
-    if [ $? -eq 0 ]; then
-        print_success "Torrentio indexer added successfully"
-    else
-        print_warning "Failed to add Torrentio indexer"
-    fi
-}
-
-# Add Zilean indexer to Prowlarr
-add_zilean_indexer() {
-    print_info "Adding Zilean indexer to Prowlarr..."
-    
-    local indexer_data='{
-        "enable": true,
-        "name": "Zilean",
-        "implementation": "Torznab",
-        "implementationName": "Generic Torznab",
-        "protocol": "torrent",
-        "priority": 25,
-        "downloadClientId": 0,
-        "tags": [],
-        "fields": [
-            {
-                "name": "baseUrl",
-                "value": "http://surge-zilean:8182"
-            },
-            {
-                "name": "apiPath",
-                "value": "/torznab"
-            },
-            {
-                "name": "categories",
-                "value": "5000,5030,5040"
-            }
-        ]
-    }'
-    
-    curl -s -X POST "http://localhost:9696/api/v1/indexer" \
-        -H "Content-Type: application/json" \
-        -H "X-Api-Key: $PROWLARR_API_KEY" \
-        -d "$indexer_data" > /dev/null
-    
-    if [ $? -eq 0 ]; then
-        print_success "Zilean indexer added successfully"
-    else
-        print_warning "Failed to add Zilean indexer"
-    fi
 }
 
 # Connect Prowlarr to Radarr and Sonarr
@@ -1285,6 +1154,10 @@ show_next_steps() {
     
     if [ "$deploy_now" = "y" ] || [ "$deploy_now" = "Y" ]; then
         deploy_stack "$MEDIA_SERVER"
+        # Ensure Prowlarr indexers are configured after deployment
+        if [ "$ENABLE_PROWLARR" = "true" ]; then
+            configure_prowlarr_comprehensive
+        fi
     else
         echo ""
         print_info "To deploy later, run:"
