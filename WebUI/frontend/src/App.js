@@ -20,7 +20,8 @@ import decypharrLogo from './assets/service-logos/decypharr.png';
 
 const steps = [
   'Welcome',
-  'Core Media Server',
+  'Media Server',
+  'Storage Config',
   'Media Automation',
   'Download Tools',
   'Content Enhancement',
@@ -114,6 +115,8 @@ function App() {
   const [config, setConfig] = React.useState({
     // Core Media Server
     mediaServer: '', // plex|emby|jellyfin
+    // Storage Config
+    storagePath: '',
     // Download Clients & Tools
     nzbgetUrl: '', nzbgetApiKey: '',
     rdtClientUrl: '', rdtClientApiKey: '',
@@ -230,13 +233,15 @@ function App() {
           Surge Setup
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label) => (
+          {steps.map((label, idx) => (
             <Step key={label}>
               <StepLabel
                 sx={{
                   '& .MuiStepLabel-label': { color: '#fff !important' },
-                  '& .MuiStepIcon-root': { color: '#fff !important' }
+                  '& .MuiStepIcon-root': { color: '#fff !important', cursor: 'pointer' }
                 }}
+                onClick={() => setActiveStep(idx)}
+                style={{ cursor: 'pointer' }}
               >
                 {label}
               </StepLabel>
@@ -289,6 +294,44 @@ function App() {
           )}
           {activeStep === 2 && (
             <Box>
+              <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Storage Config</Typography>
+              <Typography style={{ color: '#fff', marginBottom: 8 }}>Where would you like to store your media and config?</Typography>
+              <Box display="flex" gap={2} alignItems="center">
+                <input
+                  type="text"
+                  name="storagePath"
+                  placeholder="/mnt/media or /home/user/SurgeData"
+                  value={config.storagePath}
+                  onChange={handleChange}
+                  style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                />
+                <Button
+                  variant="outlined"
+                  style={{ color: '#fff', borderColor: '#fff', minWidth: 120 }}
+                  onClick={async () => {
+                    // Use the File System Access API if available
+                    if (window.showDirectoryPicker) {
+                      try {
+                        const dirHandle = await window.showDirectoryPicker();
+                        setConfig((prev) => ({ ...prev, storagePath: dirHandle.name }));
+                      } catch (e) {
+                        // User cancelled or not supported
+                      }
+                    } else {
+                      alert('Directory picker is not supported in this browser. Please type the path manually.');
+                    }
+                  }}
+                >
+                  Browse
+                </Button>
+              </Box>
+              <Typography style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
+                You can type a path or use the Browse button (if supported by your browser).
+              </Typography>
+            </Box>
+          )}
+          {activeStep === 3 && (
+            <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Media Automation & Management</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
                 {Object.keys(serviceLogos).map((service) => (
@@ -302,17 +345,7 @@ function App() {
                         border: mediaAutomation[service] ? '2px solid #1976d2' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
-                        ...(activeStep === 1 ? {
-                          background: '#fff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 220,
-                          height: 220,
-                          padding: 0
-                        } : {
-                          background: '#181818'
-                        }),
+                        background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
                         boxShadow: mediaAutomation[service] ? '0 0 8px #1976d2' : 'none',
@@ -336,10 +369,17 @@ function App() {
                   </Tooltip>
                 ))}
               </Box>
-              {/* Service settings fields removed as requested */}
+              {/* Sub-sections for enabled services */}
+              {Object.keys(serviceLogos).filter((service) => mediaAutomation[service]).map((service) => (
+                <Box key={service} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
+                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
+                  {/* TODO: Add {service} settings here */}
+                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {service} will appear here.</Typography>
+                </Box>
+              ))}
             </Box>
           )}
-          {activeStep === 3 && (
+          {activeStep === 4 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Download Clients & Tools</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
@@ -378,9 +418,17 @@ function App() {
                   </Tooltip>
                 ))}
               </Box>
+              {/* Sub-sections for enabled download tools */}
+              {downloadToolsList.filter((tool) => downloadTools[tool.key]).map((tool) => (
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
+                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                  {/* TODO: Add {tool.name} settings here */}
+                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+                </Box>
+              ))}
             </Box>
           )}
-          {activeStep === 4 && (
+          {activeStep === 5 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Content Enhancement</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
@@ -419,9 +467,17 @@ function App() {
                   </Tooltip>
                 ))}
               </Box>
+              {/* Sub-sections for enabled content enhancement tools */}
+              {contentEnhancementList.filter((tool) => contentEnhancement[tool.key]).map((tool) => (
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
+                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                  {/* TODO: Add {tool.name} settings here */}
+                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+                </Box>
+              ))}
             </Box>
           )}
-          {activeStep === 5 && (
+          {activeStep === 6 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Monitoring & Interface</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
@@ -460,9 +516,17 @@ function App() {
                   </Tooltip>
                 ))}
               </Box>
+              {/* Sub-sections for enabled monitoring tools */}
+              {monitoringList.filter((tool) => monitoring[tool.key]).map((tool) => (
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
+                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                  {/* TODO: Add {tool.name} settings here */}
+                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+                </Box>
+              ))}
             </Box>
           )}
-          {activeStep === 6 && (
+          {activeStep === 7 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Shared Configuration</Typography>
               <input name="discordWebhook" placeholder="Discord Webhook URL" value={config.discordWebhook} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
@@ -472,14 +536,14 @@ function App() {
               <input name="groupId" placeholder="Group ID" value={config.groupId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
             </Box>
           )}
-          {activeStep === 7 && (
+          {activeStep === 8 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Review</Typography>
               <pre style={{ color: '#fff', background: '#222', padding: 12, borderRadius: 4 }}>{JSON.stringify(config, null, 2)}</pre>
               <Button onClick={handleSave} variant="contained">Save Configuration</Button>
             </Box>
           )}
-          {activeStep === 8 && (
+          {activeStep === 9 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Deploy</Typography>
               <Button onClick={handleDeploy} variant="contained">Deploy Services</Button>
@@ -492,6 +556,7 @@ function App() {
           <Button
             disabled={
               (activeStep === 1 && !config.mediaServer) ||
+              (activeStep === 2 && !config.storagePath) ||
               activeStep === steps.length - 1
             }
             onClick={handleNext}
