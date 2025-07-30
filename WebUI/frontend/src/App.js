@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
@@ -117,6 +116,61 @@ function App() {
     mediaServer: '', // plex|emby|jellyfin
     // Storage Config
     storagePath: '',
+    // Media Automation - Radarr settings
+    radarrSettings: {
+      port: 7878,
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
+    // Media Automation - Sonarr settings
+    sonarrSettings: {
+      port: 8989,
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
+    // Media Automation - Prowlarr settings
+    prowlarrSettings: {
+      port: 9696,
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
+    // Media Automation - Bazarr settings
+    bazarrSettings: {
+      port: 6767,
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
+    // Media Automation - CineSync settings
+    cinesyncSettings: {
+      webuiPort: 5173,
+      apiPort: 8082,
+      webdavPort: 8082,
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
+    // Media Automation - Placeholdarr settings
+    placeholdarrSettings: {
+      apiKey: 'surgestack',
+      authMethod: 'Basic',
+      logLevel: 'Info',
+      branch: 'master',
+      launchBrowser: 'false',
+    },
     // Download Clients & Tools
     nzbgetUrl: '', nzbgetApiKey: '',
     rdtClientUrl: '', rdtClientApiKey: '',
@@ -233,24 +287,34 @@ function App() {
           Surge Setup
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label, idx) => (
-            <Step key={label}>
-              <StepLabel
-                sx={{
-                  '& .MuiStepLabel-label': { color: '#fff !important' },
-                  '& .MuiStepIcon-root': { color: '#fff !important', cursor: 'pointer' }
-                }}
-                onClick={() => setActiveStep(idx)}
-                style={{ cursor: 'pointer' }}
-              >
-                {label}
-              </StepLabel>
-            </Step>
-          ))}
+          {steps.map((label, idx) => {
+            // Only allow jumping if both mediaServer and storagePath are set, or if on welcome/core/storage steps
+            const canJump =
+              idx === 0 ||
+              (idx === 1) ||
+              (idx === 2) ||
+              (config.mediaServer && config.storagePath);
+            return (
+              <Step key={label}>
+                <StepLabel
+                  sx={{
+                    '& .MuiStepLabel-label': { color: '#fff !important' },
+                    '& .MuiStepIcon-root': { color: canJump ? '#07938f' : '#444', cursor: canJump ? 'pointer' : 'not-allowed' }
+                  }}
+                  onClick={() => {
+                    if (canJump) setActiveStep(idx);
+                  }}
+                  style={{ cursor: canJump ? 'pointer' : 'not-allowed' }}
+                >
+                  {label}
+                </StepLabel>
+              </Step>
+            );
+          })}
         </Stepper>
         <Box sx={{ my: 4 }}>
           {activeStep === 0 && (
-            <Typography align="center" style={{ color: '#fff' }}>Welcome! This tool will help you configure Surge and its services.</Typography>
+            <Typography align="center" style={{ color: '#fff' }}>Welcome to Surge! Surge aims to take the hassle out of media server management by allowing you to easily deploy a media server and all the backend software you may need.</Typography>
           )}
           {activeStep === 1 && (
             <Box>
@@ -264,14 +328,14 @@ function App() {
                         cursor: 'pointer',
                         opacity: config.mediaServer === srv.key ? 1 : 0.4,
                         filter: config.mediaServer === srv.key ? 'none' : 'grayscale(100%)',
-                        border: config.mediaServer === srv.key ? '2px solid #1976d2' : '2px solid #444',
+                        border: config.mediaServer === srv.key ? '2px solid #07938f' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
                         background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
-                        boxShadow: config.mediaServer === srv.key ? '0 0 8px #1976d2' : 'none',
-                        '&:hover': { boxShadow: '0 0 16px #1976d2' }
+                        boxShadow: config.mediaServer === srv.key ? '0 0 8px #07938f' : 'none',
+                        '&:hover': { boxShadow: '0 0 16px #07938f' }
                       }}
                     >
                       <img src={srv.logo} alt={srv.name} style={{ maxWidth: 192, maxHeight: 192, width: 'auto', height: 'auto', display: 'block', margin: '0 auto' }} />
@@ -342,14 +406,14 @@ function App() {
                         cursor: 'pointer',
                         opacity: mediaAutomation[service] ? 1 : 0.4,
                         filter: mediaAutomation[service] ? 'none' : 'grayscale(100%)',
-                        border: mediaAutomation[service] ? '2px solid #1976d2' : '2px solid #444',
+                        border: mediaAutomation[service] ? '2px solid #07938f' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
                         background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
-                        boxShadow: mediaAutomation[service] ? '0 0 8px #1976d2' : 'none',
-                        '&:hover': { boxShadow: '0 0 16px #1976d2' }
+                        boxShadow: mediaAutomation[service] ? '0 0 8px #07938f' : 'none',
+                        '&:hover': { boxShadow: '0 0 16px #07938f' }
                       }}
                     >
                       <img src={serviceLogos[service]} alt={service} style={{ width: 64, height: 64, display: 'block', margin: '0 auto' }} />
@@ -371,10 +435,280 @@ function App() {
               </Box>
               {/* Sub-sections for enabled services */}
               {Object.keys(serviceLogos).filter((service) => mediaAutomation[service]).map((service) => (
-                <Box key={service} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
-                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
-                  {/* TODO: Add {service} settings here */}
-                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {service} will appear here.</Typography>
+                <Box key={service} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
+                  {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Port</Typography>
+                          <input
+                            name={`${service}_port`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config[`${service}Settings`].port}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], port: val } }));
+                            }}
+                            placeholder={service === 'radarr' ? '7878' : service === 'sonarr' ? '8989' : service === 'prowlarr' ? '9696' : '6767'}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={2}>
+                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <input
+                            name={`${service}_apikey`}
+                            value={config[`${service}Settings`].apiKey}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], apiKey: e.target.value } }))}
+                            placeholder="surgestack"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <select
+                            name={`${service}_auth`}
+                            value={config[`${service}Settings`].authMethod}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], authMethod: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Basic">Basic</option>
+                            <option value="Forms">Forms</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <select
+                            name={`${service}_loglevel`}
+                            value={config[`${service}Settings`].logLevel}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], logLevel: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Trace">Trace</option>
+                            <option value="Debug">Debug</option>
+                            <option value="Info">Info</option>
+                            <option value="Warn">Warn</option>
+                            <option value="Error">Error</option>
+                            <option value="Fatal">Fatal</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <input
+                            name={`${service}_branch`}
+                            value={config[`${service}Settings`].branch}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], branch: e.target.value } }))}
+                            placeholder="master"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <select
+                            name={`${service}_launchbrowser`}
+                            value={config[`${service}Settings`].launchBrowser}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], launchBrowser: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ) : service === 'cinesync' ? (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>WebUI Port</Typography>
+                          <input
+                            name="cinesync_webuiport"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config.cinesyncSettings.webuiPort}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, webuiPort: val } }));
+                            }}
+                            placeholder="5173"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>API Server Port</Typography>
+                          <input
+                            name="cinesync_apiport"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config.cinesyncSettings.apiPort}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, apiPort: val } }));
+                            }}
+                            placeholder="8082"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>WebDAV Port</Typography>
+                          <input
+                            name="cinesync_webdavport"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config.cinesyncSettings.webdavPort}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, webdavPort: val } }));
+                            }}
+                            placeholder="8082"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <input
+                            name="cinesync_apikey"
+                            value={config.cinesyncSettings.apiKey}
+                            onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, apiKey: e.target.value } }))}
+                            placeholder="surgestack"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <select
+                            name="cinesync_auth"
+                            value={config.cinesyncSettings.authMethod}
+                            onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, authMethod: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Basic">Basic</option>
+                            <option value="Forms">Forms</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <select
+                            name="cinesync_loglevel"
+                            value={config.cinesyncSettings.logLevel}
+                            onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, logLevel: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Trace">Trace</option>
+                            <option value="Debug">Debug</option>
+                            <option value="Info">Info</option>
+                            <option value="Warn">Warn</option>
+                            <option value="Error">Error</option>
+                            <option value="Fatal">Fatal</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <input
+                            name="cinesync_branch"
+                            value={config.cinesyncSettings.branch}
+                            onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, branch: e.target.value } }))}
+                            placeholder="master"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <select
+                            name="cinesync_launchbrowser"
+                            value={config.cinesyncSettings.launchBrowser}
+                            onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, launchBrowser: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ) : service === 'placeholdarr' ? (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <input
+                            name="placeholdarr_apikey"
+                            value={config.placeholdarrSettings.apiKey}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, apiKey: e.target.value } }))}
+                            placeholder="surgestack"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <select
+                            name="placeholdarr_auth"
+                            value={config.placeholdarrSettings.authMethod}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, authMethod: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Basic">Basic</option>
+                            <option value="Forms">Forms</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <select
+                            name="placeholdarr_loglevel"
+                            value={config.placeholdarrSettings.logLevel}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, logLevel: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="Trace">Trace</option>
+                            <option value="Debug">Debug</option>
+                            <option value="Info">Info</option>
+                            <option value="Warn">Warn</option>
+                            <option value="Error">Error</option>
+                            <option value="Fatal">Fatal</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <input
+                            name="placeholdarr_branch"
+                            value={config.placeholdarrSettings.branch}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, branch: e.target.value } }))}
+                            placeholder="master"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <select
+                            name="placeholdarr_launchbrowser"
+                            value={config.placeholdarrSettings.launchBrowser}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, launchBrowser: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {service} will appear here.</Typography>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -391,14 +725,14 @@ function App() {
                         cursor: 'pointer',
                         opacity: downloadTools[tool.key] ? 1 : 0.4,
                         filter: downloadTools[tool.key] ? 'none' : 'grayscale(100%)',
-                        border: downloadTools[tool.key] ? '2px solid #1976d2' : '2px solid #444',
+                        border: downloadTools[tool.key] ? '2px solid #07938f' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
                         background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
-                        boxShadow: downloadTools[tool.key] ? '0 0 8px #1976d2' : 'none',
-                        '&:hover': { boxShadow: '0 0 16px #1976d2' }
+                        boxShadow: downloadTools[tool.key] ? '0 0 8px #07938f' : 'none',
+                        '&:hover': { boxShadow: '0 0 16px #07938f' }
                       }}
                     >
                       <img src={tool.logo} alt={tool.name} style={{ width: 64, height: 64, display: 'block', margin: '0 auto' }} />
@@ -420,8 +754,8 @@ function App() {
               </Box>
               {/* Sub-sections for enabled download tools */}
               {downloadToolsList.filter((tool) => downloadTools[tool.key]).map((tool) => (
-                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
-                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* TODO: Add {tool.name} settings here */}
                   <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
                 </Box>
@@ -440,14 +774,14 @@ function App() {
                         cursor: 'pointer',
                         opacity: contentEnhancement[tool.key] ? 1 : 0.4,
                         filter: contentEnhancement[tool.key] ? 'none' : 'grayscale(100%)',
-                        border: contentEnhancement[tool.key] ? '2px solid #1976d2' : '2px solid #444',
+                        border: contentEnhancement[tool.key] ? '2px solid #07938f' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
                         background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
-                        boxShadow: contentEnhancement[tool.key] ? '0 0 8px #1976d2' : 'none',
-                        '&:hover': { boxShadow: '0 0 16px #1976d2' }
+                        boxShadow: contentEnhancement[tool.key] ? '0 0 8px #07938f' : 'none',
+                        '&:hover': { boxShadow: '0 0 16px #07938f' }
                       }}
                     >
                       <img src={tool.logo} alt={tool.name} style={{ width: 64, height: 64, display: 'block', margin: '0 auto' }} />
@@ -469,8 +803,8 @@ function App() {
               </Box>
               {/* Sub-sections for enabled content enhancement tools */}
               {contentEnhancementList.filter((tool) => contentEnhancement[tool.key]).map((tool) => (
-                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
-                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* TODO: Add {tool.name} settings here */}
                   <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
                 </Box>
@@ -489,14 +823,14 @@ function App() {
                         cursor: 'pointer',
                         opacity: monitoring[tool.key] ? 1 : 0.4,
                         filter: monitoring[tool.key] ? 'none' : 'grayscale(100%)',
-                        border: monitoring[tool.key] ? '2px solid #1976d2' : '2px solid #444',
+                        border: monitoring[tool.key] ? '2px solid #07938f' : '2px solid #444',
                         borderRadius: 2,
                         p: 1,
                         background: '#181818',
                         transition: 'all 0.2s',
                         position: 'relative',
-                        boxShadow: monitoring[tool.key] ? '0 0 8px #1976d2' : 'none',
-                        '&:hover': { boxShadow: '0 0 16px #1976d2' }
+                        boxShadow: monitoring[tool.key] ? '0 0 8px #07938f' : 'none',
+                        '&:hover': { boxShadow: '0 0 16px #07938f' }
                       }}
                     >
                       <img src={tool.logo} alt={tool.name} style={{ width: 64, height: 64, display: 'block', margin: '0 auto' }} />
@@ -518,8 +852,8 @@ function App() {
               </Box>
               {/* Sub-sections for enabled monitoring tools */}
               {monitoringList.filter((tool) => monitoring[tool.key]).map((tool) => (
-                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2 }}>
-                  <Typography variant="subtitle1" style={{ color: '#90caf9', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* TODO: Add {tool.name} settings here */}
                   <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
                 </Box>
@@ -546,7 +880,18 @@ function App() {
           {activeStep === 9 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Deploy</Typography>
-              <Button onClick={handleDeploy} variant="contained">Deploy Services</Button>
+              <Button 
+                onClick={handleDeploy} 
+                variant="contained"
+                disabled={!config.mediaServer || !config.storagePath}
+              >
+                Deploy Services
+              </Button>
+              {(!config.mediaServer || !config.storagePath) && (
+                <Typography style={{ color: '#ffb300', marginTop: 8 }}>
+                  Please set both a Media Server and Storage Path before deploying.
+                </Typography>
+              )}
               <Typography style={{ color: '#fff' }}>{deployResult}</Typography>
             </Box>
           )}
