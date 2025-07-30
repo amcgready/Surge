@@ -863,11 +863,45 @@ function App() {
           {activeStep === 7 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Shared Configuration</Typography>
+              <Box mb={2}>
+                <Typography style={{ color: '#fff', marginBottom: 4 }}>Destination Directory</Typography>
+                <Box display="flex" gap={2} alignItems="center">
+                  <input
+                    type="text"
+                    name="destinationDirectory"
+                    placeholder="/mnt/downloads or /home/user/Downloads"
+                    value={config.destinationDirectory || ''}
+                    onChange={handleChange}
+                    style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                  />
+                  <Button
+                    variant="outlined"
+                    style={{ color: '#fff', borderColor: '#fff', minWidth: 120 }}
+                    onClick={async () => {
+                      if (window.showDirectoryPicker) {
+                        try {
+                          const dirHandle = await window.showDirectoryPicker();
+                          setConfig((prev) => ({ ...prev, destinationDirectory: dirHandle.name }));
+                        } catch (e) {
+                          // User cancelled or not supported
+                        }
+                      } else {
+                        alert('Directory picker is not supported in this browser. Please type the path manually.');
+                      }
+                    }}
+                  >
+                    Browse
+                  </Button>
+                </Box>
+                <Typography style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
+                  This directory will be used as the destination for all download clients.
+                </Typography>
+              </Box>
               <input name="discordWebhook" placeholder="Discord Webhook URL" value={config.discordWebhook} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
               <input name="traktApiKey" placeholder="Trakt API Key" value={config.traktApiKey} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
               <input name="timezone" placeholder="Timezone (e.g. UTC, America/New_York)" value={config.timezone} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
-              <input name="userId" placeholder="User ID" value={config.userId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
-              <input name="groupId" placeholder="Group ID" value={config.groupId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
+              <input name="userId" placeholder="User ID (default 1000)" value={config.userId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
+              <input name="groupId" placeholder="Group ID (default 1000)" value={config.groupId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
             </Box>
           )}
           {activeStep === 8 && (
