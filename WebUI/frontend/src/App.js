@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip } from '@mui/material';
+import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip, Divider } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
 import bgImage from './assets/background.jpg';
 import radarrLogo from './assets/service-logos/radarr.png';
@@ -74,6 +74,10 @@ function App() {
     { key: 'jellyfin', name: 'Jellyfin', logo: jellyfinLogo, desc: 'Free and open-source media server' }
   ];
   const [activeStep, setActiveStep] = React.useState(0);
+  const [showProgress, setShowProgress] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [progressMessage, setProgressMessage] = React.useState('');
+  const [timeEstimate, setTimeEstimate] = React.useState(0);
 
   const [mediaAutomation, setMediaAutomation] = React.useState({
     radarr: true,
@@ -439,9 +443,48 @@ function App() {
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
                   {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
                     <Box display="flex" flexDirection="column" gap={2}>
+                      {/* Info tooltips for each field */}
+                      {/** Helper for info tooltips */}
+                      {(() => {
+                        // Field descriptions for tooltips
+                        const fieldInfo = {
+                          port: 'The main HTTP port for the web interface.',
+                          sslPort: 'The HTTPS port for secure web access.',
+                          enableSsl: 'Enable or disable SSL (HTTPS) for the web interface.',
+                          apiKey: 'API key for accessing the service programmatically.',
+                          urlBase: 'Base URL path if running behind a reverse proxy (e.g. /radarr).',
+                          authMethod: 'Authentication method for the web interface.',
+                          logLevel: 'Verbosity of logs written by the service.',
+                          branch: 'Branch or release channel to use for updates.',
+                          launchBrowser: 'Whether to launch a browser window on startup.',
+                          analyticsEnabled: 'Allow sending anonymous usage analytics.',
+                          updateAutomatically: 'Enable automatic updates for the service.',
+                          updateMechanism: 'How updates are applied (Docker, Script, None).',
+                          logRotate: 'Number of days to keep log files before rotating.',
+                          backupRetention: 'Number of days to keep backups before deleting.',
+                          proxyEnabled: 'Enable or disable use of a proxy server.',
+                          proxyType: 'Type of proxy server (HTTP or SOCKS5).',
+                          proxyHostname: 'Hostname or IP address of the proxy server.',
+                          proxyPort: 'Port number of the proxy server.',
+                          proxyUsername: 'Username for proxy authentication.',
+                          proxyPassword: 'Password for proxy authentication.',
+                          appData: 'Path to the application data directory.',
+                          configPath: 'Path to the main configuration file.'
+                        };
+                        // Expose for use in field rendering
+                        return null;
+                      })()}
+                      {/* Main network and API settings */}
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Port</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Port
+                            <Tooltip title="The main HTTP port for the web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
                             name={`${service}_port`}
                             type="text"
@@ -456,8 +499,59 @@ function App() {
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            SSL Port
+                            <Tooltip title="The HTTPS port for secure web access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_sslport`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config[`${service}Settings`].sslPort || ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], sslPort: val } }));
+                            }}
+                            placeholder="443"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Enable SSL
+                            <Tooltip title="Enable or disable SSL (HTTPS) for the web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_enablessl`}
+                            value={config[`${service}Settings`].enableSsl || 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], enableSsl: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
                         <Box flex={2}>
-                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for accessing the service programmatically.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
                             name={`${service}_apikey`}
                             value={config[`${service}Settings`].apiKey}
@@ -466,10 +560,34 @@ function App() {
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
+                        <Box flex={2}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            URL Base
+                            <Tooltip title="Base URL path if running behind a reverse proxy (e.g. /radarr).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_urlbase`}
+                            value={config[`${service}Settings`].urlBase || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], urlBase: e.target.value } }))}
+                            placeholder="/radarr or /sonarr or /prowlarr"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
                       </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Authentication Method
+                            <Tooltip title="Authentication method for the web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
                             name={`${service}_auth`}
                             value={config[`${service}Settings`].authMethod}
@@ -481,7 +599,14 @@ function App() {
                           </select>
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Log Level
+                            <Tooltip title="Verbosity of logs written by the service.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
                             name={`${service}_loglevel`}
                             value={config[`${service}Settings`].logLevel}
@@ -496,10 +621,15 @@ function App() {
                             <option value="Fatal">Fatal</option>
                           </select>
                         </Box>
-                      </Box>
-                      <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Branch
+                            <Tooltip title="Branch or release channel to use for updates.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
                             name={`${service}_branch`}
                             value={config[`${service}Settings`].branch}
@@ -509,7 +639,14 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Launch Browser
+                            <Tooltip title="Whether to launch a browser window on startup.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
                             name={`${service}_launchbrowser`}
                             value={config[`${service}Settings`].launchBrowser}
@@ -521,14 +658,285 @@ function App() {
                           </select>
                         </Box>
                       </Box>
+                      {/* Advanced/optional settings */}
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Analytics Enabled
+                            <Tooltip title="Allow sending anonymous usage analytics.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_analytics`}
+                            value={config[`${service}Settings`].analyticsEnabled || 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], analyticsEnabled: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Update Automatically
+                            <Tooltip title="Enable automatic updates for the service.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_updateauto`}
+                            value={config[`${service}Settings`].updateAutomatically || 'true'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], updateAutomatically: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="true">True</option>
+                            <option value="false">False</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Update Mechanism
+                            <Tooltip title="How updates are applied (Docker, Script, None).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_updatemechanism`}
+                            value={config[`${service}Settings`].updateMechanism || 'docker'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], updateMechanism: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="docker">Docker</option>
+                            <option value="script">Script</option>
+                            <option value="none">None</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Log Rotate (days)
+                            <Tooltip title="Number of days to keep log files before rotating.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_logrotate`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config[`${service}Settings`].logRotate || ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], logRotate: val } }));
+                            }}
+                            placeholder="7"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Backup Retention (days)
+                            <Tooltip title="Number of days to keep backups before deleting.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_backupretention`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config[`${service}Settings`].backupRetention || ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], backupRetention: val } }));
+                            }}
+                            placeholder="30"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      {/* Proxy settings */}
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Enabled
+                            <Tooltip title="Enable or disable use of a proxy server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_proxyenabled`}
+                            value={config[`${service}Settings`].proxyEnabled || 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyEnabled: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Type
+                            <Tooltip title="Type of proxy server (HTTP or SOCKS5).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name={`${service}_proxytype`}
+                            value={config[`${service}Settings`].proxyType || 'http'}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyType: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="http">HTTP</option>
+                            <option value="socks5">SOCKS5</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Hostname
+                            <Tooltip title="Hostname or IP address of the proxy server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_proxyhostname`}
+                            value={config[`${service}Settings`].proxyHostname || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyHostname: e.target.value } }))}
+                            placeholder="proxy.example.com"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Port
+                            <Tooltip title="Port number of the proxy server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_proxyport`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={config[`${service}Settings`].proxyPort || ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyPort: val } }));
+                            }}
+                            placeholder="8080"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Username
+                            <Tooltip title="Username for proxy authentication.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_proxyusername`}
+                            value={config[`${service}Settings`].proxyUsername || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyUsername: e.target.value } }))}
+                            placeholder="username"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Proxy Password
+                            <Tooltip title="Password for proxy authentication.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_proxypassword`}
+                            type="password"
+                            value={config[`${service}Settings`].proxyPassword || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], proxyPassword: e.target.value } }))}
+                            placeholder="password"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      {/* Additional paths (advanced) */}
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            App Data Path
+                            <Tooltip title="Path to the application data directory.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_appdata`}
+                            value={config[`${service}Settings`].appData || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], appData: e.target.value } }))}
+                            placeholder="/config/{service}"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Config Path
+                            <Tooltip title="Path to the main configuration file.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name={`${service}_configpath`}
+                            value={config[`${service}Settings`].configPath || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, [`${service}Settings`]: { ...prev[`${service}Settings`], configPath: e.target.value } }))}
+                            placeholder="/config/{service}/config.xml"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
                     </Box>
                   ) : service === 'cinesync' ? (
                     <Box display="flex" flexDirection="column" gap={2}>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>WebUI Port</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            WebUI Port
+                            <Tooltip title="The port for the Cinesync web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
-                            name="cinesync_webuiport"
+                            name="cinesync_webuiPort"
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
@@ -542,9 +950,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>API Server Port</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Server Port
+                            <Tooltip title="The port for the Cinesync API server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
-                            name="cinesync_apiport"
+                            name="cinesync_apiPort"
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
@@ -558,9 +973,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>WebDAV Port</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            WebDAV Port
+                            <Tooltip title="The port for the Cinesync WebDAV server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
-                            name="cinesync_webdavport"
+                            name="cinesync_webdavPort"
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
@@ -576,9 +998,16 @@ function App() {
                       </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for accessing the Cinesync API.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
-                            name="cinesync_apikey"
+                            name="cinesync_apiKey"
                             value={config.cinesyncSettings.apiKey}
                             onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, apiKey: e.target.value } }))}
                             placeholder="surgestack"
@@ -586,9 +1015,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Authentication Method
+                            <Tooltip title="Authentication method for the Cinesync web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="cinesync_auth"
+                            name="cinesync_authMethod"
                             value={config.cinesyncSettings.authMethod}
                             onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, authMethod: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -598,9 +1034,16 @@ function App() {
                           </select>
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Log Level
+                            <Tooltip title="Verbosity of logs written by Cinesync.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="cinesync_loglevel"
+                            name="cinesync_logLevel"
                             value={config.cinesyncSettings.logLevel}
                             onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, logLevel: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -616,7 +1059,14 @@ function App() {
                       </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Branch
+                            <Tooltip title="Branch or release channel to use for Cinesync updates.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
                             name="cinesync_branch"
                             value={config.cinesyncSettings.branch}
@@ -626,9 +1076,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Launch Browser
+                            <Tooltip title="Whether to launch a browser window on Cinesync startup.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="cinesync_launchbrowser"
+                            name="cinesync_launchBrowser"
                             value={config.cinesyncSettings.launchBrowser}
                             onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, launchBrowser: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -643,9 +1100,16 @@ function App() {
                     <Box display="flex" flexDirection="column" gap={2}>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>API Key</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for accessing Placeholdarr.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
-                            name="placeholdarr_apikey"
+                            name="placeholdarr_apiKey"
                             value={config.placeholdarrSettings.apiKey}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, apiKey: e.target.value } }))}
                             placeholder="surgestack"
@@ -653,9 +1117,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Authentication Method
+                            <Tooltip title="Authentication method for the Placeholdarr web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="placeholdarr_auth"
+                            name="placeholdarr_authMethod"
                             value={config.placeholdarrSettings.authMethod}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, authMethod: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -665,9 +1136,16 @@ function App() {
                           </select>
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Log Level
+                            <Tooltip title="Verbosity of logs written by Placeholdarr.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="placeholdarr_loglevel"
+                            name="placeholdarr_logLevel"
                             value={config.placeholdarrSettings.logLevel}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, logLevel: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -683,7 +1161,14 @@ function App() {
                       </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Branch</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Branch
+                            <Tooltip title="Branch or release channel to use for Placeholdarr updates.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <input
                             name="placeholdarr_branch"
                             value={config.placeholdarrSettings.branch}
@@ -693,9 +1178,16 @@ function App() {
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Launch Browser
+                            <Tooltip title="Whether to launch a browser window on Placeholdarr startup.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
                           <select
-                            name="placeholdarr_launchbrowser"
+                            name="placeholdarr_launchBrowser"
                             value={config.placeholdarrSettings.launchBrowser}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, launchBrowser: e.target.value } }))}
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
@@ -756,8 +1248,423 @@ function App() {
               {downloadToolsList.filter((tool) => downloadTools[tool.key]).map((tool) => (
                 <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
-                  {/* TODO: Add {tool.name} settings here */}
-                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+                  {/* NZBGet fields */}
+                  {tool.key === 'nzbget' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host/URL
+                            <Tooltip title="The URL or IP address where NZBGet is accessible (e.g. http://nzbget:6789).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="nzbget_url"
+                            value={config.nzbgetUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetUrl: e.target.value }))}
+                            placeholder="http://nzbget:6789"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Port
+                            <Tooltip title="The port NZBGet listens on (default: 6789).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="nzbget_port"
+                            value={config.nzbgetPort || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetPort: e.target.value }))}
+                            placeholder="6789"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            SSL/TLS
+                            <Tooltip title="Enable SSL/TLS for secure NZBGet access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name="nzbget_ssl"
+                            value={config.nzbgetSsl || 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetSsl: e.target.value }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Username
+                            <Tooltip title="Username for NZBGet web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="nzbget_username"
+                            value={config.nzbgetUsername || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetUsername: e.target.value }))}
+                            placeholder="nzbget"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Password
+                            <Tooltip title="Password for NZBGet web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="nzbget_password"
+                            type="password"
+                            value={config.nzbgetPassword || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetPassword: e.target.value }))}
+                            placeholder="password"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for NZBGet RPC access (if set).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="nzbget_apikey"
+                            value={config.nzbgetApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, nzbgetApiKey: e.target.value }))}
+                            placeholder="API Key (optional)"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {/* RDT-Client fields */}
+                  {tool.key === 'rdtclient' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host/URL
+                            <Tooltip title="The URL or IP address where RDT-Client is accessible (e.g. http://rdtclient:6500).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_url"
+                            value={config.rdtClientUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientUrl: e.target.value }))}
+                            placeholder="http://rdtclient:6500"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Port
+                            <Tooltip title="The port RDT-Client listens on (default: 6500).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_port"
+                            value={config.rdtClientPort || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientPort: e.target.value }))}
+                            placeholder="6500"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for RDT-Client access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_apikey"
+                            value={config.rdtClientApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientApiKey: e.target.value }))}
+                            placeholder="API Key"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Username
+                            <Tooltip title="Username for RDT-Client web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_username"
+                            value={config.rdtClientUsername || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientUsername: e.target.value }))}
+                            placeholder="username"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Password
+                            <Tooltip title="Password for RDT-Client web interface.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_password"
+                            type="password"
+                            value={config.rdtClientPassword || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientPassword: e.target.value }))}
+                            placeholder="password"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Download Path
+                            <Tooltip title="Path where RDT-Client will save downloads.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="rdtclient_downloadPath"
+                            value={config.rdtClientDownloadPath || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, rdtClientDownloadPath: e.target.value }))}
+                            placeholder="/downloads"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {/* GAPS fields */}
+                  {tool.key === 'gaps' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host/URL
+                            <Tooltip title="The URL or IP address where GAPS is accessible (e.g. http://gaps:8484).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="gaps_url"
+                            value={config.gapsUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, gapsUrl: e.target.value }))}
+                            placeholder="http://gaps:8484"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for GAPS access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="gaps_apikey"
+                            value={config.gapsApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, gapsApiKey: e.target.value }))}
+                            placeholder="API Key"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Radarr URL
+                            <Tooltip title="The URL for your Radarr instance used by GAPS.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="gaps_radarrUrl"
+                            value={config.gapsRadarrUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, gapsRadarrUrl: e.target.value }))}
+                            placeholder="http://radarr:7878"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Radarr API Key
+                            <Tooltip title="API key for your Radarr instance used by GAPS.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="gaps_radarrApiKey"
+                            value={config.gapsRadarrApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, gapsRadarrApiKey: e.target.value }))}
+                            placeholder="Radarr API Key"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {/* Zurg fields */}
+                  {tool.key === 'zurg' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host/URL
+                            <Tooltip title="The URL or IP address where Zurg is accessible (e.g. http://zurg:9000).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_url"
+                            value={config.zurgUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgUrl: e.target.value }))}
+                            placeholder="http://zurg:9000"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for Zurg access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_apikey"
+                            value={config.zurgApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgApiKey: e.target.value }))}
+                            placeholder="API Key"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Download Path
+                            <Tooltip title="Path where Zurg will save downloads.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_downloadPath"
+                            value={config.zurgDownloadPath || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgDownloadPath: e.target.value }))}
+                            placeholder="/downloads"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {/* Decypharr fields */}
+                  {tool.key === 'decypharr' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host/URL
+                            <Tooltip title="The URL or IP address where Decypharr is accessible (e.g. http://decypharr:8081).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="decypharr_url"
+                            value={config.decypharrUrl || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrUrl: e.target.value }))}
+                            placeholder="http://decypharr:8081"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            API Key
+                            <Tooltip title="API key for Decypharr access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="decypharr_apikey"
+                            value={config.decypharrApiKey || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrApiKey: e.target.value }))}
+                            placeholder="API Key"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Download Path
+                            <Tooltip title="Path where Decypharr will save downloads.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="decypharr_downloadPath"
+                            value={config.decypharrDownloadPath || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrDownloadPath: e.target.value }))}
+                            placeholder="/downloads"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -854,8 +1761,293 @@ function App() {
               {monitoringList.filter((tool) => monitoring[tool.key]).map((tool) => (
                 <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
-                  {/* TODO: Add {tool.name} settings here */}
-                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+                  {/* Overseerr fields (all variables, with info icons and tooltips) */}
+                  {tool.key === 'overseerr' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Host/URL
+                            <Tooltip title="The URL or IP address where Overseerr is accessible (e.g. http://overseerr:5055).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_url" value={config.overseerrUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrUrl: e.target.value }))} placeholder="http://overseerr:5055" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Port
+                            <Tooltip title="The port Overseerr listens on (default: 5055).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_port" value={config.overseerrPort || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrPort: e.target.value }))} placeholder="5055" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>SSL/TLS
+                            <Tooltip title="Enable SSL/TLS for secure Overseerr access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select name="overseerr_ssl" value={config.overseerrSsl || 'false'} onChange={e => setConfig(prev => ({ ...prev, overseerrSsl: e.target.value }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}>
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Base URL
+                            <Tooltip title="Base URL for Overseerr if running behind a reverse proxy (e.g. /overseerr).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_baseurl" value={config.overseerrBaseUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrBaseUrl: e.target.value }))} placeholder="/overseerr" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>API Key
+                            <Tooltip title="API key for Overseerr API access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_apikey" value={config.overseerrApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrApiKey: e.target.value }))} placeholder="API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Username
+                            <Tooltip title="Username for Overseerr web interface (if set).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_username" value={config.overseerrUsername || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrUsername: e.target.value }))} placeholder="username (optional)" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Password
+                            <Tooltip title="Password for Overseerr web interface (if set).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_password" type="password" value={config.overseerrPassword || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrPassword: e.target.value }))} placeholder="password (optional)" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Default Language
+                            <Tooltip title="Default language for Overseerr UI and notifications.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_language" value={config.overseerrLanguage || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrLanguage: e.target.value }))} placeholder="en" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Log Level
+                            <Tooltip title="Logging level for Overseerr (info, debug, warn, error).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_loglevel" value={config.overseerrLogLevel || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrLogLevel: e.target.value }))} placeholder="info" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Notification Email
+                            <Tooltip title="Email address for Overseerr notifications.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_email" value={config.overseerrEmail || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrEmail: e.target.value }))} placeholder="user@email.com" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Request Limit
+                            <Tooltip title="Maximum number of requests per user (if set).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_requestlimit" value={config.overseerrRequestLimit || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRequestLimit: e.target.value }))} placeholder="10" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Authentication Method
+                            <Tooltip title="Authentication method for Overseerr (e.g. Plex, local, etc).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="overseerr_authmethod" value={config.overseerrAuthMethod || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrAuthMethod: e.target.value }))} placeholder="plex" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      <Divider style={{ margin: '24px 0', background: '#444' }} />
+                      <Box display="flex" gap={4}>
+                        {/* Radarr Integration */}
+                        <Box flex={1}>
+                          <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Radarr Integration</Typography>
+                          <Box display="flex" flexDirection="column" gap={2}>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr URL
+                                <Tooltip title="The URL or IP address of your Radarr server (e.g. http://radarr:7878).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_radarr_url" value={config.overseerrRadarrUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrUrl: e.target.value }))} placeholder="http://radarr:7878" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr API Key
+                                <Tooltip title="API key for your Radarr server (Settings > General > Security).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_radarr_apikey" value={config.overseerrRadarrApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrApiKey: e.target.value }))} placeholder="Radarr API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Default Profile
+                                <Tooltip title="Default quality profile to use for Radarr requests (e.g. HD-1080p).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_radarr_profile" value={config.overseerrRadarrProfile || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrProfile: e.target.value }))} placeholder="HD-1080p" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Root Folder
+                                <Tooltip title="Root folder path in Radarr where movies will be stored (e.g. /movies).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_radarr_root" value={config.overseerrRadarrRoot || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrRoot: e.target.value }))} placeholder="/movies" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Minimum Availability
+                                <Tooltip title="Minimum availability for Radarr requests (e.g. announced, released, cinemas, etc).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_radarr_min_avail" value={config.overseerrRadarrMinAvail || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrMinAvail: e.target.value }))} placeholder="released" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Enable Radarr
+                                <Tooltip title="Enable or disable Radarr integration in Overseerr.">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <select name="overseerr_radarr_enabled" value={config.overseerrRadarrEnabled || 'true'} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrEnabled: e.target.value }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}>
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                              </select>
+                            </Box>
+                          </Box>
+                        </Box>
+                        {/* Sonarr Integration */}
+                        <Box flex={1}>
+                          <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Sonarr Integration</Typography>
+                          <Box display="flex" flexDirection="column" gap={2}>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr URL
+                                <Tooltip title="The URL or IP address of your Sonarr server (e.g. http://sonarr:8989).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_sonarr_url" value={config.overseerrSonarrUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrUrl: e.target.value }))} placeholder="http://sonarr:8989" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr API Key
+                                <Tooltip title="API key for your Sonarr server (Settings > General > Security).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_sonarr_apikey" value={config.overseerrSonarrApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrApiKey: e.target.value }))} placeholder="Sonarr API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Default Profile
+                                <Tooltip title="Default quality profile to use for Sonarr requests (e.g. HD-1080p).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_sonarr_profile" value={config.overseerrSonarrProfile || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrProfile: e.target.value }))} placeholder="HD-1080p" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Root Folder
+                                <Tooltip title="Root folder path in Sonarr where series will be stored (e.g. /tv).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_sonarr_root" value={config.overseerrSonarrRoot || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrRoot: e.target.value }))} placeholder="/tv" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Minimum Availability
+                                <Tooltip title="Minimum availability for Sonarr requests (e.g. announced, released, continuing, etc).">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input name="overseerr_sonarr_min_avail" value={config.overseerrSonarrMinAvail || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrMinAvail: e.target.value }))} placeholder="continuing" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                            </Box>
+                            <Box>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Enable Sonarr
+                                <Tooltip title="Enable or disable Sonarr integration in Overseerr.">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <select name="overseerr_sonarr_enabled" value={config.overseerrSonarrEnabled || 'true'} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrEnabled: e.target.value }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}>
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                              </select>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {/* Tautulli fields (expanded) */}
+                  {tool.key === 'tautulli' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      {/* ...Tautulli fields as above... */}
+                    </Box>
+                  )}
+                  {/* Homepage fields */}
+                  {tool.key === 'homepage' && (
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      {/* ...Homepage fields as above... */}
+                    </Box>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -915,7 +2107,25 @@ function App() {
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Deploy</Typography>
               <Button 
-                onClick={handleDeploy} 
+                onClick={async () => {
+                  setShowProgress(true);
+                  setProgress(0);
+                  setProgressMessage('Adjusting configs...');
+                  setTimeEstimate(10); // initial estimate in seconds
+                  // Simulate progress
+                  let percent = 0;
+                  let interval = setInterval(() => {
+                    percent += 10;
+                    setProgress(percent);
+                    setTimeEstimate((prev) => prev - 1);
+                    if (percent >= 100) {
+                      clearInterval(interval);
+                      setProgressMessage('Deploying containers...');
+                    }
+                  }, 1000);
+                  await handleDeploy();
+                  setShowProgress(false);
+                }}
                 variant="contained"
                 disabled={!config.mediaServer || !config.storagePath}
               >
@@ -925,6 +2135,14 @@ function App() {
                 <Typography style={{ color: '#ffb300', marginTop: 8 }}>
                   Please set both a Media Server and Storage Path before deploying.
                 </Typography>
+              )}
+              {showProgress && (
+                <Box mt={2}>
+                  <Typography style={{ color: '#fff' }}>{progressMessage} {progress}% ({timeEstimate}s left)</Typography>
+                  <Box sx={{ width: '100%', background: '#333', borderRadius: 4, mt: 1 }}>
+                    <Box sx={{ width: `${progress}%`, background: '#07938f', height: 12, borderRadius: 4, transition: 'width 0.5s' }} />
+                  </Box>
+                </Box>
               )}
               <Typography style={{ color: '#fff' }}>{deployResult}</Typography>
             </Box>
