@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip, Divider } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
@@ -31,6 +32,8 @@ const steps = [
 ];
 
 function App() {
+  // State for Zurg advanced config toggle
+  const [showZurgAdvanced, setShowZurgAdvanced] = React.useState(false);
   const [showNoMediaServerDialog, setShowNoMediaServerDialog] = React.useState(false);
   // Monitoring & Interface toggles
   const monitoringList = [
@@ -124,37 +127,142 @@ function App() {
     // Media Automation - Radarr settings
     radarrSettings: {
       port: 7878,
+      sslPort: '',
+      enableSsl: 'false',
+      urlBase: '',
       apiKey: 'surgestack',
+      rootFolderPath: '/data/movies',
+      movieProfileId: '',
+      minimumAvailability: 'released',
       authMethod: 'Basic',
       logLevel: 'Info',
       branch: 'master',
       launchBrowser: 'false',
+      analyticsEnabled: 'false',
+      updateAutomatically: 'true',
+      updateMechanism: 'docker',
+      logRotate: '',
+      backupRetention: '',
+      proxyEnabled: 'false',
+      proxyType: 'http',
+      proxyHostname: '',
+      proxyPort: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      appData: '',
+      configPath: '',
+      puid: '',
+      pgid: '',
+      umask: '',
+      tz: '',
     },
     // Media Automation - Sonarr settings
     sonarrSettings: {
       port: 8989,
+      sslPort: '',
+      enableSsl: 'false',
+      urlBase: '',
+      instanceName: '',
       apiKey: 'surgestack',
+      rootFolderPath: '/data/tv',
+      seriesProfileId: '',
+      minimumAvailability: 'released',
+      namingFormat: '',
+      seasonFolderFormat: '',
+      multiEpisodeStyle: '',
+      createEmptyFolders: 'true',
+      deleteEmptyFolders: 'true',
+      useHardLinks: 'true',
+      importExtraFiles: 'true',
+      unmonitorDeleted: 'true',
+      downloadPropers: 'prefer',
+      analyseVideo: 'true',
+      rescanAfterRefresh: 'always',
+      changeFileDate: 'none',
+      recyclingBinPath: '',
+      recyclingBinRetention: '',
+      setPermissions: 'false',
+      chmodFolder: '',
+      chownGroup: '',
       authMethod: 'Basic',
       logLevel: 'Info',
       branch: 'master',
+      analyticsEnabled: 'false',
+      updateAutomatically: 'true',
+      updateMechanism: 'docker',
+      appData: '',
+      configPath: '',
+      backupFolder: '',
+      backupInterval: '',
+      backupRetention: '',
+      proxyEnabled: 'false',
+      proxyType: 'http',
+      proxyHostname: '',
+      proxyPort: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      ignoredAddresses: '',
+      bypassProxyLocal: 'true',
+      logRotate: '',
+      puid: '',
+      pgid: '',
+      umask: '',
+      tz: '',
       launchBrowser: 'false',
     },
     // Media Automation - Prowlarr settings
     prowlarrSettings: {
       port: 9696,
+      sslPort: '',
+      enableSsl: 'false',
+      urlBase: '',
+      instanceName: '',
       apiKey: 'surgestack',
+      appData: '',
+      configPath: '',
       authMethod: 'Basic',
+      certificateValidation: 'enabled',
       logLevel: 'Info',
+      logRotate: '',
       branch: 'master',
+      analyticsEnabled: 'false',
+      updateAutomatically: 'true',
+      updateMechanism: 'docker',
+      updateScript: '',
+      backupFolder: '',
+      backupInterval: '',
+      backupRetention: '',
+      proxyEnabled: 'false',
+      proxyType: 'http',
+      proxyHostname: '',
+      proxyPort: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      ignoredAddresses: '',
+      bypassProxyLocal: 'true',
+      puid: '',
+      pgid: '',
+      umask: '',
+      tz: '',
+      tags: '',
       launchBrowser: 'false',
     },
     // Media Automation - Bazarr settings
     bazarrSettings: {
       port: 6767,
+      sslPort: '',
+      enableSsl: 'false',
+      urlBase: '',
       apiKey: 'surgestack',
       authMethod: 'Basic',
       logLevel: 'Info',
       branch: 'master',
+      appData: '',
+      configPath: '',
+      puid: '',
+      pgid: '',
+      umask: '',
+      tz: '',
       launchBrowser: 'false',
     },
     // Media Automation - CineSync settings
@@ -167,9 +275,88 @@ function App() {
       logLevel: 'Info',
       branch: 'master',
       launchBrowser: 'false',
+      sourceDir: '',
+      destinationDir: '',
+      useSourceStructure: false,
+      cinesyncLayout: true,
+      animeSeparation: true,
+      fourKSeparation: true,
+      kidsSeparation: false,
+      customShowFolder: '',
+      custom4kShowFolder: '',
+      customAnimeShowFolder: '',
+      customMovieFolder: '',
+      custom4kMovieFolder: '',
+      customAnimeMovieFolder: '',
+      customKidsMovieFolder: '',
+      customKidsShowFolder: '',
+      showResolutionStructure: false,
+      movieResolutionStructure: false,
+      logLevelApp: 'INFO',
+      rcloneMount: false,
+      mountCheckInterval: 30,
+      tmdbApiKey: '',
+      language: 'English',
+      animeScan: false,
+      tmdbFolderId: false,
+      imdbFolderId: false,
+      tvdbFolderId: false,
+      renameEnabled: false,
+      mediaInfoParser: false,
+      renameTags: '',
+      mediaInfoTags: '',
+      movieCollectionEnabled: false,
+      relativeSymlink: false,
+      maxCores: 1,
+      maxProcesses: 15,
+      skipExtrasFolder: true,
+      junkMaxSizeMb: 5,
+      allowedExtensions: '.mp4,.mkv,.srt,.avi,.mov,.divx,.strm',
+      skipAdultPatterns: true,
+      sleepTime: 60,
+      symlinkCleanupInterval: 600,
+      enablePlexUpdate: false,
+      plexUrl: '',
+      plexToken: '',
+      cinesyncIp: '0.0.0.0',
+      cinesyncAuthEnabled: true,
+      cinesyncUsername: 'admin',
+      cinesyncPassword: 'admin',
+      mediahubAutoStart: true,
+      rtmAutoStart: false,
+      fileOperationsAutoMode: true,
+      dbThrottleRate: 100,
+      dbMaxRetries: 10,
+      dbRetryDelay: 1.0,
+      dbBatchSize: 1000,
+      dbMaxWorkers: 20,
     },
     // Media Automation - Placeholdarr settings
     placeholdarrSettings: {
+      plexUrl: '',
+      plexToken: '',
+      radarrUrl: '',
+      radarrApiKey: '',
+      sonarrUrl: '',
+      sonarrApiKey: '',
+      movieLibraryFolder: '',
+      tvLibraryFolder: '',
+      dummyFilePath: '',
+      placeholderStrategy: 'hardlink',
+      tvPlayMode: 'episode',
+      titleUpdates: 'OFF',
+      includeSpecials: false,
+      episodesLookahead: 0,
+      maxMonitorTime: 0,
+      checkInterval: 0,
+      availableCleanupDelay: 0,
+      calendarLookaheadDays: 0,
+      calendarSyncIntervalHours: 0,
+      enableComingSoonPlaceholders: false,
+      preferredMovieDateType: 'inCinemas',
+      enableComingSoonCountdown: false,
+      calendarPlaceholderMode: 'episode',
+      comingSoonDummyFilePath: '',
       apiKey: 'surgestack',
       authMethod: 'Basic',
       logLevel: 'Info',
@@ -179,6 +366,35 @@ function App() {
     // Download Clients & Tools
     nzbgetUrl: '', nzbgetApiKey: '',
     rdtClientUrl: '', rdtClientApiKey: '',
+    // Zurg (common fields)
+    zurgUrl: '',
+    zurgApiKey: '',
+    zurgDownloadPath: '',
+    zurgToken: '',
+    zurgHost: '',
+    zurgPort: '',
+    zurgUsername: '',
+    zurgPassword: '',
+    // Zurg (advanced fields)
+    zurgProxy: '',
+    zurgConcurrentWorkers: '',
+    zurgCheckForChangesEverySecs: '',
+    zurgRepairEveryMins: '',
+    zurgIgnoreRenames: '',
+    zurgRetainRdTorrentName: '',
+    zurgRetainFolderNameExtension: '',
+    zurgEnableRepair: '',
+    zurgAutoDeleteRarTorrents: '',
+    zurgApiTimeoutSecs: '',
+    zurgDownloadTimeoutSecs: '',
+    zurgEnableDownloadMount: '',
+    zurgRateLimitSleepSecs: '',
+    zurgRetriesUntilFailed: '',
+    zurgNetworkBufferSize: '',
+    zurgServeFromRclone: '',
+    zurgVerifyDownloadLink: '',
+    zurgForceIpv6: '',
+    zurgOnLibraryUpdate: '',
     // Content Enhancement
     kometaUrl: '', kometaApiKey: '',
     posterizarrUrl: '', posterizarrApiKey: '',
@@ -212,13 +428,6 @@ function App() {
 
   const handleNext = () => setActiveStep((prev) => prev + 1);
   // Custom next handler for media server step
-  const handleNextMediaServer = () => {
-    if (!config.mediaServer) {
-      setShowNoMediaServerDialog(true);
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
-  };
   const handleBack = () => setActiveStep((prev) => prev - 1);
 
   const handleChange = (e) => {
@@ -288,42 +497,32 @@ function App() {
         minHeight: '100vh',
         width: '100vw',
         position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'block',
+        padding: 0,
+        margin: 0,
         zIndex: 1
       }}>
-        <Container maxWidth="md" style={{ minWidth: 600, background: 'rgba(17,17,17,0.92)', borderRadius: 12, boxShadow: '0 0 24px #000', paddingBottom: 32 }}>
-        <Box sx={{ my: 4 }}>
+        <Container style={{ width: '100%', background: 'rgba(17,17,17,0.92)', borderRadius: 12, boxShadow: '0 0 24px #000', padding: 0 }}>
+        <Box>
         <SurgeLogo />
         <Typography variant="h4" align="center" gutterBottom style={{ color: '#fff' }}>
           Surge Setup
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label, idx) => {
-            // Only allow jumping if both mediaServer and storagePath are set, or if on welcome/core/storage steps
-            const canJump =
-              idx === 0 ||
-              (idx === 1) ||
-              (idx === 2) ||
-              (config.mediaServer && config.storagePath);
-            return (
-              <Step key={label}>
-                <StepLabel
-                  sx={{
-                    '& .MuiStepLabel-label': { color: '#fff !important' },
-                    '& .MuiStepIcon-root': { color: canJump ? '#07938f' : '#444', cursor: canJump ? 'pointer' : 'not-allowed' }
-                  }}
-                  onClick={() => {
-                    if (canJump) setActiveStep(idx);
-                  }}
-                  style={{ cursor: canJump ? 'pointer' : 'not-allowed' }}
-                >
-                  {label}
-                </StepLabel>
-              </Step>
-            );
-          })}
+          {steps.map((label, idx) => (
+            <Step key={label}>
+              <StepLabel
+                sx={{
+                  '& .MuiStepLabel-label': { color: '#fff !important' },
+                  '& .MuiStepIcon-root': { color: '#07938f', cursor: 'pointer' }
+                }}
+                onClick={() => setActiveStep(idx)}
+                style={{ cursor: 'pointer' }}
+              >
+                {label}
+              </StepLabel>
+            </Step>
+          ))}
         </Stepper>
         <Box sx={{ my: 4 }}>
           {activeStep === 0 && (
@@ -402,6 +601,9 @@ function App() {
                   Browse
                 </Button>
               </Box>
+              <Typography style={{ color: '#fff', background: '#232323', fontSize: 14, marginTop: 12, padding: 12, borderRadius: 4 }}>
+                The storage path you set here will be treated as the main directory for your Surge stack. All service data, configuration, and volumes will be stored under this directory, just like in the setup script.
+              </Typography>
               <Typography style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
                 You can type a path or use the Browse button (if supported by your browser).
               </Typography>
@@ -451,7 +653,7 @@ function App() {
                 <Box key={service} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
                   {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
-                    <Box display="flex" flexDirection="column" gap={2}>
+                    <Box display="flex" flexDirection="column" gap={3}>
                       {/* Info tooltips for each field */}
                       {/** Helper for info tooltips */}
                       {(() => {
@@ -478,7 +680,14 @@ function App() {
                           proxyUsername: 'Username for proxy authentication.',
                           proxyPassword: 'Password for proxy authentication.',
                           appData: 'Path to the application data directory.',
-                          configPath: 'Path to the main configuration file.'
+                          configPath: 'Path to the main configuration file.',
+                          rootFolderPath: 'Path where Radarr stores downloaded movies.',
+                          movieProfileId: 'Default quality profile ID for new movies.',
+                          minimumAvailability: 'Minimum availability required before grabbing a movie.',
+                          puid: 'Process user ID (for Docker/UNIX).',
+                          pgid: 'Process group ID (for Docker/UNIX).',
+                          umask: 'Umask for file permissions (for Docker/UNIX).',
+                          tz: 'Timezone (for Docker/UNIX).'
                         };
                         // Expose for use in field rendering
                         return null;
@@ -586,6 +795,65 @@ function App() {
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
+                        {service === 'radarr' && (
+                          <>
+                            <Box flex={2}>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                Root Folder Path
+                                <Tooltip title="Path where Radarr stores downloaded movies.">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input
+                                name="radarr_rootFolderPath"
+                                value={config.radarrSettings.rootFolderPath}
+                                onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, rootFolderPath: e.target.value } }))}
+                                placeholder="/data/movies"
+                                style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                              />
+                            </Box>
+                            <Box flex={2}>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                Quality Profile ID
+                                <Tooltip title="Default quality profile ID for new movies.">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <input
+                                name="radarr_movieProfileId"
+                                value={config.radarrSettings.movieProfileId}
+                                onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, movieProfileId: e.target.value } }))}
+                                placeholder="1 (HD-1080p, etc)"
+                                style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                              />
+                            </Box>
+                            <Box flex={2}>
+                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                Minimum Availability
+                                <Tooltip title="Minimum availability required before grabbing a movie.">
+                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                  </span>
+                                </Tooltip>
+                              </Typography>
+                              <select
+                                name="radarr_minimumAvailability"
+                                value={config.radarrSettings.minimumAvailability}
+                                onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, minimumAvailability: e.target.value } }))}
+                                style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                              >
+                                <option value="released">Released</option>
+                                <option value="cinemas">In Cinemas</option>
+                                <option value="announced">Announced</option>
+                                <option value="tba">TBA</option>
+                              </select>
+                            </Box>
+                          </>
+                        )}
                       </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
@@ -1107,33 +1375,297 @@ function App() {
                     </Box>
                   ) : service === 'placeholdarr' ? (
                     <Box display="flex" flexDirection="column" gap={2}>
+                      {/* First row: Plex, Radarr, Sonarr URLs and API keys */}
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            API Key
-                            <Tooltip title="API key for accessing Placeholdarr.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
+                          <Typography style={{ color: '#fff' }}>Plex URL</Typography>
+                          <input
+                            name="placeholdarr_plexUrl"
+                            value={config.placeholdarrSettings.plexUrl}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, plexUrl: e.target.value } }))}
+                            placeholder="http://plex:32400"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Plex Token</Typography>
+                          <input
+                            name="placeholdarr_plexToken"
+                            value={config.placeholdarrSettings.plexToken}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, plexToken: e.target.value } }))}
+                            placeholder=""
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Radarr URL</Typography>
+                          <input
+                            name="placeholdarr_radarrUrl"
+                            value={config.placeholdarrSettings.radarrUrl}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, radarrUrl: e.target.value } }))}
+                            placeholder="http://radarr:7878"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Radarr API Key</Typography>
+                          <input
+                            name="placeholdarr_radarrApiKey"
+                            value={config.placeholdarrSettings.radarrApiKey}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, radarrApiKey: e.target.value } }))}
+                            placeholder=""
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Sonarr URL</Typography>
+                          <input
+                            name="placeholdarr_sonarrUrl"
+                            value={config.placeholdarrSettings.sonarrUrl}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, sonarrUrl: e.target.value } }))}
+                            placeholder="http://sonarr:8989"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Sonarr API Key</Typography>
+                          <input
+                            name="placeholdarr_sonarrApiKey"
+                            value={config.placeholdarrSettings.sonarrApiKey}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, sonarrApiKey: e.target.value } }))}
+                            placeholder=""
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Movie Library Folder</Typography>
+                          <input
+                            name="placeholdarr_movieLibraryFolder"
+                            value={config.placeholdarrSettings.movieLibraryFolder}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, movieLibraryFolder: e.target.value } }))}
+                            placeholder="/data/media/movies"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>TV Library Folder</Typography>
+                          <input
+                            name="placeholdarr_tvLibraryFolder"
+                            value={config.placeholdarrSettings.tvLibraryFolder}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, tvLibraryFolder: e.target.value } }))}
+                            placeholder="/data/media/tv"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Dummy File Path</Typography>
+                          <input
+                            name="placeholdarr_dummyFilePath"
+                            value={config.placeholdarrSettings.dummyFilePath}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, dummyFilePath: e.target.value } }))}
+                            placeholder="/data/media/placeholder.mkv"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Placeholder Strategy</Typography>
+                          <select
+                            name="placeholdarr_placeholderStrategy"
+                            value={config.placeholdarrSettings.placeholderStrategy}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, placeholderStrategy: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="hardlink">hardlink</option>
+                            <option value="copy">copy</option>
+                            <option value="symlink">symlink</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>TV Play Mode</Typography>
+                          <select
+                            name="placeholdarr_tvPlayMode"
+                            value={config.placeholdarrSettings.tvPlayMode}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, tvPlayMode: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="episode">episode</option>
+                            <option value="season">season</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Title Updates</Typography>
+                          <select
+                            name="placeholdarr_titleUpdates"
+                            value={config.placeholdarrSettings.titleUpdates}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, titleUpdates: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Include Specials</Typography>
+                          <select
+                            name="placeholdarr_includeSpecials"
+                            value={config.placeholdarrSettings.includeSpecials ? 'true' : 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, includeSpecials: e.target.value === 'true' } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Episodes Lookahead</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_episodesLookahead"
+                            value={config.placeholdarrSettings.episodesLookahead}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, episodesLookahead: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Max Monitor Time</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_maxMonitorTime"
+                            value={config.placeholdarrSettings.maxMonitorTime}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, maxMonitorTime: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Check Interval</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_checkInterval"
+                            value={config.placeholdarrSettings.checkInterval}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, checkInterval: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Available Cleanup Delay</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_availableCleanupDelay"
+                            value={config.placeholdarrSettings.availableCleanupDelay}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, availableCleanupDelay: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Calendar Lookahead Days</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_calendarLookaheadDays"
+                            value={config.placeholdarrSettings.calendarLookaheadDays}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, calendarLookaheadDays: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Calendar Sync Interval (Hours)</Typography>
+                          <input
+                            type="number"
+                            name="placeholdarr_calendarSyncIntervalHours"
+                            value={config.placeholdarrSettings.calendarSyncIntervalHours}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, calendarSyncIntervalHours: Number(e.target.value) } }))}
+                            placeholder="0"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Enable Coming Soon Placeholders</Typography>
+                          <select
+                            name="placeholdarr_enableComingSoonPlaceholders"
+                            value={config.placeholdarrSettings.enableComingSoonPlaceholders ? 'true' : 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, enableComingSoonPlaceholders: e.target.value === 'true' } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Preferred Movie Date Type</Typography>
+                          <select
+                            name="placeholdarr_preferredMovieDateType"
+                            value={config.placeholdarrSettings.preferredMovieDateType}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, preferredMovieDateType: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="inCinemas">inCinemas</option>
+                            <option value="physicalRelease">physicalRelease</option>
+                            <option value="digitalRelease">digitalRelease</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Enable Coming Soon Countdown</Typography>
+                          <select
+                            name="placeholdarr_enableComingSoonCountdown"
+                            value={config.placeholdarrSettings.enableComingSoonCountdown ? 'true' : 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, enableComingSoonCountdown: e.target.value === 'true' } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Calendar Placeholder Mode</Typography>
+                          <select
+                            name="placeholdarr_calendarPlaceholderMode"
+                            value={config.placeholdarrSettings.calendarPlaceholderMode}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, calendarPlaceholderMode: e.target.value } }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="episode">episode</option>
+                            <option value="season">season</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>Coming Soon Dummy File Path</Typography>
+                          <input
+                            name="placeholdarr_comingSoonDummyFilePath"
+                            value={config.placeholdarrSettings.comingSoonDummyFilePath}
+                            onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, comingSoonDummyFilePath: e.target.value } }))}
+                            placeholder="/data/media/comingsoon.mkv"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                        </Box>
+                      </Box>
+                      {/* Legacy/advanced fields */}
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff' }}>API Key</Typography>
                           <input
                             name="placeholdarr_apiKey"
                             value={config.placeholdarrSettings.apiKey}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, apiKey: e.target.value } }))}
                             placeholder="surgestack"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Authentication Method
-                            <Tooltip title="Authentication method for the Placeholdarr web interface.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
+                          <Typography style={{ color: '#fff' }}>Authentication Method</Typography>
                           <select
                             name="placeholdarr_authMethod"
                             value={config.placeholdarrSettings.authMethod}
@@ -1145,14 +1677,7 @@ function App() {
                           </select>
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Log Level
-                            <Tooltip title="Verbosity of logs written by Placeholdarr.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
+                          <Typography style={{ color: '#fff' }}>Log Level</Typography>
                           <select
                             name="placeholdarr_logLevel"
                             value={config.placeholdarrSettings.logLevel}
@@ -1167,34 +1692,18 @@ function App() {
                             <option value="Fatal">Fatal</option>
                           </select>
                         </Box>
-                      </Box>
-                      <Box display="flex" gap={2}>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Branch
-                            <Tooltip title="Branch or release channel to use for Placeholdarr updates.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
+                          <Typography style={{ color: '#fff' }}>Branch</Typography>
                           <input
                             name="placeholdarr_branch"
                             value={config.placeholdarrSettings.branch}
                             onChange={e => setConfig(prev => ({ ...prev, placeholdarrSettings: { ...prev.placeholdarrSettings, branch: e.target.value } }))}
                             placeholder="master"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
                           />
                         </Box>
                         <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Launch Browser
-                            <Tooltip title="Whether to launch a browser window on Placeholdarr startup.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
+                          <Typography style={{ color: '#fff' }}>Launch Browser</Typography>
                           <select
                             name="placeholdarr_launchBrowser"
                             value={config.placeholdarrSettings.launchBrowser}
@@ -1255,7 +1764,7 @@ function App() {
               </Box>
               {/* Sub-sections for enabled download tools */}
               {downloadToolsList.filter((tool) => downloadTools[tool.key]).map((tool) => (
-                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 0, mb: 2, mt: 2, border: '2px solid #07938f' }}>
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* NZBGet fields */}
                   {tool.key === 'nzbget' && (
@@ -1581,18 +2090,18 @@ function App() {
                         </Box>
                         <Box flex={1}>
                           <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            API Key
-                            <Tooltip title="API key for Zurg access.">
+                            Token
+                            <Tooltip title="Your Real-Debrid token for Zurg (required).">
                               <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                               </span>
                             </Tooltip>
                           </Typography>
                           <input
-                            name="zurg_apikey"
-                            value={config.zurgApiKey || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, zurgApiKey: e.target.value }))}
-                            placeholder="API Key"
+                            name="zurg_token"
+                            value={config.zurgToken || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgToken: e.target.value }))}
+                            placeholder="Real-Debrid Token"
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
@@ -1613,6 +2122,144 @@ function App() {
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Host
+                            <Tooltip title="Bind address for Zurg (default: [::]).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_host"
+                            value={config.zurgHost || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgHost: e.target.value }))}
+                            placeholder="[::]"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Port
+                            <Tooltip title="Port for Zurg web server (default: 9999).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_port"
+                            value={config.zurgPort || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgPort: e.target.value }))}
+                            placeholder="9999"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Username
+                            <Tooltip title="Optional HTTP username for Zurg UI.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_username"
+                            value={config.zurgUsername || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgUsername: e.target.value }))}
+                            placeholder="Username"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Password
+                            <Tooltip title="Optional HTTP password for Zurg UI.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="zurg_password"
+                            value={config.zurgPassword || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, zurgPassword: e.target.value }))}
+                            placeholder="Password"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      {/* Advanced Config Toggle */}
+                      <Box mt={2}>
+                        <Button
+                          variant="outlined"
+                          style={{ color: '#fff', borderColor: '#07938f', marginBottom: 8 }}
+                          onClick={() => setShowZurgAdvanced(prev => !prev)}
+                        >
+                          {showZurgAdvanced ? 'Hide Advanced Config' : 'Show Advanced Config'}
+                        </Button>
+                        {showZurgAdvanced && (
+                          <Box display="flex" flexDirection="column" gap={2} sx={{ background: '#232323', borderRadius: 2, p: 2, border: '1px solid #07938f' }}>
+                            <Box display="flex" gap={2}>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Proxy
+                                  <Tooltip title="Proxy settings (YAML or string, advanced).">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="zurg_proxy"
+                                  value={config.zurgProxy || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, zurgProxy: e.target.value }))}
+                                  placeholder="Proxy config (advanced)"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Concurrent Workers
+                                  <Tooltip title="Number of concurrent workers (advanced).">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="zurg_concurrentWorkers"
+                                  value={config.zurgConcurrentWorkers || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, zurgConcurrentWorkers: e.target.value }))}
+                                  placeholder="20"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Check for Changes (secs)
+                                  <Tooltip title="How often to check for changes (seconds, advanced).">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="zurg_checkForChangesEverySecs"
+                                  value={config.zurgCheckForChangesEverySecs || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, zurgCheckForChangesEverySecs: e.target.value }))}
+                                  placeholder="10"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                            </Box>
+                            {/* Add more advanced fields as needed, following the same pattern */}
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   )}
@@ -1772,8 +2419,8 @@ function App() {
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* Overseerr fields (all variables, with info icons and tooltips) */}
                   {tool.key === 'overseerr' && (
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Box display="flex" gap={2}>
+                    <Box>
+                      <Box display="grid" gridTemplateColumns="1fr" gap={2}>
                         <Box flex={1}>
                           <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Host/URL
                             <Tooltip title="The URL or IP address where Overseerr is accessible (e.g. http://overseerr:5055).">
@@ -1900,146 +2547,7 @@ function App() {
                             </Tooltip>
                           </Typography>
                           <input name="overseerr_authmethod" value={config.overseerrAuthMethod || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrAuthMethod: e.target.value }))} placeholder="plex" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                      <Divider style={{ margin: '24px 0', background: '#444' }} />
-                      <Box display="flex" gap={0} style={{ margin: 0, padding: 0, width: '100%' }}>
-                        {/* Radarr Integration */}
-                        <Box flex={1} style={{ margin: 0, padding: 0 }}>
-                          <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Radarr Integration</Typography>
-                          <Box display="flex" flexDirection="column" gap={2}>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr URL
-                                <Tooltip title="The URL or IP address of your Radarr server (e.g. http://radarr:7878).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_radarr_url" value={config.overseerrRadarrUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrUrl: e.target.value }))} placeholder="http://radarr:7878" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr API Key
-                                <Tooltip title="API key for your Radarr server (Settings > General > Security).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_radarr_apikey" value={config.overseerrRadarrApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrApiKey: e.target.value }))} placeholder="Radarr API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Default Profile
-                                <Tooltip title="Default quality profile to use for Radarr requests (e.g. HD-1080p).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_radarr_profile" value={config.overseerrRadarrProfile || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrProfile: e.target.value }))} placeholder="HD-1080p" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Root Folder
-                                <Tooltip title="Root folder path in Radarr where movies will be stored (e.g. /movies).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_radarr_root" value={config.overseerrRadarrRoot || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrRoot: e.target.value }))} placeholder="/movies" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Radarr Minimum Availability
-                                <Tooltip title="Minimum availability for Radarr requests (e.g. announced, released, cinemas, etc).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_radarr_min_avail" value={config.overseerrRadarrMinAvail || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrMinAvail: e.target.value }))} placeholder="released" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Enable Radarr
-                                <Tooltip title="Enable or disable Radarr integration in Overseerr.">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <select name="overseerr_radarr_enabled" value={config.overseerrRadarrEnabled || 'true'} onChange={e => setConfig(prev => ({ ...prev, overseerrRadarrEnabled: e.target.value }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}>
-                                <option value="true">True</option>
-                                <option value="false">False</option>
-                              </select>
-                            </Box>
-                          </Box>
-                        </Box>
-                        {/* Sonarr Integration */}
-                        <Box flex={1} style={{ margin: 0, padding: 0 }}>
-                          <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Sonarr Integration</Typography>
-                          <Box display="flex" flexDirection="column" gap={2}>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr URL
-                                <Tooltip title="The URL or IP address of your Sonarr server (e.g. http://sonarr:8989).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_sonarr_url" value={config.overseerrSonarrUrl || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrUrl: e.target.value }))} placeholder="http://sonarr:8989" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr API Key
-                                <Tooltip title="API key for your Sonarr server (Settings > General > Security).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_sonarr_apikey" value={config.overseerrSonarrApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrApiKey: e.target.value }))} placeholder="Sonarr API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Default Profile
-                                <Tooltip title="Default quality profile to use for Sonarr requests (e.g. HD-1080p).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_sonarr_profile" value={config.overseerrSonarrProfile || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrProfile: e.target.value }))} placeholder="HD-1080p" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Root Folder
-                                <Tooltip title="Root folder path in Sonarr where series will be stored (e.g. /tv).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_sonarr_root" value={config.overseerrSonarrRoot || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrRoot: e.target.value }))} placeholder="/tv" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Sonarr Minimum Availability
-                                <Tooltip title="Minimum availability for Sonarr requests (e.g. announced, released, continuing, etc).">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <input name="overseerr_sonarr_min_avail" value={config.overseerrSonarrMinAvail || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrMinAvail: e.target.value }))} placeholder="continuing" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
-                            </Box>
-                            <Box>
-                              <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Enable Sonarr
-                                <Tooltip title="Enable or disable Sonarr integration in Overseerr.">
-                                  <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                              <select name="overseerr_sonarr_enabled" value={config.overseerrSonarrEnabled || 'true'} onChange={e => setConfig(prev => ({ ...prev, overseerrSonarrEnabled: e.target.value }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}>
-                                <option value="true">True</option>
-                                <option value="false">False</option>
-                              </select>
-                            </Box>
-                          </Box>
-                        </Box>
+                    <Box width="100%" display="grid" gridTemplateColumns="repeat(auto-fit, minmax(320px, 1fr))" gap={0} style={{ marginTop: 0 }}>
                       </Box>
                         </Box>
                       </Box>
@@ -2048,12 +2556,108 @@ function App() {
                   {/* Tautulli fields (expanded) */}
                   {tool.key === 'tautulli' && (
                     <Box display="flex" flexDirection="column" gap={2}>
-                      {/* ...Tautulli fields as above... */}
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Host/URL
+                            <Tooltip title="The URL or IP address where Tautulli is accessible (e.g. http://tautulli:8181).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_url" value={config.tautulliUrl || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliUrl: e.target.value }))} placeholder="http://tautulli:8181" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Port
+                            <Tooltip title="The port Tautulli listens on (default: 8181).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_port" value={config.tautulliPort || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliPort: e.target.value }))} placeholder="8181" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>PUID
+                            <Tooltip title="User ID for running the Tautulli container (for Docker).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_puid" value={config.tautulliPuid || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliPuid: e.target.value }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>PGID
+                            <Tooltip title="Group ID for running the Tautulli container (for Docker).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_pgid" value={config.tautulliPgid || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliPgid: e.target.value }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Timezone
+                            <Tooltip title="Timezone for Tautulli (e.g. UTC, America/New_York).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_tz" value={config.tautulliTz || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliTz: e.target.value }))} placeholder="UTC" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>API Key
+                            <Tooltip title="API key for Tautulli API access.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_apikey" value={config.tautulliApiKey || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliApiKey: e.target.value }))} placeholder="API Key" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Plex URL
+                            <Tooltip title="The URL or IP address of your Plex Media Server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_plexurl" value={config.tautulliPlexUrl || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliPlexUrl: e.target.value }))} placeholder="http://plex:32400" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Plex Token
+                            <Tooltip title="Plex authentication token for Tautulli to access your server.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_plextoken" value={config.tautulliPlexToken || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliPlexToken: e.target.value }))} placeholder="Plex Token" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>Log Level
+                            <Tooltip title="Logging level for Tautulli (info, debug, warn, error).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input name="tautulli_loglevel" value={config.tautulliLogLevel || ''} onChange={e => setConfig(prev => ({ ...prev, tautulliLogLevel: e.target.value }))} placeholder="info" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                        </Box>
+                      </Box>
                     </Box>
                   )}
                   {/* Homepage fields */}
                   {tool.key === 'homepage' && (
                     <Box display="flex" flexDirection="column" gap={2}>
+                      <Typography style={{ color: '#fff', background: '#232323', padding: 12, borderRadius: 4, marginBottom: 8 }}>
+                        Homepage will automatically be configured.
+                      </Typography>
                       {/* ...Homepage fields as above... */}
                     </Box>
                   )}
@@ -2164,12 +2768,32 @@ function App() {
               (activeStep === 2 && !config.storagePath) ||
               activeStep === steps.length - 1
             }
-            onClick={activeStep === 1 ? handleNextMediaServer : handleNext}
+            onClick={() => {
+              if (activeStep === 1 && !config.mediaServer) {
+                setShowNoMediaServerDialog(true);
+              } else {
+                handleNext();
+              }
+            }}
             variant="outlined"
             style={{ color: '#fff', borderColor: '#fff' }}
           >
             Next
           </Button>
+      {/* Confirmation dialog for no media server selected */}
+      {showNoMediaServerDialog && (
+        <Box position="fixed" top={0} left={0} width="100vw" height="100vh" zIndex={2000} display="flex" alignItems="center" justifyContent="center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <Box bgcolor="#232323" p={4} borderRadius={4} boxShadow={4} minWidth={320}>
+            <Typography style={{ color: '#fff', marginBottom: 16 }}>
+              You have not selected a media server. Are you sure you want to continue?
+            </Typography>
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button onClick={() => setShowNoMediaServerDialog(false)} variant="outlined" style={{ color: '#fff', borderColor: '#fff' }}>Cancel</Button>
+              <Button onClick={() => { setShowNoMediaServerDialog(false); handleNext(); }} variant="contained" color="primary">Continue</Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
       {/* Confirmation dialog for no media server selected */}
       {showNoMediaServerDialog && (
         <Box position="fixed" top={0} left={0} width="100vw" height="100vh" zIndex={2000} display="flex" alignItems="center" justifyContent="center" style={{ background: 'rgba(0,0,0,0.7)' }}>

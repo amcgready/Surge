@@ -1,0 +1,10 @@
+html, body, #root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box !important;
+}
