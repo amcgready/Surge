@@ -92,6 +92,64 @@ def deploy_services():
         # Compose up only enabled services
         cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
         result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # If prowlarr, radarr, and/or sonarr are enabled, use the Prowlarr API to add Radarr/Sonarr as connections
+        import time
+        import requests
+        prowlarr_enabled = 'prowlarr' in enabled
+        radarr_enabled = 'radarr' in enabled
+        sonarr_enabled = 'sonarr' in enabled
+        if prowlarr_enabled and (radarr_enabled or sonarr_enabled):
+            # Wait a bit for Prowlarr to be up
+            time.sleep(5)
+            prowlarr_url = data.get('prowlarrSettings', {}).get('urlBase') or 'http://prowlarr:9696'
+            prowlarr_api_key = data.get('prowlarrSettings', {}).get('apiKey') or 'surgestack'
+            headers = {'X-Api-Key': prowlarr_api_key, 'Content-Type': 'application/json'}
+            # Add Radarr connection
+            if radarr_enabled:
+                radarr_url = data.get('radarrSettings', {}).get('urlBase') or 'http://radarr:7878'
+                radarr_api_key = data.get('radarrSettings', {}).get('apiKey') or 'surgestack'
+                radarr_payload = {
+                    'name': 'Radarr',
+                    'implementation': 'Radarr',
+                    'configContract': 'RadarrSettings',
+                    'fields': [
+                        {'name': 'apiKey', 'value': radarr_api_key},
+                        {'name': 'baseUrl', 'value': radarr_url}
+                    ],
+                    'syncLevel': 'full',
+                    'enableRss': True,
+                    'enableAutomaticSearch': True,
+                    'enableInteractiveSearch': True,
+                    'isDefault': True
+                }
+                try:
+                    requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=radarr_payload, timeout=10)
+                except Exception as e:
+                    pass
+            # Add Sonarr connection
+            if sonarr_enabled:
+                sonarr_url = data.get('sonarrSettings', {}).get('urlBase') or 'http://sonarr:8989'
+                sonarr_api_key = data.get('sonarrSettings', {}).get('apiKey') or 'surgestack'
+                sonarr_payload = {
+                    'name': 'Sonarr',
+                    'implementation': 'Sonarr',
+                    'configContract': 'SonarrSettings',
+                    'fields': [
+                        {'name': 'apiKey', 'value': sonarr_api_key},
+                        {'name': 'baseUrl', 'value': sonarr_url}
+                    ],
+                    'syncLevel': 'full',
+                    'enableRss': True,
+                    'enableAutomaticSearch': True,
+                    'enableInteractiveSearch': True,
+                    'isDefault': True
+                }
+                try:
+                    requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=sonarr_payload, timeout=10)
+                except Exception as e:
+                    pass
+
         if result.returncode == 0:
             return jsonify({'status': 'deployed', 'output': result.stdout, 'services': list(enabled)})
         else:
