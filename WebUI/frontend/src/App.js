@@ -32,10 +32,23 @@ const steps = [
 ];
 
 function App() {
-  // State for Decypharr advanced config toggle
-  const [showDecypharrAdvanced, setShowDecypharrAdvanced] = React.useState(false);
-  // State for Zurg advanced config toggle
+  // State for advanced config toggles for all services
+  const [showRadarrAdvanced, setShowRadarrAdvanced] = React.useState(false);
+  const [showSonarrAdvanced, setShowSonarrAdvanced] = React.useState(false);
+  const [showProwlarrAdvanced, setShowProwlarrAdvanced] = React.useState(false);
+  const [showBazarrAdvanced, setShowBazarrAdvanced] = React.useState(false);
+  const [showKometaAdvanced, setShowKometaAdvanced] = React.useState(false);
+  const [showPosterizarrAdvanced, setShowPosterizarrAdvanced] = React.useState(false);
+  const [showPlaceholdarrAdvanced, setShowPlaceholdarrAdvanced] = React.useState(false);
+  const [showNZBGetAdvanced, setShowNZBGetAdvanced] = React.useState(false);
+  const [showRdtClientAdvanced, setShowRdtClientAdvanced] = React.useState(false);
+  const [showGapsAdvanced, setShowGapsAdvanced] = React.useState(false);
+  const [showZileanAdvanced, setShowZileanAdvanced] = React.useState(false);
+  const [showCliDebridAdvanced, setShowCliDebridAdvanced] = React.useState(false);
+  const [showImageMaidAdvanced, setShowImageMaidAdvanced] = React.useState(false);
+  const [showCineSyncAdvanced, setShowCineSyncAdvanced] = React.useState(false);
   const [showZurgAdvanced, setShowZurgAdvanced] = React.useState(false);
+  const [showDecypharrAdvanced, setShowDecypharrAdvanced] = React.useState(false);
   const [showNoMediaServerDialog, setShowNoMediaServerDialog] = React.useState(false);
   // Monitoring & Interface toggles
   const monitoringList = [
@@ -323,6 +336,19 @@ function App() {
       dbRetryDelay: 1.0,
       dbBatchSize: 1000,
       dbMaxWorkers: 20,
+      // Backend config fields
+      origin_directory: '/mnt/mycloudpr4100/Surge/CineSync/Origin',
+      destination_directory: '/mnt/mycloudpr4100/Surge/CineSync/Destination',
+      port: 8080,
+      host: '0.0.0.0',
+      username: 'admin',
+      password: 'surge',
+      enable_ssl: false,
+      ssl_cert: '',
+      ssl_key: '',
+      webhook_url: '',
+      extra_env: {},
+      extra_args: '',
     },
     // Media Automation - Placeholdarr settings
     placeholdarrSettings: {
@@ -357,7 +383,13 @@ function App() {
       launchBrowser: 'false',
     },
     // Download Clients & Tools
-    nzbgetUrl: '', nzbgetApiKey: '',
+    nzbgetUrl: '',
+    nzbgetApiKey: '',
+    nzbgetPort: '',
+    nzbgetUsername: '',
+    nzbgetPassword: '',
+    nzbgetSsl: 'false',
+    nzbgetDestinationDirectory: '',
     rdtClientUrl: '', rdtClientApiKey: '',
     // Decypharr (common fields)
     decypharrUrl: '',
@@ -657,6 +689,110 @@ function App() {
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
                   {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
                     <Box display="flex" flexDirection="column" gap={3}>
+                        {/* Main network and API settings for each service should only appear in their respective section. */}
+                      {/* Thorough Advanced Config for Prowlarr */}
+                      {service === 'prowlarr' && (
+                        <>
+                          {/* Main network and API settings for Prowlarr */}
+                          {/* Main network and API settings for Prowlarr should only appear once at the top of the section. */}
+                          {/* Advanced Config button and section at the bottom */}
+                          <Box mt={2}>
+                          <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                          <Button
+                            variant="outlined"
+                            style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                            onClick={() => setShowProwlarrAdvanced((prev) => !prev)}
+                          >
+                            {showProwlarrAdvanced ? 'Hide' : 'Show'} Advanced Config
+                          </Button>
+                          {showProwlarrAdvanced && (
+                            <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                              <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                                Prowlarr Advanced Config
+                              </Typography>
+                              <Box display="flex" gap={2} flexWrap="wrap">
+                                {/* All backend fields for Prowlarr Advanced */}
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PUID</Typography><input name="prowlarr_PUID" value={config.prowlarrSettings.PUID || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, PUID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PGID</Typography><input name="prowlarr_PGID" value={config.prowlarrSettings.PGID || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, PGID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>TZ</Typography><input name="prowlarr_TZ" value={config.prowlarrSettings.TZ || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, TZ: e.target.value } }))} placeholder="UTC" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>UMASK</Typography><input name="prowlarr_UMASK" value={config.prowlarrSettings.UMASK || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, UMASK: e.target.value } }))} placeholder="002" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Host</Typography><input name="prowlarr_host" value={config.prowlarrSettings.host || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, host: e.target.value } }))} placeholder="0.0.0.0" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>SSL Cert</Typography><input name="prowlarr_ssl_cert" value={config.prowlarrSettings.ssl_cert || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, ssl_cert: e.target.value } }))} placeholder="" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>SSL Key</Typography><input name="prowlarr_ssl_key" value={config.prowlarrSettings.ssl_key || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, ssl_key: e.target.value } }))} placeholder="" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Env (JSON)</Typography><input name="prowlarr_extra_env" value={JSON.stringify(config.prowlarrSettings.extra_env || {})} onChange={e => {let val = {};try { val = JSON.parse(e.target.value); } catch {}setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, extra_env: val } }));}} placeholder='{"MYVAR": "value"}' style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Args</Typography><input name="prowlarr_extra_args" value={config.prowlarrSettings.extra_args || ''} onChange={e => setConfig(prev => ({ ...prev, prowlarrSettings: { ...prev.prowlarrSettings, extra_args: e.target.value } }))} placeholder="--some-flag" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              </Box>
+                            </Box>
+                          )}
+                          </Box>
+                        </>
+                      )}
+                      {/* Thorough Advanced Config for Sonarr */}
+                      {service === 'sonarr' && (
+                        <Box mt={2}>
+                          {/* Advanced Config button and section moved to bottom */}
+                          <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                          <Button
+                            variant="outlined"
+                            style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                            onClick={() => setShowSonarrAdvanced((prev) => !prev)}
+                          >
+                            {showSonarrAdvanced ? 'Hide' : 'Show'} Advanced Config
+                          </Button>
+                          {showSonarrAdvanced && (
+                            <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                              <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                                Sonarr Advanced Config
+                              </Typography>
+                              <Box display="flex" gap={2} flexWrap="wrap">
+                                {/* All backend fields for Sonarr */}
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PUID</Typography><input name="sonarr_PUID" value={config.sonarrSettings.PUID || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, PUID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PGID</Typography><input name="sonarr_PGID" value={config.sonarrSettings.PGID || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, PGID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>TZ</Typography><input name="sonarr_TZ" value={config.sonarrSettings.TZ || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, TZ: e.target.value } }))} placeholder="UTC" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>UMASK</Typography><input name="sonarr_UMASK" value={config.sonarrSettings.UMASK || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, UMASK: e.target.value } }))} placeholder="002" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Config Path</Typography><input name="sonarr_config_path" value={config.sonarrSettings.config_path || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, config_path: e.target.value } }))} placeholder="/config" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>TV Path</Typography><input name="sonarr_tv_path" value={config.sonarrSettings.tv_path || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, tv_path: e.target.value } }))} placeholder="/tv" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Downloads Path</Typography><input name="sonarr_downloads_path" value={config.sonarrSettings.downloads_path || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, downloads_path: e.target.value } }))} placeholder="/downloads" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Read Only</Typography><select name="sonarr_read_only" value={config.sonarrSettings.read_only ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, read_only: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>User Override</Typography><input name="sonarr_user_override" value={config.sonarrSettings.user_override || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, user_override: e.target.value } }))} placeholder="1000:1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Docker Secrets (JSON)</Typography><input name="sonarr_docker_secrets" value={JSON.stringify(config.sonarrSettings.docker_secrets || {})} onChange={e => {let val = {};try { val = JSON.parse(e.target.value); } catch {}setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, docker_secrets: val } }));}} placeholder='{"FILE__MYVAR": "/run/secrets/mysecretvariable"}' style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Env (JSON)</Typography><input name="sonarr_extra_env" value={JSON.stringify(config.sonarrSettings.extra_env || {})} onChange={e => {let val = {};try { val = JSON.parse(e.target.value); } catch {}setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, extra_env: val } }));}} placeholder='{"MYVAR": "value"}' style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Args</Typography><input name="sonarr_extra_args" value={config.sonarrSettings.extra_args || ''} onChange={e => setConfig(prev => ({ ...prev, sonarrSettings: { ...prev.sonarrSettings, extra_args: e.target.value } }))} placeholder="--some-flag" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                      {/* Thorough Advanced Config for Radarr */}
+                      {service === 'radarr' && (
+                        <Box mt={2}>
+                          {/* Advanced Config button and section moved to bottom */}
+                          <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                          <Button
+                            variant="outlined"
+                            style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                            onClick={() => setShowRadarrAdvanced((prev) => !prev)}
+                          >
+                            {showRadarrAdvanced ? 'Hide' : 'Show'} Advanced Config
+                          </Button>
+                          {showRadarrAdvanced && (
+                            <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                              <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                                Radarr Advanced Config
+                              </Typography>
+                              <Box display="flex" gap={2} flexWrap="wrap">
+                                {/* All backend fields for Radarr */}
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PUID</Typography><input name="radarr_PUID" value={config.radarrSettings.PUID || ''} onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, PUID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>PGID</Typography><input name="radarr_PGID" value={config.radarrSettings.PGID || ''} onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, PGID: e.target.value } }))} placeholder="1000" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>TZ</Typography><input name="radarr_TZ" value={config.radarrSettings.TZ || ''} onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, TZ: e.target.value } }))} placeholder="UTC" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>UMASK</Typography><input name="radarr_UMASK" value={config.radarrSettings.UMASK || ''} onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, UMASK: e.target.value } }))} placeholder="002" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Env (JSON)</Typography><input name="radarr_extra_env" value={JSON.stringify(config.radarrSettings.extra_env || {})} onChange={e => {let val = {};try { val = JSON.parse(e.target.value); } catch {}setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, extra_env: val } }));}} placeholder='{"MYVAR": "value"}' style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Extra Args</Typography><input name="radarr_extra_args" value={config.radarrSettings.extra_args || ''} onChange={e => setConfig(prev => ({ ...prev, radarrSettings: { ...prev.radarrSettings, extra_args: e.target.value } }))} placeholder="--some-flag" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                       {/* Info tooltips for each field */}
                       {/** Helper for info tooltips */}
                       {(() => {
@@ -1770,118 +1906,137 @@ function App() {
                 <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 0, mb: 2, mt: 2, border: '2px solid #07938f' }}>
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
                   {/* NZBGet fields */}
-                  {tool.key === 'nzbget' && (
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Box display="flex" gap={2}>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Host/URL
-                            <Tooltip title="The URL or IP address where NZBGet is accessible (e.g. http://nzbget:6789).">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <input
-                            name="nzbget_url"
-                            value={config.nzbgetUrl || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetUrl: e.target.value }))}
-                            placeholder="http://nzbget:6789"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
-                          />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Port
-                            <Tooltip title="The port NZBGet listens on (default: 6789).">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <input
-                            name="nzbget_port"
-                            value={config.nzbgetPort || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetPort: e.target.value }))}
-                            placeholder="6789"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
-                          />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            SSL/TLS
-                            <Tooltip title="Enable SSL/TLS for secure NZBGet access.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <select
-                            name="nzbget_ssl"
-                            value={config.nzbgetSsl || 'false'}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetSsl: e.target.value }))}
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
-                          >
-                            <option value="false">False</option>
-                            <option value="true">True</option>
-                          </select>
-                        </Box>
-                      </Box>
-                      <Box display="flex" gap={2}>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Username
-                            <Tooltip title="Username for NZBGet web interface.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <input
-                            name="nzbget_username"
-                            value={config.nzbgetUsername || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetUsername: e.target.value }))}
-                            placeholder="nzbget"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
-                          />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Password
-                            <Tooltip title="Password for NZBGet web interface.">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <input
-                            name="nzbget_password"
-                            type="password"
-                            value={config.nzbgetPassword || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetPassword: e.target.value }))}
-                            placeholder="password"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
-                          />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            API Key
-                            <Tooltip title="API key for NZBGet RPC access (if set).">
-                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                          <input
-                            name="nzbget_apikey"
-                            value={config.nzbgetApiKey || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, nzbgetApiKey: e.target.value }))}
-                            placeholder="API Key (optional)"
-                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
-                          />
-                        </Box>
-                      </Box>
+              {tool.key === 'nzbget' && (
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Box display="flex" gap={2}>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        Host/URL
+                        <Tooltip title="The URL or IP address where NZBGet is accessible (e.g. http://nzbget:6789).">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_url"
+                        value={config.nzbgetUrl || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetUrl: e.target.value }))}
+                        placeholder="http://nzbget:6789"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
                     </Box>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        Port
+                        <Tooltip title="The port NZBGet listens on (default: 6789).">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_port"
+                        value={config.nzbgetPort || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetPort: e.target.value }))}
+                        placeholder="6789"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        SSL/TLS
+                        <Tooltip title="Enable SSL/TLS for secure NZBGet access.">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <select
+                        name="nzbget_ssl"
+                        value={config.nzbgetSsl || 'false'}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetSsl: e.target.value }))}
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                      >
+                        <option value="false">False</option>
+                        <option value="true">True</option>
+                      </select>
+                    </Box>
+                  </Box>
+                  <Box display="flex" gap={2}>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        Username
+                        <Tooltip title="Username for NZBGet web interface.">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_username"
+                        value={config.nzbgetUsername || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetUsername: e.target.value }))}
+                        placeholder="admin"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        Password
+                        <Tooltip title="Password for NZBGet web interface.">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_password"
+                        type="password"
+                        value={config.nzbgetPassword || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetPassword: e.target.value }))}
+                        placeholder="surge"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        API Key
+                        <Tooltip title="API key for NZBGet RPC access (if set).">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_apikey"
+                        value={config.nzbgetApiKey || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetApiKey: e.target.value }))}
+                        placeholder="surgestack"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
+                    </Box>
+                  </Box>
+                  <Box display="flex" gap={2}>
+                    <Box flex={1}>
+                      <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                        Destination Directory
+                        <Tooltip title="Directory where NZBGet will save downloads.">
+                          <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          </span>
+                        </Tooltip>
+                      </Typography>
+                      <input
+                        name="nzbget_destinationDirectory"
+                        value={config.nzbgetDestinationDirectory || ''}
+                        onChange={e => setConfig(prev => ({ ...prev, nzbgetDestinationDirectory: e.target.value }))}
+                        placeholder="/mnt/mycloudpr4100/Surge/NZBGet/Downloads"
+                        style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
                   )}
                   {/* RDT-Client fields */}
                   {tool.key === 'rdtclient' && (
@@ -2533,13 +2688,247 @@ function App() {
                 ))}
               </Box>
               {/* Sub-sections for enabled content enhancement tools */}
-              {contentEnhancementList.filter((tool) => contentEnhancement[tool.key]).map((tool) => (
-                <Box key={tool.key} sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
-                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{tool.name}</Typography>
-                  {/* TODO: Add {tool.name} settings here */}
-                  <Typography style={{ color: '#bbb', fontStyle: 'italic' }}>Settings for {tool.name} will appear here.</Typography>
+              {/* Kometa */}
+              {contentEnhancement.kometa && (
+                <Box sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>Kometa</Typography>
+                  <Button variant="outlined" size="small" sx={{ mb: 2, color: '#fff', borderColor: '#07938f' }} onClick={() => setShowKometaAdvanced((v) => !v)}>
+                    {showKometaAdvanced ? 'Hide Advanced Config' : 'Show Advanced Config'}
+                  </Button>
+                  <Box display="flex" gap={2} alignItems="center">
+                    <Typography style={{ color: '#fff' }}>Kometa URL</Typography>
+                    <input
+                      name="kometaUrl"
+                      value={config.kometaUrl}
+                      onChange={handleChange}
+                      placeholder="http://kometa:8000"
+                      style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                    />
+                  </Box>
+                  <Box display="flex" gap={2} alignItems="center" mt={2}>
+                    <Typography style={{ color: '#fff' }}>Kometa API Key</Typography>
+                    <input
+                      name="kometaApiKey"
+                      value={config.kometaApiKey}
+                      onChange={handleChange}
+                      placeholder="API Key"
+                      style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                    />
+                  </Box>
+                  {showKometaAdvanced && (
+                    <Box mt={2}>
+                      <Typography style={{ color: '#fff', fontWeight: 500, marginBottom: 8 }}>Advanced Kometa Options</Typography>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Config Path</Typography>
+                        <input
+                          name="kometaSettings.CONFIG_PATH"
+                          value={config.kometaSettings?.CONFIG_PATH || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, kometaSettings: { ...prev.kometaSettings, CONFIG_PATH: e.target.value } }))}
+                          placeholder="/config/config.yml"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Log Level</Typography>
+                        <select
+                          name="kometaSettings.LOG_LEVEL"
+                          value={config.kometaSettings?.LOG_LEVEL || 'info'}
+                          onChange={e => setConfig(prev => ({ ...prev, kometaSettings: { ...prev.kometaSettings, LOG_LEVEL: e.target.value } }))}
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        >
+                          <option value="info">Info</option>
+                          <option value="debug">Debug</option>
+                          <option value="warning">Warning</option>
+                          <option value="error">Error</option>
+                        </select>
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Timezone (TZ)</Typography>
+                        <input
+                          name="kometaSettings.TZ"
+                          value={config.kometaSettings?.TZ || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, kometaSettings: { ...prev.kometaSettings, TZ: e.target.value } }))}
+                          placeholder="UTC"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Env</Typography>
+                        <input
+                          name="kometaSettings.extra_env"
+                          value={config.kometaSettings?.extra_env || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, kometaSettings: { ...prev.kometaSettings, extra_env: e.target.value } }))}
+                          placeholder="{}"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Args</Typography>
+                        <input
+                          name="kometaSettings.extra_args"
+                          value={config.kometaSettings?.extra_args || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, kometaSettings: { ...prev.kometaSettings, extra_args: e.target.value } }))}
+                          placeholder=""
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
-              ))}
+              )}
+              {/* Posterizarr */}
+              {contentEnhancement.posterizarr && (
+                <Box sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>Posterizarr</Typography>
+                  <Button variant="outlined" size="small" sx={{ mb: 2, color: '#fff', borderColor: '#07938f' }} onClick={() => setShowPosterizarrAdvanced((v) => !v)}>
+                    {showPosterizarrAdvanced ? 'Hide Advanced Config' : 'Show Advanced Config'}
+                  </Button>
+                  <Box display="flex" gap={2} alignItems="center">
+                    <Typography style={{ color: '#fff' }}>Posterizarr URL</Typography>
+                    <input
+                      name="posterizarrUrl"
+                      value={config.posterizarrUrl}
+                      onChange={handleChange}
+                      placeholder="http://posterizarr:8000"
+                      style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                    />
+                  </Box>
+                  <Box display="flex" gap={2} alignItems="center" mt={2}>
+                    <Typography style={{ color: '#fff' }}>Posterizarr API Key</Typography>
+                    <input
+                      name="posterizarrApiKey"
+                      value={config.posterizarrApiKey}
+                      onChange={handleChange}
+                      placeholder="API Key"
+                      style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                    />
+                  </Box>
+                  {showPosterizarrAdvanced && (
+                    <Box mt={2}>
+                      <Typography style={{ color: '#fff', fontWeight: 500, marginBottom: 8 }}>Advanced Posterizarr Options</Typography>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Config Path</Typography>
+                        <input
+                          name="posterizarrSettings.config_path"
+                          value={config.posterizarrSettings?.config_path || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, posterizarrSettings: { ...prev.posterizarrSettings, config_path: e.target.value } }))}
+                          placeholder="/config/config.json"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Run Time</Typography>
+                        <input
+                          name="posterizarrSettings.RUN_TIME"
+                          value={config.posterizarrSettings?.RUN_TIME || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, posterizarrSettings: { ...prev.posterizarrSettings, RUN_TIME: e.target.value } }))}
+                          placeholder="disabled"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Timezone (TZ)</Typography>
+                        <input
+                          name="posterizarrSettings.TZ"
+                          value={config.posterizarrSettings?.TZ || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, posterizarrSettings: { ...prev.posterizarrSettings, TZ: e.target.value } }))}
+                          placeholder="UTC"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      {/* Add more advanced Posterizarr options here as needed, matching backend */}
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Env</Typography>
+                        <input
+                          name="posterizarrSettings.extra_env"
+                          value={config.posterizarrSettings?.extra_env || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, posterizarrSettings: { ...prev.posterizarrSettings, extra_env: e.target.value } }))}
+                          placeholder="{}"
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Args</Typography>
+                        <input
+                          name="posterizarrSettings.extra_args"
+                          value={config.posterizarrSettings?.extra_args || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, posterizarrSettings: { ...prev.posterizarrSettings, extra_args: e.target.value } }))}
+                          placeholder=""
+                          style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              )}
+              {/* TODO: Add advanced config UI for Placeholdarr, NZBGet, RDT-Client, Gaps, Zilean, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc. */}
+              {/* Placeholdarr */}
+              {contentEnhancement.placeholdarr && (
+                <Box sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
+                  <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>Placeholdarr</Typography>
+                  <Button variant="outlined" size="small" sx={{ mb: 2, color: '#fff', borderColor: '#07938f' }} onClick={() => setShowPlaceholdarrAdvanced((v) => !v)}>
+                    {showPlaceholdarrAdvanced ? 'Hide Advanced Config' : 'Show Advanced Config'}
+                  </Button>
+                  {/* Basic fields */}
+                  <Box display="flex" gap={2} alignItems="center">
+                    <Typography style={{ color: '#fff' }}>Plex URL</Typography>
+                    <input name="placeholdarrSettings.PLEX_URL" value={config.placeholdarrSettings?.PLEX_URL || ''} onChange={handleChange} placeholder="http://plex:32400" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                  </Box>
+                  <Box display="flex" gap={2} alignItems="center" mt={2}>
+                    <Typography style={{ color: '#fff' }}>Plex Token</Typography>
+                    <input name="placeholdarrSettings.PLEX_TOKEN" value={config.placeholdarrSettings?.PLEX_TOKEN || ''} onChange={handleChange} placeholder="Token" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                  </Box>
+                  {/* Advanced fields */}
+                  {showPlaceholdarrAdvanced && (
+                    <Box mt={2}>
+                      <Typography style={{ color: '#fff', fontWeight: 500, marginBottom: 8 }}>Advanced Placeholdarr Options</Typography>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Radarr URL</Typography>
+                        <input name="placeholdarrSettings.RADARR_URL" value={config.placeholdarrSettings?.RADARR_URL || ''} onChange={handleChange} placeholder="http://radarr:7878" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Radarr API Key</Typography>
+                        <input name="placeholdarrSettings.RADARR_API_KEY" value={config.placeholdarrSettings?.RADARR_API_KEY || ''} onChange={handleChange} placeholder="API Key" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Sonarr URL</Typography>
+                        <input name="placeholdarrSettings.SONARR_URL" value={config.placeholdarrSettings?.SONARR_URL || ''} onChange={handleChange} placeholder="http://sonarr:8989" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Sonarr API Key</Typography>
+                        <input name="placeholdarrSettings.SONARR_API_KEY" value={config.placeholdarrSettings?.SONARR_API_KEY || ''} onChange={handleChange} placeholder="API Key" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Movie Library Folder</Typography>
+                        <input name="placeholdarrSettings.MOVIE_LIBRARY_FOLDER" value={config.placeholdarrSettings?.MOVIE_LIBRARY_FOLDER || ''} onChange={handleChange} placeholder="/data/movies" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>TV Library Folder</Typography>
+                        <input name="placeholdarrSettings.TV_LIBRARY_FOLDER" value={config.placeholdarrSettings?.TV_LIBRARY_FOLDER || ''} onChange={handleChange} placeholder="/data/tv" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Dummy File Path</Typography>
+                        <input name="placeholdarrSettings.DUMMY_FILE_PATH" value={config.placeholdarrSettings?.DUMMY_FILE_PATH || ''} onChange={handleChange} placeholder="/data/dummy.mp4" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      {/* ...repeat for all documented Placeholdarr options... */}
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Placeholder Strategy</Typography>
+                        <input name="placeholdarrSettings.PLACEHOLDER_STRATEGY" value={config.placeholdarrSettings?.PLACEHOLDER_STRATEGY || ''} onChange={handleChange} placeholder="hardlink" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      {/* ...repeat for all other Placeholdarr advanced options, matching backend... */}
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Env</Typography>
+                        <input name="placeholdarrSettings.extra_env" value={config.placeholdarrSettings?.extra_env || ''} onChange={handleChange} placeholder="{}" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                      <Box display="flex" gap={2} alignItems="center" mb={2}>
+                        <Typography style={{ color: '#fff' }}>Extra Args</Typography>
+                        <input name="placeholdarrSettings.extra_args" value={config.placeholdarrSettings?.extra_args || ''} onChange={handleChange} placeholder="" style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              )}
+              {/* Repeat similar advanced config UI for NZBGet, RDT-Client, Gaps, Zilean, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc., matching backend-documented options */}
             </Box>
           )}
           {activeStep === 6 && (

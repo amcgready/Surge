@@ -93,16 +93,29 @@ def deploy_services():
             return jsonify({'status': 'error', 'error': 'No services enabled'}), 400
 
 
-        # Zurg: set default path if not provided (already not using shared config)
-        zurg_settings = data.get('zurgSettings', {})
-        zurg_dest = zurg_settings.get('destination')
-        if not zurg_dest:
-            zurg_dest = '/mnt/Zurg'
-            if 'zurgSettings' not in data:
-                data['zurgSettings'] = {}
-            data['zurgSettings']['destination'] = zurg_dest
+        # Zurg: all documented Docker env vars and advanced options
+        zurg_defaults = {
+            'destination': '/mnt/Zurg',
+            'api_key': 'surgestack',
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 9999,
+            'username': 'admin',
+            'password': 'surge',
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'webhook_url': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'zurgSettings' not in data:
+            data['zurgSettings'] = {}
+        for k, v in zurg_defaults.items():
+            if k not in data['zurgSettings']:
+                data['zurgSettings'][k] = v
 
-        # NZBGet: ensure destination_directory is present and not using shared config
+        # NZBGet: all Docker env vars and advanced options
         nzbget_defaults = {
             'destination_directory': '/mnt/mycloudpr4100/Surge/NZBGet/Downloads',
             'api_key': 'surgestack',
@@ -110,6 +123,14 @@ def deploy_services():
             'port': 6789,
             'username': 'admin',
             'password': 'surge',
+            'control_username': 'admin',
+            'control_password': 'surge',
+            'webui_port': 6789,
+            'webui_username': 'admin',
+            'webui_password': 'surge',
+            'log_level': 'INFO',
+            'extra_env': {},
+            'extra_args': '',
         }
         if 'nzbgetSettings' not in data:
             data['nzbgetSettings'] = {}
@@ -117,7 +138,7 @@ def deploy_services():
             if k not in data['nzbgetSettings']:
                 data['nzbgetSettings'][k] = v
 
-        # CineSync: ensure all relevant settings exist
+        # CineSync: all Docker env vars and advanced options
         cinesync_defaults = {
             'origin_directory': '/mnt/mycloudpr4100/Surge/CineSync/Origin',
             'destination_directory': '/mnt/mycloudpr4100/Surge/CineSync/Destination',
@@ -139,6 +160,429 @@ def deploy_services():
         for k, v in cinesync_defaults.items():
             if k not in data['cinesyncSettings']:
                 data['cinesyncSettings'][k] = v
+
+        # --- BEGIN: All services, all documented Docker env vars and advanced config options ---
+        # Radarr
+        radarr_defaults = {
+            'urlBase': 'http://radarr:7878',
+            'apiKey': 'surgestack',
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 7878,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'PUID': 1000,
+            'PGID': 1000,
+            'TZ': 'UTC',
+            'UMASK': '002',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'radarrSettings' not in data:
+            data['radarrSettings'] = {}
+        for k, v in radarr_defaults.items():
+            if k not in data['radarrSettings']:
+                data['radarrSettings'][k] = v
+
+        # Sonarr
+        sonarr_defaults = {
+            'urlBase': 'http://sonarr:8989',
+            'apiKey': 'surgestack',
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 8989,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'PUID': 1000,
+            'PGID': 1000,
+            'TZ': 'UTC',
+            'UMASK': '002',
+            'config_path': '/config',
+            'tv_path': '/tv',
+            'downloads_path': '/downloads',
+            'read_only': False,  # Advanced
+            'user_override': '', # Advanced, e.g. '1000:1000'
+            'docker_secrets': {}, # Advanced, e.g. {'FILE__MYVAR': '/run/secrets/mysecretvariable'}
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'sonarrSettings' not in data:
+            data['sonarrSettings'] = {}
+        for k, v in sonarr_defaults.items():
+            if k not in data['sonarrSettings']:
+                data['sonarrSettings'][k] = v
+
+        # Prowlarr
+        prowlarr_defaults = {
+            'urlBase': 'http://prowlarr:9696',
+            'apiKey': 'surgestack',
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 9696,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'PUID': 1000,
+            'PGID': 1000,
+            'TZ': 'UTC',
+            'UMASK': '002',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'prowlarrSettings' not in data:
+            data['prowlarrSettings'] = {}
+        for k, v in prowlarr_defaults.items():
+            if k not in data['prowlarrSettings']:
+                data['prowlarrSettings'][k] = v
+
+        # Bazarr
+        bazarr_defaults = {
+            'urlBase': 'http://bazarr:6767',
+            'apiKey': 'surgestack',
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 6767,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'PUID': 1000,
+            'PGID': 1000,
+            'TZ': 'UTC',
+            'UMASK': '002',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'bazarrSettings' not in data:
+            data['bazarrSettings'] = {}
+        for k, v in bazarr_defaults.items():
+            if k not in data['bazarrSettings']:
+                data['bazarrSettings'][k] = v
+
+        # Placeholdarr
+        placeholdarr_defaults = {
+            'PLEX_URL': '',
+            'PLEX_TOKEN': '',
+            'RADARR_URL': '',
+            'RADARR_API_KEY': '',
+            'SONARR_URL': '',
+            'SONARR_API_KEY': '',
+            'MOVIE_LIBRARY_FOLDER': '',
+            'TV_LIBRARY_FOLDER': '',
+            'DUMMY_FILE_PATH': '/data/dummy.mp4',
+            'PLACEHOLDER_STRATEGY': 'hardlink',
+            'TV_PLAY_MODE': 'episode',
+            'TITLE_UPDATES': 'OFF',
+            'INCLUDE_SPECIALS': False,
+            'EPISODES_LOOKAHEAD': 0,
+            'MAX_MONITOR_TIME': 0,
+            'CHECK_INTERVAL': 0,
+            'AVAILABLE_CLEANUP_DELAY': 0,
+            'CALENDAR_LOOKAHEAD_DAYS': 0,
+            'CALENDAR_SYNC_INTERVAL_HOURS': 0,
+            'ENABLE_COMING_SOON_PLACEHOLDERS': False,
+            'PREFERRED_MOVIE_DATE_TYPE': 'inCinemas',
+            'ENABLE_COMING_SOON_COUNTDOWN': False,
+            'CALENDAR_PLACEHOLDER_MODE': 'episode',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'placeholdarrSettings' not in data:
+            data['placeholdarrSettings'] = {}
+        for k, v in placeholdarr_defaults.items():
+            if k not in data['placeholdarrSettings']:
+                data['placeholdarrSettings'][k] = v
+
+        # RDT-Client
+        rdtclient_defaults = {
+            'REALDEBRID_API_KEY': '',
+            'DOWNLOAD_PATH': '/data/downloads',
+            'MAPPED_PATH': '/data/downloads',
+            'BASE_PATH': '/',
+            'LOG_LEVEL': 'Info',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'rdtclientSettings' not in data:
+            data['rdtclientSettings'] = {}
+        for k, v in rdtclient_defaults.items():
+            if k not in data['rdtclientSettings']:
+                data['rdtclientSettings'][k] = v
+
+        # Zilean
+        zilean_defaults = {
+            'API_KEY': '',
+            'ZURG_URL': '',
+            'LOG_LEVEL': 'info',
+            'PORT': 8080,
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'zileanSettings' not in data:
+            data['zileanSettings'] = {}
+        for k, v in zilean_defaults.items():
+            if k not in data['zileanSettings']:
+                data['zileanSettings'][k] = v
+
+        # Gaps
+        gaps_defaults = {
+            'BASE_URL': '',
+            'PLEX_HOST': '',
+            'PLEX_PORT': 32400,
+            'PLEX_TOKEN': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'gapsSettings' not in data:
+            data['gapsSettings'] = {}
+        for k, v in gaps_defaults.items():
+            if k not in data['gapsSettings']:
+                data['gapsSettings'][k] = v
+
+        # cli-debrid
+        clidebrid_defaults = {
+            'PLEX_URL': '',
+            'DEBRID_PROVIDER': '',
+            'TRAKT_API_KEY': '',
+            'TMDB_API_KEY': '',
+            'NOTIFICATIONS_DISCORD': '',
+            'NOTIFICATIONS_EMAIL': '',
+            'NOTIFICATIONS_TELEGRAM': '',
+            'NOTIFICATIONS_NTFY': '',
+            'LOG_LEVEL': 'info',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'cliDebridSettings' not in data:
+            data['cliDebridSettings'] = {}
+        for k, v in clidebrid_defaults.items():
+            if k not in data['cliDebridSettings']:
+                data['cliDebridSettings'][k] = v
+
+        # Decypharr
+        decypharr_defaults = {
+            'urlBase': 'http://decypharr:8282',
+            'apiKey': 'surgestack',
+            'debrids': [],
+            'qbittorrent': {},
+            'use_auth': False,
+            'log_level': 'info',
+            'host': '0.0.0.0',
+            'port': 8282,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'decypharrSettings' not in data:
+            data['decypharrSettings'] = {}
+        for k, v in decypharr_defaults.items():
+            if k not in data['decypharrSettings']:
+                data['decypharrSettings'][k] = v
+
+        # Kometa
+        kometa_defaults = {
+            'urlBase': 'http://kometa:8081',
+            'apiKey': 'surgestack',
+            'CONFIG_PATH': '/config/config.yml',
+            'LOG_LEVEL': 'info',
+            'TZ': 'UTC',
+            'PUID': 1000,
+            'PGID': 1000,
+            'UMASK': '002',
+            'host': '0.0.0.0',
+            'port': 8081,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'kometaSettings' not in data:
+            data['kometaSettings'] = {}
+        for k, v in kometa_defaults.items():
+            if k not in data['kometaSettings']:
+                data['kometaSettings'][k] = v
+
+        # ImageMaid
+        imagemaid_defaults = {
+            'urlBase': 'http://imagemaid:8090',
+            'apiKey': 'surgestack',
+            'PLEX_PATH': '',
+            'MODE': 'report',
+            'SCHEDULE': '',
+            'PLEX_URL': '',
+            'PLEX_TOKEN': '',
+            'DISCORD': '',
+            'TIMEOUT': 600,
+            'SLEEP': 60,
+            'IGNORE_RUNNING': False,
+            'LOCAL_DB': False,
+            'USE_EXISTING': False,
+            'PHOTO_TRANSCODER': False,
+            'EMPTY_TRASH': False,
+            'CLEAN_BUNDLES': False,
+            'OPTIMIZE_DB': False,
+            'TRACE': False,
+            'LOG_REQUESTS': False,
+            'host': '0.0.0.0',
+            'port': 8090,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'imageMaidSettings' not in data:
+            data['imageMaidSettings'] = {}
+        for k, v in imagemaid_defaults.items():
+            if k not in data['imageMaidSettings']:
+                data['imageMaidSettings'][k] = v
+
+        # Posterizarr
+        posterizarr_defaults = {
+            'urlBase': 'http://posterizarr:8082',
+            'apiKey': 'surgestack',
+            'config_path': '/config/config.json',
+            'RUN_TIME': 'disabled',
+            'TZ': 'UTC',
+            'PUID': 1000,
+            'PGID': 1000,
+            'UMASK': '002',
+            'host': '0.0.0.0',
+            'port': 8082,
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'PosterMinHeight': 3000,
+            'BgTcMinWidth': 3840,
+            'BgTcMinHeight': 2160,
+            'tmdb_vote_sorting': 'vote_average',
+            'PreferredLanguageOrder': 'xx,en,de',
+            'ForceRunningDeletion': False,
+            'AutoUpdatePosterizarr': False,
+            'show_skipped': False,
+            'magickinstalllocation': './magick',
+            'fontAllCaps': False,
+            'AddBorder': False,
+            'AddText': False,
+            'AddTextStroke': False,
+            'strokecolor': '',
+            'strokewidth': 0,
+            'AddOverlay': False,
+            'fontcolor': '',
+            'bordercolor': '',
+            'minPointSize': 0,
+            'maxPointSize': 0,
+            'borderwidth': 0,
+            'MaxWidth': 0,
+            'MaxHeight': 0,
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'posterizarrSettings' not in data:
+            data['posterizarrSettings'] = {}
+        for k, v in posterizarr_defaults.items():
+            if k not in data['posterizarrSettings']:
+                data['posterizarrSettings'][k] = v
+
+        # Overseerr
+        overseerr_defaults = {
+            'PORT': 5055,
+            'TZ': 'UTC',
+            'LOG_LEVEL': 'info',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'overseerrSettings' not in data:
+            data['overseerrSettings'] = {}
+        for k, v in overseerr_defaults.items():
+            if k not in data['overseerrSettings']:
+                data['overseerrSettings'][k] = v
+
+        # Tautulli
+        tautulli_defaults = {
+            'TZ': 'UTC',
+            'PUID': 1000,
+            'PGID': 1000,
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'tautulliSettings' not in data:
+            data['tautulliSettings'] = {}
+        for k, v in tautulli_defaults.items():
+            if k not in data['tautulliSettings']:
+                data['tautulliSettings'][k] = v
+
+        # Homepage
+        homepage_defaults = {
+            'HOMEPAGE_ALLOWED_HOSTS': 'gethomepage.dev',
+            'PUID': 1000,
+            'PGID': 1000,
+            'TZ': 'UTC',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'homepageSettings' not in data:
+            data['homepageSettings'] = {}
+        for k, v in homepage_defaults.items():
+            if k not in data['homepageSettings']:
+                data['homepageSettings'][k] = v
+
+        # Plex
+        plex_defaults = {
+            'HOSTNAME': 'PlexServer',
+            'TZ': 'UTC',
+            'PLEX_CLAIM': '',
+            'ADVERTISE_IP': '',
+            'PLEX_UID': 1000,
+            'PLEX_GID': 1000,
+            'CHANGE_CONFIG_DIR_OWNERSHIP': True,
+            'ALLOWED_NETWORKS': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'plexSettings' not in data:
+            data['plexSettings'] = {}
+        for k, v in plex_defaults.items():
+            if k not in data['plexSettings']:
+                data['plexSettings'][k] = v
+
+        # Jellyfin
+        jellyfin_defaults = {
+            'TZ': 'UTC',
+            'JELLYFIN_PublishedServerUrl': '',
+            'JELLYFIN_LOG_DIR': '',
+            'JELLYFIN_DATA_DIR': '',
+            'JELLYFIN_CONFIG_DIR': '',
+            'JELLYFIN_CACHE_DIR': '',
+            'JELLYFIN_FFMPEG_PATH': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'jellyfinSettings' not in data:
+            data['jellyfinSettings'] = {}
+        for k, v in jellyfin_defaults.items():
+            if k not in data['jellyfinSettings']:
+                data['jellyfinSettings'][k] = v
+
+        # Emby
+        emby_defaults = {
+            'TZ': 'UTC',
+            'EMBY_DATA_DIR': '',
+            'EMBY_CONFIG_DIR': '',
+            'EMBY_CACHE_DIR': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'embySettings' not in data:
+            data['embySettings'] = {}
+        for k, v in emby_defaults.items():
+            if k not in data['embySettings']:
+                data['embySettings'][k] = v
+        # --- END: All services ---
 
         # Compose up only enabled services
         cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
