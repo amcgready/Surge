@@ -1901,9 +1901,9 @@ function App() {
                           </Typography>
                           <input name="overseerr_authmethod" value={config.overseerrAuthMethod || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrAuthMethod: e.target.value }))} placeholder="plex" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
                       <Divider style={{ margin: '24px 0', background: '#444' }} />
-                      <Box display="flex" gap={0}>
+                      <Box display="flex" gap={0} style={{ margin: 0, padding: 0, width: '100%' }}>
                         {/* Radarr Integration */}
-                        <Box flex={1}>
+                        <Box flex={1} style={{ margin: 0, padding: 0 }}>
                           <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Radarr Integration</Typography>
                           <Box display="flex" flexDirection="column" gap={2}>
                             <Box>
@@ -1972,7 +1972,7 @@ function App() {
                           </Box>
                         </Box>
                         {/* Sonarr Integration */}
-                        <Box flex={1}>
+                        <Box flex={1} style={{ margin: 0, padding: 0 }}>
                           <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Sonarr Integration</Typography>
                           <Box display="flex" flexDirection="column" gap={2}>
                             <Box>
@@ -2136,13 +2136,13 @@ function App() {
                   setShowProgress(false);
                 }}
                 variant="contained"
-                disabled={!config.mediaServer || !config.storagePath}
+                disabled={!config.storagePath}
               >
                 Deploy Services
               </Button>
-              {(!config.mediaServer || !config.storagePath) && (
+              {!config.storagePath && (
                 <Typography style={{ color: '#ffb300', marginTop: 8 }}>
-                  Please set both a Media Server and Storage Path before deploying.
+                  Please set a Storage Path before deploying.
                 </Typography>
               )}
               {showProgress && (
