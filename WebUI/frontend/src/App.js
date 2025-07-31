@@ -1892,7 +1892,7 @@ function App() {
                           </Typography>
                           <input name="overseerr_authmethod" value={config.overseerrAuthMethod || ''} onChange={e => setConfig(prev => ({ ...prev, overseerrAuthMethod: e.target.value }))} placeholder="plex" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} />
                       <Divider style={{ margin: '24px 0', background: '#444' }} />
-                      <Box display="flex" gap={4}>
+                      <Box display="flex" gap={0}>
                         {/* Radarr Integration */}
                         <Box flex={1}>
                           <Typography variant="h6" style={{ color: '#fff', marginBottom: 8 }}>Radarr Integration</Typography>
