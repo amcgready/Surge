@@ -31,6 +31,7 @@ const steps = [
 ];
 
 function App() {
+  const [showNoMediaServerDialog, setShowNoMediaServerDialog] = React.useState(false);
   // Monitoring & Interface toggles
   const monitoringList = [
     { key: 'overseerr', name: 'Overseerr', desc: 'Media request and management tool', logo: require('./assets/service-logos/overseerr.png') },
@@ -210,6 +211,14 @@ function App() {
   const [deployResult, setDeployResult] = React.useState('');
 
   const handleNext = () => setActiveStep((prev) => prev + 1);
+  // Custom next handler for media server step
+  const handleNextMediaServer = () => {
+    if (!config.mediaServer) {
+      setShowNoMediaServerDialog(true);
+    } else {
+      setActiveStep((prev) => prev + 1);
+    }
+  };
   const handleBack = () => setActiveStep((prev) => prev - 1);
 
   const handleChange = (e) => {
@@ -327,7 +336,7 @@ function App() {
                 {coreServers.map((srv) => (
                   <Tooltip key={srv.key} title={srv.desc} placement="top">
                     <Box
-                      onClick={() => setConfig((prev) => ({ ...prev, mediaServer: srv.key }))}
+                      onClick={() => setConfig((prev) => ({ ...prev, mediaServer: prev.mediaServer === srv.key ? '' : srv.key }))}
                       sx={{
                         cursor: 'pointer',
                         opacity: config.mediaServer === srv.key ? 1 : 0.4,
@@ -2152,16 +2161,29 @@ function App() {
           <Button disabled={activeStep === 0} onClick={handleBack} variant="outlined" style={{ color: '#fff', borderColor: '#fff' }}>Back</Button>
           <Button
             disabled={
-              (activeStep === 1 && !config.mediaServer) ||
               (activeStep === 2 && !config.storagePath) ||
               activeStep === steps.length - 1
             }
-            onClick={handleNext}
+            onClick={activeStep === 1 ? handleNextMediaServer : handleNext}
             variant="outlined"
             style={{ color: '#fff', borderColor: '#fff' }}
           >
             Next
           </Button>
+      {/* Confirmation dialog for no media server selected */}
+      {showNoMediaServerDialog && (
+        <Box position="fixed" top={0} left={0} width="100vw" height="100vh" zIndex={2000} display="flex" alignItems="center" justifyContent="center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <Box bgcolor="#232323" p={4} borderRadius={4} boxShadow={4} minWidth={320}>
+            <Typography style={{ color: '#fff', marginBottom: 16 }}>
+              You have not selected a media server. Are you sure you want to continue?
+            </Typography>
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button onClick={() => setShowNoMediaServerDialog(false)} variant="outlined" style={{ color: '#fff', borderColor: '#fff' }}>Cancel</Button>
+              <Button onClick={() => { setShowNoMediaServerDialog(false); setActiveStep((prev) => prev + 1); }} variant="contained" color="primary">Continue</Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
         </Box>
       </Box>
       </Container>
