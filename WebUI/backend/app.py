@@ -50,14 +50,52 @@ def test_connection():
 
 @app.route('/api/deploy_services', methods=['POST'])
 def deploy_services():
-    # Example: trigger docker compose up for main services
     import subprocess
     try:
-        result = subprocess.run(['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'], capture_output=True, text=True)
+        data = request.json or {}
+        # Map frontend toggles to docker-compose service names
+        toggle_map = {
+            'radarr': 'radarr',
+            'sonarr': 'sonarr',
+            'bazarr': 'bazarr',
+            'prowlarr': 'prowlarr',
+            'nzbget': 'nzbget',
+            'rdtclient': 'rdt-client',
+            'zurg': 'zurg',
+            'zilean': 'zilean',
+            'cliDebrid': 'cli-debrid',
+            'decypharr': 'decypharr',
+            'posterizarr': 'posterizarr',
+            'cinesync': 'cinesync',
+            'placeholdarr': 'placeholdarr',
+            'overseerr': 'overseerr',
+            'tautulli': 'tautulli',
+            'homepage': 'homepage',
+            'gaps': 'gaps',
+            'kometa': 'kometa',
+            'plex': 'plex',
+            'jellyfin': 'jellyfin',
+            'emby': 'emby',
+        }
+        # Collect enabled services from toggles in config
+        enabled = set()
+        for group in ['mediaAutomation', 'downloadTools', 'contentEnhancement', 'monitoring']:
+            toggles = data.get(group, {})
+            for key, val in toggles.items():
+                if val and key in toggle_map:
+                    enabled.add(toggle_map[key])
+        # Always include homepage if present in config
+        if 'homepage' in toggle_map:
+            enabled.add('homepage')
+        if not enabled:
+            return jsonify({'status': 'error', 'error': 'No services enabled'}), 400
+        # Compose up only enabled services
+        cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
-            return jsonify({'status': 'deployed', 'output': result.stdout})
+            return jsonify({'status': 'deployed', 'output': result.stdout, 'services': list(enabled)})
         else:
-            return jsonify({'status': 'error', 'output': result.stderr}), 500
+            return jsonify({'status': 'error', 'output': result.stderr, 'services': list(enabled)}), 500
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
