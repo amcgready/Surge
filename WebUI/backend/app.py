@@ -51,6 +51,8 @@ def test_connection():
 @app.route('/api/deploy_services', methods=['POST'])
 def deploy_services():
     import subprocess
+    import os
+    import configparser
     try:
         data = request.json or {}
         # Map frontend toggles to docker-compose service names
@@ -89,23 +91,93 @@ def deploy_services():
             enabled.add('homepage')
         if not enabled:
             return jsonify({'status': 'error', 'error': 'No services enabled'}), 400
+
+
+        # Zurg: set default path if not provided (already not using shared config)
+        zurg_settings = data.get('zurgSettings', {})
+        zurg_dest = zurg_settings.get('destination')
+        if not zurg_dest:
+            zurg_dest = '/mnt/Zurg'
+            if 'zurgSettings' not in data:
+                data['zurgSettings'] = {}
+            data['zurgSettings']['destination'] = zurg_dest
+
+        # NZBGet: ensure destination_directory is present and not using shared config
+        nzbget_defaults = {
+            'destination_directory': '/mnt/mycloudpr4100/Surge/NZBGet/Downloads',
+            'api_key': 'surgestack',
+            'host': '0.0.0.0',
+            'port': 6789,
+            'username': 'admin',
+            'password': 'surge',
+        }
+        if 'nzbgetSettings' not in data:
+            data['nzbgetSettings'] = {}
+        for k, v in nzbget_defaults.items():
+            if k not in data['nzbgetSettings']:
+                data['nzbgetSettings'][k] = v
+
+        # CineSync: ensure all relevant settings exist
+        cinesync_defaults = {
+            'origin_directory': '/mnt/mycloudpr4100/Surge/CineSync/Origin',
+            'destination_directory': '/mnt/mycloudpr4100/Surge/CineSync/Destination',
+            'api_key': 'surgestack',
+            'port': 8080,
+            'host': '0.0.0.0',
+            'log_level': 'info',
+            'username': 'admin',
+            'password': 'surge',
+            'enable_ssl': False,
+            'ssl_cert': '',
+            'ssl_key': '',
+            'webhook_url': '',
+            'extra_env': {},
+            'extra_args': '',
+        }
+        if 'cinesyncSettings' not in data:
+            data['cinesyncSettings'] = {}
+        for k, v in cinesync_defaults.items():
+            if k not in data['cinesyncSettings']:
+                data['cinesyncSettings'][k] = v
+
         # Compose up only enabled services
         cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
         result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # If bazarr is enabled, add Radarr/Sonarr to Bazarr config.ini using values from config
+        bazarr_enabled = 'bazarr' in enabled
+        radarr_enabled = 'radarr' in enabled
+        sonarr_enabled = 'sonarr' in enabled
+        bazarr_config_path = os.path.expandvars(os.path.join(os.path.dirname(__file__), '../../../config/Bazarr/config.ini'))
+        if bazarr_enabled:
+            config_ini = configparser.ConfigParser()
+            if os.path.exists(bazarr_config_path):
+                config_ini.read(bazarr_config_path)
+            if radarr_enabled:
+                config_ini['radarr'] = {
+                    'enabled': 'True',
+                    'url': data.get('radarrSettings', {}).get('urlBase', 'http://radarr:7878'),
+                    'api_key': data.get('radarrSettings', {}).get('apiKey', 'surgestack'),
+                }
+            if sonarr_enabled:
+                config_ini['sonarr'] = {
+                    'enabled': 'True',
+                    'url': data.get('sonarrSettings', {}).get('urlBase', 'http://sonarr:8989'),
+                    'api_key': data.get('sonarrSettings', {}).get('apiKey', 'surgestack'),
+                }
+            os.makedirs(os.path.dirname(bazarr_config_path), exist_ok=True)
+            with open(bazarr_config_path, 'w') as f:
+                config_ini.write(f)
 
         # If prowlarr, radarr, and/or sonarr are enabled, use the Prowlarr API to add Radarr/Sonarr as connections
         import time
         import requests
         prowlarr_enabled = 'prowlarr' in enabled
-        radarr_enabled = 'radarr' in enabled
-        sonarr_enabled = 'sonarr' in enabled
         if prowlarr_enabled and (radarr_enabled or sonarr_enabled):
-            # Wait a bit for Prowlarr to be up
             time.sleep(5)
             prowlarr_url = data.get('prowlarrSettings', {}).get('urlBase') or 'http://prowlarr:9696'
             prowlarr_api_key = data.get('prowlarrSettings', {}).get('apiKey') or 'surgestack'
             headers = {'X-Api-Key': prowlarr_api_key, 'Content-Type': 'application/json'}
-            # Add Radarr connection
             if radarr_enabled:
                 radarr_url = data.get('radarrSettings', {}).get('urlBase') or 'http://radarr:7878'
                 radarr_api_key = data.get('radarrSettings', {}).get('apiKey') or 'surgestack'
@@ -127,7 +199,6 @@ def deploy_services():
                     requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=radarr_payload, timeout=10)
                 except Exception as e:
                     pass
-            # Add Sonarr connection
             if sonarr_enabled:
                 sonarr_url = data.get('sonarrSettings', {}).get('urlBase') or 'http://sonarr:8989'
                 sonarr_api_key = data.get('sonarrSettings', {}).get('apiKey') or 'surgestack'
