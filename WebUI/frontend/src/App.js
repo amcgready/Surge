@@ -32,6 +32,8 @@ const steps = [
 ];
 
 function App() {
+  // State for Decypharr advanced config toggle
+  const [showDecypharrAdvanced, setShowDecypharrAdvanced] = React.useState(false);
   // State for Zurg advanced config toggle
   const [showZurgAdvanced, setShowZurgAdvanced] = React.useState(false);
   const [showNoMediaServerDialog, setShowNoMediaServerDialog] = React.useState(false);
@@ -151,10 +153,8 @@ function App() {
       proxyPassword: '',
       appData: '',
       configPath: '',
-      puid: '',
-      pgid: '',
-      umask: '',
-      tz: '',
+      // removed puid/pgid, now in shared config
+      // removed umask/tz, now in shared config
     },
     // Media Automation - Sonarr settings
     sonarrSettings: {
@@ -204,10 +204,8 @@ function App() {
       ignoredAddresses: '',
       bypassProxyLocal: 'true',
       logRotate: '',
-      puid: '',
-      pgid: '',
-      umask: '',
-      tz: '',
+      // removed puid/pgid, now in shared config
+      // removed umask/tz, now in shared config
       launchBrowser: 'false',
     },
     // Media Automation - Prowlarr settings
@@ -240,10 +238,8 @@ function App() {
       proxyPassword: '',
       ignoredAddresses: '',
       bypassProxyLocal: 'true',
-      puid: '',
-      pgid: '',
-      umask: '',
-      tz: '',
+      // removed puid/pgid, now in shared config
+      // removed umask/tz, now in shared config
       tags: '',
       launchBrowser: 'false',
     },
@@ -259,10 +255,8 @@ function App() {
       branch: 'master',
       appData: '',
       configPath: '',
-      puid: '',
-      pgid: '',
-      umask: '',
-      tz: '',
+      // removed puid/pgid, now in shared config
+      // removed umask/tz, now in shared config
       launchBrowser: 'false',
     },
     // Media Automation - CineSync settings
@@ -276,7 +270,6 @@ function App() {
       branch: 'master',
       launchBrowser: 'false',
       sourceDir: '',
-      destinationDir: '',
       useSourceStructure: false,
       cinesyncLayout: true,
       animeSeparation: true,
@@ -366,35 +359,38 @@ function App() {
     // Download Clients & Tools
     nzbgetUrl: '', nzbgetApiKey: '',
     rdtClientUrl: '', rdtClientApiKey: '',
-    // Zurg (common fields)
-    zurgUrl: '',
-    zurgApiKey: '',
-    zurgDownloadPath: '',
-    zurgToken: '',
-    zurgHost: '',
-    zurgPort: '',
-    zurgUsername: '',
-    zurgPassword: '',
-    // Zurg (advanced fields)
-    zurgProxy: '',
-    zurgConcurrentWorkers: '',
-    zurgCheckForChangesEverySecs: '',
-    zurgRepairEveryMins: '',
-    zurgIgnoreRenames: '',
-    zurgRetainRdTorrentName: '',
-    zurgRetainFolderNameExtension: '',
-    zurgEnableRepair: '',
-    zurgAutoDeleteRarTorrents: '',
-    zurgApiTimeoutSecs: '',
-    zurgDownloadTimeoutSecs: '',
-    zurgEnableDownloadMount: '',
-    zurgRateLimitSleepSecs: '',
-    zurgRetriesUntilFailed: '',
-    zurgNetworkBufferSize: '',
-    zurgServeFromRclone: '',
-    zurgVerifyDownloadLink: '',
-    zurgForceIpv6: '',
-    zurgOnLibraryUpdate: '',
+    // Decypharr (common fields)
+    decypharrUrl: '',
+    decypharrApiKey: '',
+    decypharrDownloadFolder: '',
+    decypharrCategories: '',
+    decypharrUseAuth: false,
+    decypharrPort: 8282,
+    decypharrLogLevel: 'info',
+    // Decypharr (advanced fields)
+    decypharrMinFileSize: '',
+    decypharrMaxFileSize: '',
+    decypharrAllowedFileTypes: '',
+    decypharrRateLimit: '',
+    decypharrDownloadUncached: false,
+    decypharrCheckCached: false,
+    decypharrUseWebdav: false,
+    decypharrProxy: '',
+    decypharrTorrentsRefreshInterval: '',
+    decypharrDownloadLinksRefreshInterval: '',
+    decypharrWorkers: '',
+    decypharrServeFromRclone: false,
+    decypharrAddSamples: false,
+    decypharrFolderNaming: '',
+    decypharrAutoExpireLinksAfter: '',
+    decypharrRcUrl: '',
+    decypharrRcUser: '',
+    decypharrRcPass: '',
+    decypharrRcRefreshDirs: '',
+    decypharrDirectories: '',
+    decypharrRefreshInterval: '',
+    decypharrMaxDownloads: '',
+    decypharrSkipPreCache: false,
     // Content Enhancement
     kometaUrl: '', kometaApiKey: '',
     posterizarrUrl: '', posterizarrApiKey: '',
@@ -402,7 +398,14 @@ function App() {
     overseerrUrl: '', overseerrApiKey: '',
     tautulliUrl: '', tautulliApiKey: '',
     // Shared Configuration
-    discordWebhook: '', traktApiKey: '', timezone: '', userId: '', groupId: ''
+    destinationDir: '',
+    discordWebhook: '',
+    traktApiKey: '',
+    timezone: '',
+    userId: '',
+    groupId: '',
+    umask: '',
+    tz: ''
   });
 
   // Autodetect URLs and API keys (example: fetch from backend or localStorage)
@@ -2270,7 +2273,7 @@ function App() {
                         <Box flex={1}>
                           <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
                             Host/URL
-                            <Tooltip title="The URL or IP address where Decypharr is accessible (e.g. http://decypharr:8081).">
+                            <Tooltip title="The URL or IP address where Decypharr is accessible (e.g. http://decypharr:8282).">
                               <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                               </span>
@@ -2280,7 +2283,7 @@ function App() {
                             name="decypharr_url"
                             value={config.decypharrUrl || ''}
                             onChange={e => setConfig(prev => ({ ...prev, decypharrUrl: e.target.value }))}
-                            placeholder="http://decypharr:8081"
+                            placeholder="http://decypharr:8282"
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
@@ -2303,21 +2306,186 @@ function App() {
                         </Box>
                         <Box flex={1}>
                           <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                            Download Path
-                            <Tooltip title="Path where Decypharr will save downloads.">
+                            Download Folder
+                            <Tooltip title="Folder where Decypharr will place downloads or symlinks.">
                               <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                               </span>
                             </Tooltip>
                           </Typography>
                           <input
-                            name="decypharr_downloadPath"
-                            value={config.decypharrDownloadPath || ''}
-                            onChange={e => setConfig(prev => ({ ...prev, decypharrDownloadPath: e.target.value }))}
-                            placeholder="/downloads"
+                            name="decypharr_downloadFolder"
+                            value={config.decypharrDownloadFolder || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrDownloadFolder: e.target.value }))}
+                            placeholder="/mnt/symlinks/"
                             style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                           />
                         </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Categories
+                            <Tooltip title="Categories for Arr integration (comma separated, e.g. sonarr,radarr)">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="decypharr_categories"
+                            value={config.decypharrCategories || ''}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrCategories: e.target.value }))}
+                            placeholder="sonarr,radarr"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box display="flex" gap={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Use Auth
+                            <Tooltip title="Enable authentication for Decypharr UI.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name="decypharr_useAuth"
+                            value={config.decypharrUseAuth ? 'true' : 'false'}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrUseAuth: e.target.value === 'true' }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="false">False</option>
+                            <option value="true">True</option>
+                          </select>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Port
+                            <Tooltip title="Port for Decypharr web server (default: 8282).">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <input
+                            name="decypharr_port"
+                            type="number"
+                            value={config.decypharrPort || 8282}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrPort: Number(e.target.value) }))}
+                            placeholder="8282"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                          />
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                            Log Level
+                            <Tooltip title="Verbosity of logs written by Decypharr.">
+                              <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              </span>
+                            </Tooltip>
+                          </Typography>
+                          <select
+                            name="decypharr_logLevel"
+                            value={config.decypharrLogLevel || 'info'}
+                            onChange={e => setConfig(prev => ({ ...prev, decypharrLogLevel: e.target.value }))}
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          >
+                            <option value="debug">Debug</option>
+                            <option value="info">Info</option>
+                            <option value="warn">Warn</option>
+                            <option value="error">Error</option>
+                            <option value="trace">Trace</option>
+                          </select>
+                        </Box>
+                      </Box>
+                      {/* Advanced Config Toggle */}
+                      <Box mt={2}>
+                        <Button
+                          variant="outlined"
+                          style={{ color: '#fff', borderColor: '#07938f', marginBottom: 8 }}
+                          onClick={() => setShowDecypharrAdvanced(prev => !prev)}
+                        >
+                          {showDecypharrAdvanced ? 'Hide Advanced Config' : 'Show Advanced Config'}
+                        </Button>
+                        {showDecypharrAdvanced && (
+                          <Box display="flex" flexDirection="column" gap={2} sx={{ background: '#232323', borderRadius: 2, p: 2, border: '1px solid #07938f' }}>
+                            <Box display="flex" gap={2}>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Discord Webhook URL
+                                  <Tooltip title="Webhook for Discord notifications.">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="decypharr_discordWebhookUrl"
+                                  value={config.decypharrDiscordWebhookUrl || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, decypharrDiscordWebhookUrl: e.target.value }))}
+                                  placeholder="https://discord.com/api/webhooks/..."
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Min File Size (bytes)
+                                  <Tooltip title="Minimum file size to process (bytes).">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="decypharr_minFileSize"
+                                  type="number"
+                                  value={config.decypharrMinFileSize || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, decypharrMinFileSize: e.target.value }))}
+                                  placeholder="0"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Max File Size (bytes)
+                                  <Tooltip title="Maximum file size to process (bytes).">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="decypharr_maxFileSize"
+                                  type="number"
+                                  value={config.decypharrMaxFileSize || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, decypharrMaxFileSize: e.target.value }))}
+                                  placeholder="0"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                              <Box flex={1}>
+                                <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                                  Allowed File Types
+                                  <Tooltip title="Allowed file extensions (comma separated, e.g. mp4,mkv,avi)">
+                                    <span style={{ marginLeft: 4, cursor: 'pointer', color: '#79eaff' }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                                <input
+                                  name="decypharr_allowedFileTypes"
+                                  value={config.decypharrAllowedFileTypes || ''}
+                                  onChange={e => setConfig(prev => ({ ...prev, decypharrAllowedFileTypes: e.target.value }))}
+                                  placeholder="mp4,mkv,avi"
+                                  style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
+                                />
+                              </Box>
+                            </Box>
+                            {/* Add more advanced fields as needed, following the same pattern */}
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   )}
@@ -2704,7 +2872,23 @@ function App() {
               </Box>
               <input name="discordWebhook" placeholder="Discord Webhook URL" value={config.discordWebhook} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
               <input name="traktApiKey" placeholder="Trakt API Key" value={config.traktApiKey} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
-              <input name="timezone" placeholder="Timezone (e.g. UTC, America/New_York)" value={config.timezone} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
+              <select name="timezone" value={config.timezone} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}}>
+                <option value="">Select Timezone</option>
+                <option value="UTC">UTC</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="America/Chicago">America/Chicago</option>
+                <option value="America/Denver">America/Denver</option>
+                <option value="America/Los_Angeles">America/Los_Angeles</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="Europe/Berlin">Europe/Berlin</option>
+                <option value="Europe/Paris">Europe/Paris</option>
+                <option value="Europe/Moscow">Europe/Moscow</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+                <option value="Asia/Shanghai">Asia/Shanghai</option>
+                <option value="Asia/Kolkata">Asia/Kolkata</option>
+                <option value="Australia/Sydney">Australia/Sydney</option>
+                <option value="Pacific/Auckland">Pacific/Auckland</option>
+              </select>
               <input name="userId" placeholder="User ID (default 1000)" value={config.userId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
               <input name="groupId" placeholder="Group ID (default 1000)" value={config.groupId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
             </Box>
