@@ -266,11 +266,20 @@ function App() {
       authMethod: 'Basic',
       logLevel: 'Info',
       branch: 'master',
+      launchBrowser: 'false',
       appData: '',
       configPath: '',
-      // removed puid/pgid, now in shared config
-      // removed umask/tz, now in shared config
-      launchBrowser: 'false',
+      analyticsEnabled: 'false',
+      updateAutomatically: 'false',
+      updateMechanism: '',
+      logRotate: '',
+      backupRetention: '',
+      proxyEnabled: 'false',
+      proxyType: '',
+      proxyHostname: '',
+      proxyPort: '',
+      proxyUsername: '',
+      proxyPassword: '',
     },
     // Media Automation - CineSync settings
     cinesyncSettings: {
@@ -689,6 +698,42 @@ function App() {
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
                   {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
                     <Box display="flex" flexDirection="column" gap={3}>
+                      {/* Bazarr Advanced Config Toggle */}
+                      {service === 'bazarr' && (
+                        <Box mt={2}>
+                          <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                          <Button
+                            variant="outlined"
+                            style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                            onClick={() => setShowBazarrAdvanced((prev) => !prev)}
+                          >
+                            {showBazarrAdvanced ? 'Hide' : 'Show'} Advanced Config
+                          </Button>
+                          {showBazarrAdvanced && (
+                            <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                              <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                                Bazarr Advanced Config
+                              </Typography>
+                              <Box display="flex" gap={2} flexWrap="wrap">
+                                {/* Advanced Bazarr fields */}
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>App Data</Typography><input name="bazarr_appData" value={config.bazarrSettings.appData || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, appData: e.target.value } }))} placeholder="/appdata" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Config Path</Typography><input name="bazarr_configPath" value={config.bazarrSettings.configPath || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, configPath: e.target.value } }))} placeholder="/config" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Analytics Enabled</Typography><select name="bazarr_analyticsEnabled" value={config.bazarrSettings.analyticsEnabled || 'false'} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, analyticsEnabled: e.target.value } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Update Automatically</Typography><select name="bazarr_updateAutomatically" value={config.bazarrSettings.updateAutomatically || 'false'} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, updateAutomatically: e.target.value } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Update Mechanism</Typography><input name="bazarr_updateMechanism" value={config.bazarrSettings.updateMechanism || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, updateMechanism: e.target.value } }))} placeholder="Docker/Script/None" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Log Rotate (days)</Typography><input name="bazarr_logRotate" value={config.bazarrSettings.logRotate || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, logRotate: e.target.value } }))} placeholder="7" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Backup Retention (days)</Typography><input name="bazarr_backupRetention" value={config.bazarrSettings.backupRetention || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, backupRetention: e.target.value } }))} placeholder="30" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Enabled</Typography><select name="bazarr_proxyEnabled" value={config.bazarrSettings.proxyEnabled || 'false'} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyEnabled: e.target.value } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Type</Typography><input name="bazarr_proxyType" value={config.bazarrSettings.proxyType || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyType: e.target.value } }))} placeholder="HTTP/SOCKS5" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Hostname</Typography><input name="bazarr_proxyHostname" value={config.bazarrSettings.proxyHostname || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyHostname: e.target.value } }))} placeholder="proxy.example.com" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Port</Typography><input name="bazarr_proxyPort" value={config.bazarrSettings.proxyPort || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyPort: e.target.value } }))} placeholder="8080" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Username</Typography><input name="bazarr_proxyUsername" value={config.bazarrSettings.proxyUsername || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyUsername: e.target.value } }))} placeholder="username" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                                <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Proxy Password</Typography><input name="bazarr_proxyPassword" value={config.bazarrSettings.proxyPassword || ''} onChange={e => setConfig(prev => ({ ...prev, bazarrSettings: { ...prev.bazarrSettings, proxyPassword: e.target.value } }))} placeholder="password" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                         {/* Main network and API settings for each service should only appear in their respective section. */}
                       {/* Thorough Advanced Config for Prowlarr */}
                       {service === 'prowlarr' && (
