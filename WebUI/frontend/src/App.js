@@ -46,10 +46,12 @@ function App() {
   const [showZileanAdvanced, setShowZileanAdvanced] = React.useState(false);
   const [showCliDebridAdvanced, setShowCliDebridAdvanced] = React.useState(false);
   const [showImageMaidAdvanced, setShowImageMaidAdvanced] = React.useState(false);
-  const [showCineSyncAdvanced, setShowCineSyncAdvanced] = React.useState(false);
+  const [showCineSyncAdvanced, setShowCineSyncAdvanced] = React.useState(false); // Only used in CineSync section now
   const [showZurgAdvanced, setShowZurgAdvanced] = React.useState(false);
   const [showDecypharrAdvanced, setShowDecypharrAdvanced] = React.useState(false);
   const [showNoMediaServerDialog, setShowNoMediaServerDialog] = React.useState(false);
+  // JSON parse error state
+  const [jsonParseError, setJsonParseError] = React.useState('');
   // Monitoring & Interface toggles
   const monitoringList = [
     { key: 'overseerr', name: 'Overseerr', desc: 'Media request and management tool', logo: require('./assets/service-logos/overseerr.png') },
@@ -307,7 +309,12 @@ function App() {
       customKidsShowFolder: '',
       showResolutionStructure: false,
       movieResolutionStructure: false,
-      logLevelApp: 'INFO',
+      cinesyncIp: '0.0.0.0',
+      cinesyncAuthEnabled: true,
+      cinesyncUsername: 'admin',
+      cinesyncPassword: 'admin',
+      origin_directory: '/mnt/mycloudpr4100/Surge/CineSync/Origin',
+      destination_directory: '/mnt/mycloudpr4100/Surge/CineSync/Destination',
       rcloneMount: false,
       mountCheckInterval: 30,
       tmdbApiKey: '',
@@ -462,7 +469,14 @@ function App() {
       } catch (e) {
         // fallback: try localStorage
         const local = localStorage.getItem('surge-setup');
-        if (local) setConfig((prev) => ({ ...prev, ...JSON.parse(local) }));
+        if (local) {
+          try {
+            setConfig((prev) => ({ ...prev, ...JSON.parse(local) }));
+          } catch (err) {
+            console.error('Failed to parse localStorage surge-setup:', local, err);
+            alert('Error: Failed to parse saved setup from localStorage. Value: ' + local + '\nError: ' + err.message);
+          }
+        }
       }
     }
     fetchDefaults();
@@ -494,7 +508,15 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, api_key })
       });
-      const data = await resp.json();
+      const text = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Failed to parse JSON from /api/test_connection:', text, e);
+        setTestResult('Error: Invalid JSON response from backend. Value: ' + text + '\nError: ' + e.message);
+        return;
+      }
       setTestResult(data.status === 'success' ? 'Connection successful!' : 'Failed: ' + (data.error || data.output));
     } catch (e) {
       setTestResult('Error: ' + e.message);
@@ -513,16 +535,30 @@ function App() {
   const handleDeploy = async () => {
     setDeployResult('Deploying...');
     try {
-      const resp = await fetch('/api/deploy_services', { method: 'POST' });
-      const data = await resp.json();
+      const resp = await fetch('/api/deploy', { method: 'POST' });
+      const text = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Failed to parse JSON from /api/deploy:', text, e);
+        setDeployResult('Error: Invalid JSON response from backend. Value: ' + text + '\nError: ' + e.message);
+        return;
+      }
       setDeployResult(data.status === 'deployed' ? 'Deployment successful!' : 'Failed: ' + (data.error || data.output));
     } catch (e) {
       setDeployResult('Error: ' + e.message);
     }
-  };
+  }
 
   return (
     <>
+      {jsonParseError && (
+        <div style={{ background: '#ffdddd', color: '#900', padding: 16, margin: 16, border: '2px solid #900', borderRadius: 8, fontFamily: 'monospace', whiteSpace: 'pre-wrap', zIndex: 9999 }}>
+          <b>JSON Parse Error:</b><br />
+          {jsonParseError}
+        </div>
+      )}
       <div style={{
         minHeight: '100vh',
         minWidth: '100vw',
@@ -698,6 +734,43 @@ function App() {
                   <Typography variant="subtitle1" style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>{service.charAt(0).toUpperCase() + service.slice(1)}</Typography>
                   {service === 'radarr' || service === 'sonarr' || service === 'prowlarr' || service === 'bazarr' ? (
                     <Box display="flex" flexDirection="column" gap={3}>
+                      {/* CineSync Advanced Config Toggle */}
+                      <Box mt={2}>
+                        <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                        <Button
+                          variant="outlined"
+                          style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                          onClick={() => setShowCineSyncAdvanced((prev) => !prev)}
+                        >
+                          {showCineSyncAdvanced ? 'Hide' : 'Show'} Advanced Config
+                        </Button>
+                        {showCineSyncAdvanced && (
+                          <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                            <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                              CineSync Advanced Config
+                            </Typography>
+                            <Box display="flex" gap={2} flexWrap="wrap">
+                              {/* Advanced CineSync fields */}
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Show Folder</Typography><input name="cinesync_customShowFolder" value={config.cinesyncSettings.customShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customShowFolder: e.target.value } }))} placeholder="/shows" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom 4K Show Folder</Typography><input name="cinesync_custom4kShowFolder" value={config.cinesyncSettings.custom4kShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, custom4kShowFolder: e.target.value } }))} placeholder="/shows-4k" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Anime Show Folder</Typography><input name="cinesync_customAnimeShowFolder" value={config.cinesyncSettings.customAnimeShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customAnimeShowFolder: e.target.value } }))} placeholder="/shows-anime" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Movie Folder</Typography><input name="cinesync_customMovieFolder" value={config.cinesyncSettings.customMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customMovieFolder: e.target.value } }))} placeholder="/movies" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom 4K Movie Folder</Typography><input name="cinesync_custom4kMovieFolder" value={config.cinesyncSettings.custom4kMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, custom4kMovieFolder: e.target.value } }))} placeholder="/movies-4k" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Anime Movie Folder</Typography><input name="cinesync_customAnimeMovieFolder" value={config.cinesyncSettings.customAnimeMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customAnimeMovieFolder: e.target.value } }))} placeholder="/movies-anime" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Kids Movie Folder</Typography><input name="cinesync_customKidsMovieFolder" value={config.cinesyncSettings.customKidsMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customKidsMovieFolder: e.target.value } }))} placeholder="/movies-kids" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Kids Show Folder</Typography><input name="cinesync_customKidsShowFolder" value={config.cinesyncSettings.customKidsShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customKidsShowFolder: e.target.value } }))} placeholder="/shows-kids" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Show Resolution Structure</Typography><select name="cinesync_showResolutionStructure" value={config.cinesyncSettings.showResolutionStructure ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, showResolutionStructure: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Movie Resolution Structure</Typography><select name="cinesync_movieResolutionStructure" value={config.cinesyncSettings.movieResolutionStructure ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, movieResolutionStructure: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>CineSync IP</Typography><input name="cinesync_cinesyncIp" value={config.cinesyncSettings.cinesyncIp || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncIp: e.target.value } }))} placeholder="0.0.0.0" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Auth Enabled</Typography><select name="cinesync_cinesyncAuthEnabled" value={config.cinesyncSettings.cinesyncAuthEnabled ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncAuthEnabled: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Username</Typography><input name="cinesync_cinesyncUsername" value={config.cinesyncSettings.cinesyncUsername || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncUsername: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Password</Typography><input name="cinesync_cinesyncPassword" value={config.cinesyncSettings.cinesyncPassword || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncPassword: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
                       {/* Bazarr Advanced Config Toggle */}
                       {service === 'bazarr' && (
                         <Box mt={2}>
@@ -1386,6 +1459,43 @@ function App() {
                     </Box>
                   ) : service === 'cinesync' ? (
                     <Box display="flex" flexDirection="column" gap={2}>
+                      {/* CineSync Advanced Config Toggle */}
+                      <Box mt={2}>
+                        <Divider sx={{ my: 2, borderColor: '#07938f' }} />
+                        <Button
+                          variant="outlined"
+                          style={{ color: '#fff', borderColor: '#07938f', marginTop: 8 }}
+                          onClick={() => setShowCineSyncAdvanced((prev) => !prev)}
+                        >
+                          {showCineSyncAdvanced ? 'Hide' : 'Show'} Advanced Config
+                        </Button>
+                        {showCineSyncAdvanced && (
+                          <Box sx={{ background: '#181818', borderRadius: 2, p: 2, border: '1px solid #07938f', mt: 2 }}>
+                            <Typography variant="subtitle2" style={{ color: '#79eaff', marginBottom: 8 }}>
+                              CineSync Advanced Config
+                            </Typography>
+                            <Box display="flex" gap={2} flexWrap="wrap">
+                              {/* Advanced CineSync fields from GitHub */}
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Show Folder</Typography><input name="cinesync_customShowFolder" value={config.cinesyncSettings.customShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customShowFolder: e.target.value } }))} placeholder="/shows" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom 4K Show Folder</Typography><input name="cinesync_custom4kShowFolder" value={config.cinesyncSettings.custom4kShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, custom4kShowFolder: e.target.value } }))} placeholder="/shows-4k" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Anime Show Folder</Typography><input name="cinesync_customAnimeShowFolder" value={config.cinesyncSettings.customAnimeShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customAnimeShowFolder: e.target.value } }))} placeholder="/shows-anime" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Movie Folder</Typography><input name="cinesync_customMovieFolder" value={config.cinesyncSettings.customMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customMovieFolder: e.target.value } }))} placeholder="/movies" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom 4K Movie Folder</Typography><input name="cinesync_custom4kMovieFolder" value={config.cinesyncSettings.custom4kMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, custom4kMovieFolder: e.target.value } }))} placeholder="/movies-4k" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Anime Movie Folder</Typography><input name="cinesync_customAnimeMovieFolder" value={config.cinesyncSettings.customAnimeMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customAnimeMovieFolder: e.target.value } }))} placeholder="/movies-anime" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Kids Movie Folder</Typography><input name="cinesync_customKidsMovieFolder" value={config.cinesyncSettings.customKidsMovieFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customKidsMovieFolder: e.target.value } }))} placeholder="/movies-kids" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Custom Kids Show Folder</Typography><input name="cinesync_customKidsShowFolder" value={config.cinesyncSettings.customKidsShowFolder || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, customKidsShowFolder: e.target.value } }))} placeholder="/shows-kids" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Show Resolution Structure</Typography><select name="cinesync_showResolutionStructure" value={config.cinesyncSettings.showResolutionStructure ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, showResolutionStructure: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Movie Resolution Structure</Typography><select name="cinesync_movieResolutionStructure" value={config.cinesyncSettings.movieResolutionStructure ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, movieResolutionStructure: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>CineSync IP</Typography><input name="cinesync_cinesyncIp" value={config.cinesyncSettings.cinesyncIp || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncIp: e.target.value } }))} placeholder="0.0.0.0" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Auth Enabled</Typography><select name="cinesync_cinesyncAuthEnabled" value={config.cinesyncSettings.cinesyncAuthEnabled ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncAuthEnabled: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Username</Typography><input name="cinesync_cinesyncUsername" value={config.cinesyncSettings.cinesyncUsername || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncUsername: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Password</Typography><input name="cinesync_cinesyncPassword" value={config.cinesyncSettings.cinesyncPassword || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncPassword: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
                       <Box display="flex" gap={2}>
                         <Box flex={1}>
                           <Typography style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>

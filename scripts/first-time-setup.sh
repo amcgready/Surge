@@ -682,7 +682,7 @@ configure_homepage_widgets() {
     fi
     if [ "$ENABLE_ZILEAN" = "true" ]; then
         echo "  - name: Zilean" >> "$homepage_yaml"
-        echo "    url: http://localhost:8182" >> "$homepage_yaml"
+        echo "    url: http://localhost:8181" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_GAPS" = "true" ]; then
         echo "  - name: GAPS" >> "$homepage_yaml"
@@ -694,7 +694,7 @@ configure_homepage_widgets() {
     fi
     if [ "$ENABLE_TAUTULLI" = "true" ]; then
         echo "  - name: Tautulli" >> "$homepage_yaml"
-        echo "    url: http://localhost:8181" >> "$homepage_yaml"
+        echo "    url: http://localhost:8182" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo "  - name: Posterizarr" >> "$homepage_yaml"
@@ -904,9 +904,9 @@ configure_overseerr_media_server() {
 configure_tautulli_media_server() {
     print_info "Configuring Tautulli connection to $MEDIA_SERVER..."
     
-    wait_for_service "tautulli" "8181"
+    wait_for_service "tautulli" "8182"
     
-    print_info "Tautulli setup: http://localhost:8181/setup"
+    print_info "Tautulli setup: http://localhost:8182/setup"
     case $MEDIA_SERVER in
         plex)
             print_info "Use Plex server: http://surge-plex:32400"
@@ -971,9 +971,9 @@ SONARR_PORT=${SONARR_PORT:-8989}
 PROWLARR_PORT=9696
 BAZARR_PORT=6767
 NZBGET_PORT=6789
-ZILEAN_PORT=8182
+ZILEAN_PORT=8181
 DECYPHARR_PORT=8282
-TAUTULLI_PORT=8181
+TAUTULLI_PORT=8182
 OVERSEERR_PORT=5055
 RDT_CLIENT_PORT=6500
 KOMETA_PORT=5556
@@ -1300,7 +1300,7 @@ display_final_access_info() {
     fi
     
     if [ "$ENABLE_TAUTULLI" = "true" ]; then
-        echo "  📈 Tautulli (Analytics): http://localhost:8181"
+        echo "  📈 Tautulli (Analytics): http://localhost:8182"
     fi
     
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then

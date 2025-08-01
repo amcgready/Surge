@@ -312,11 +312,11 @@ All services can be configured through:
 | Prowlarr | 9696 | Indexer management + Torrentio |
 | Bazarr | 6767 | Subtitle management |
 | NZBGet | 6789 | Usenet downloader |
-| Zilean | 8182 | DMM content search |
+| Zilean | 8181 | DMM content search |
 | GAPS | 8484 | Plex missing movies integration |
 | RDT-Client | 6500 | Real-Debrid torrent client |
 | Decypharr | 8282 | QBittorrent API with debrid support |
-| Tautulli | 8181 | Media server stats |
+| Tautulli | 8182 | Media server stats |
 | Posterizarr | 5060 | Custom poster management |
 
 **Note**: ImageMaid, Kometa, Watchtower, and cli_debrid run as CLI/scheduled services without web interfaces.

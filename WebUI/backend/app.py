@@ -1,3 +1,9 @@
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)
+
 # Autodetect endpoint for frontend to fetch default URLs and API keys
 @app.route('/api/autodetect')
 def autodetect():
@@ -14,8 +20,6 @@ def autodetect():
     # Optionally, merge with any saved config
     detected.update(setup_config)
     return jsonify(detected)
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
@@ -47,6 +51,12 @@ def test_connection():
         return jsonify({'status': 'success', 'code': resp.status_code})
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 400
+
+
+# New endpoint: POST /api/deploy (calls deploy_services logic)
+@app.route('/api/deploy', methods=['POST'])
+def deploy():
+    return deploy_services()
 
 @app.route('/api/deploy_services', methods=['POST'])
 def deploy_services():
