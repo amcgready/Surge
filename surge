@@ -41,6 +41,17 @@ show_help() {
     echo "  deploy <server>         - Deploy Surge with specified media server"
     echo "                           Options: plex, emby, jellyfin"
     echo ""
+    echo "Configuration Commands:"
+    echo "  auto-config             - Automatically configure service connections"
+    echo "  auto-config --service S - Configure specific service only"
+    echo "  auto-config --discover  - Discover API keys without configuring"
+    echo "  post-config             - Run post-deployment configuration"
+    echo "  troubleshoot            - Diagnose API connection issues"
+    echo "  api-keys                - Manage API keys (discover, configure)"
+    echo "  inject-keys             - Generate and inject API keys into configs"
+    echo "  fix-ownership [path]    - Fix directory ownership for Docker containers"
+    echo "  configure-overseerr     - Configure Overseerr with service API keys"
+    echo ""
     echo "Management Commands:"
     echo "  update                  - Update all containers to latest versions"
     echo "  status                  - Show status of all services"
@@ -105,6 +116,27 @@ case ${1:-} in
             exit 1
         fi
         exec "$SCRIPT_DIR/scripts/deploy.sh" "$2" "${@:3}"
+        ;;
+    auto-config)
+        exec "$SCRIPT_DIR/scripts/auto-config.sh" "${@:2}"
+        ;;
+    post-config)
+        exec "$SCRIPT_DIR/scripts/post-deploy-config.sh" "${@:2}"
+        ;;
+    troubleshoot)
+        exec "$SCRIPT_DIR/scripts/troubleshoot-api.sh" "${@:2}"
+        ;;
+    api-keys)
+        exec python3 "$SCRIPT_DIR/scripts/api-key-manager.py" "${@:2}"
+        ;;
+    inject-keys)
+        exec python3 "$SCRIPT_DIR/scripts/inject-api-keys.py" "${@:2}"
+        ;;
+    fix-ownership)
+        exec "$SCRIPT_DIR/scripts/fix-ownership.sh" "${@:2}"
+        ;;
+    configure-overseerr)
+        exec python3 "$SCRIPT_DIR/scripts/configure-overseerr.py" "${@:2}"
         ;;
     exec)
         if [ -z "$2" ]; then

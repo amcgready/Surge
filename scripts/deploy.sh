@@ -95,6 +95,30 @@ create_directories() {
     
     mkdir -p "$DATA_ROOT"/{media/{movies,tv,music},downloads,config,logs}
     
+    # Fix ownership for all directories (1000:1000 matches PUID:PGID used in containers)
+    print_info "Setting proper ownership for storage directories..."
+    if [ "$(id -u)" -eq 0 ]; then
+        # Running as root, set ownership directly
+        chown -R 1000:1000 "$DATA_ROOT"
+        print_success "Directory ownership set to 1000:1000"
+    else
+        # Not running as root, use sudo
+        if sudo -n true 2>/dev/null; then
+            # Sudo available without password prompt
+            sudo chown -R 1000:1000 "$DATA_ROOT"
+            print_success "Directory ownership set to 1000:1000 (with sudo)"
+        else
+            # Prompt for sudo
+            print_warning "Setting directory ownership requires sudo privileges..."
+            if sudo chown -R 1000:1000 "$DATA_ROOT"; then
+                print_success "Directory ownership set to 1000:1000 (with sudo)"
+            else
+                print_warning "Failed to set directory ownership. You may need to run manually:"
+                print_warning "  sudo chown -R 1000:1000 $DATA_ROOT"
+            fi
+        fi
+    fi
+    
     print_success "Directory structure created at $DATA_ROOT"
 }
 
@@ -168,6 +192,10 @@ deploy_services() {
     docker compose $COMPOSE_FILES up -d
     
     print_success "Surge deployed successfully!"
+    
+    # Configure services automatically
+    configure_services
+    
     print_info "Access your services:"
     echo "  - Homepage Dashboard: http://localhost:3000"
     case $media_server in
@@ -181,6 +209,77 @@ deploy_services() {
             echo "  - Jellyfin Server: http://localhost:8096"
             ;;
     esac
+}
+
+# Configure services automatically
+configure_services() {
+    print_info "Configuring service connections automatically..."
+    
+    # Set storage path environment variable
+    export STORAGE_PATH="/mnt/mycloudpr4100/Surge"
+    
+    # Brief wait for containers to start writing config files
+    print_info "Waiting for services to create configuration files..."
+    sleep 15
+    
+    # Check if Python is available
+    if ! command -v python3 &> /dev/null; then
+        print_warning "Python3 not found. Skipping automatic service configuration."
+        print_info "You can manually configure services later by running:"
+        print_info "  python3 -c 'from scripts.service_config import configure_prowlarr_applications; configure_prowlarr_applications()'"
+        return
+    fi
+    
+    # Configure Prowlarr applications (connect to Radarr and Sonarr)
+    if docker compose ps prowlarr | grep -q "Up"; then
+        print_info "Configuring Prowlarr applications..."
+        if python3 -c "
+import sys
+sys.path.append('$SCRIPT_DIR')
+from service_config import configure_prowlarr_applications
+success = configure_prowlarr_applications()
+sys.exit(0 if success else 1)
+"; then
+            print_success "Prowlarr applications configured successfully!"
+        else
+            print_warning "Failed to configure Prowlarr applications. You can try again manually:"
+            print_warning "  python3 scripts/service_config.py"
+            print_info "💡 This is normal for first-time deployments. Services need time to fully initialize."
+            print_info "💡 Try running the configuration again in 5-10 minutes."
+        fi
+    else
+        print_info "Prowlarr not running, skipping application configuration"
+    fi
+    
+    # Configure Overseerr settings
+    if docker compose ps overseerr | grep -q "Up" && [ -f "$SCRIPT_DIR/configure-overseerr.py" ]; then
+        print_info "Configuring Overseerr settings..."
+        if python3 "$SCRIPT_DIR/configure-overseerr.py"; then
+            print_success "Overseerr settings configured successfully!"
+        else
+            print_warning "Failed to configure Overseerr settings"
+        fi
+    fi
+    
+    # Configure service API keys if needed (only if config files don't exist)
+    if [ -f "$SCRIPT_DIR/inject-api-keys.py" ]; then
+        # Check if API keys need to be generated (only for new installations)
+        storage_path="/mnt/mycloudpr4100/Surge"
+        if [ ! -f "$storage_path/Prowlarr/config/config.xml" ] || [ ! -f "$storage_path/Radarr/config/config.xml" ] || [ ! -f "$storage_path/Sonarr/config/config.xml" ]; then
+            print_info "Generating initial API keys for new services..."
+            if python3 "$SCRIPT_DIR/inject-api-keys.py" --generate-all --config-dir "$storage_path" 2>/dev/null; then
+                print_success "Initial API keys generated successfully!"
+            else
+                print_info "API keys will be generated automatically when services start"
+            fi
+        else
+            print_info "API keys already exist, skipping generation"
+        fi
+    fi
+    
+    print_success "Service configuration completed!"
+    
+    print_success "Service configuration completed!"
 }
 
 # Update containers

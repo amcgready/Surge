@@ -594,86 +594,320 @@ def deploy_services():
                 data['embySettings'][k] = v
         # --- END: All services ---
 
+        # Create directories and set proper ownership before starting containers
+        storage_path = os.path.expandvars(data.get('storagePath', '/opt/surge'))
+        
+        # Create directory structure
+        directories = [
+            f"{storage_path}/media/movies",
+            f"{storage_path}/media/tv", 
+            f"{storage_path}/media/music",
+            f"{storage_path}/downloads",
+            f"{storage_path}/config",
+            f"{storage_path}/logs"
+        ]
+        
+        for directory in directories:
+            os.makedirs(directory, exist_ok=True)
+        
+        # Set proper ownership for Docker containers using PUID:PGID from config
+        try:
+            current_uid = os.getuid()
+            
+            # Get PUID and PGID from config or use defaults
+            puid = data.get('PUID', 1000)
+            pgid = data.get('PGID', 1000)
+            ownership = f"{puid}:{pgid}"
+            
+            if current_uid == 0:
+                # Running as root, set ownership directly
+                subprocess.run(['chown', '-R', ownership, storage_path], check=False)
+                print(f"✅ Set directory ownership to {ownership} for {storage_path}")
+            else:
+                # Try with sudo
+                result = subprocess.run(['sudo', '-n', 'chown', '-R', ownership, storage_path], 
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"✅ Set directory ownership to {ownership} for {storage_path} (with sudo)")
+                else:
+                    print(f"⚠️ Could not set directory ownership. You may need to run: sudo chown -R {ownership} {storage_path}")
+        except Exception as e:
+            print(f"⚠️ Error setting directory ownership: {e}")
+
         # Compose up only enabled services
         cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
         result = subprocess.run(cmd, capture_output=True, text=True)
 
-        # If bazarr is enabled, add Radarr/Sonarr to Bazarr config.ini using values from config
+        # Enhanced Bazarr configuration with real API keys
+        # We'll configure this after API keys are injected below
         bazarr_enabled = 'bazarr' in enabled
         radarr_enabled = 'radarr' in enabled
         sonarr_enabled = 'sonarr' in enabled
-        bazarr_config_path = os.path.expandvars(os.path.join(os.path.dirname(__file__), '../../../config/Bazarr/config.ini'))
-        if bazarr_enabled:
-            config_ini = configparser.ConfigParser()
-            if os.path.exists(bazarr_config_path):
-                config_ini.read(bazarr_config_path)
-            if radarr_enabled:
-                config_ini['radarr'] = {
-                    'enabled': 'True',
-                    'url': data.get('radarrSettings', {}).get('urlBase', 'http://radarr:7878'),
-                    'api_key': data.get('radarrSettings', {}).get('apiKey', 'surgestack'),
-                }
-            if sonarr_enabled:
-                config_ini['sonarr'] = {
-                    'enabled': 'True',
-                    'url': data.get('sonarrSettings', {}).get('urlBase', 'http://sonarr:8989'),
-                    'api_key': data.get('sonarrSettings', {}).get('apiKey', 'surgestack'),
-                }
-            os.makedirs(os.path.dirname(bazarr_config_path), exist_ok=True)
-            with open(bazarr_config_path, 'w') as f:
-                config_ini.write(f)
 
-        # If prowlarr, radarr, and/or sonarr are enabled, use the Prowlarr API to add Radarr/Sonarr as connections
+        # If prowlarr, radarr, and/or sonarr are enabled, inject API keys and configure Prowlarr applications
         import time
         import requests
+        import xml.etree.ElementTree as ET
+        import uuid
         prowlarr_enabled = 'prowlarr' in enabled
         if prowlarr_enabled and (radarr_enabled or sonarr_enabled):
-            time.sleep(5)
-            prowlarr_url = data.get('prowlarrSettings', {}).get('urlBase') or 'http://prowlarr:9696'
-            prowlarr_api_key = data.get('prowlarrSettings', {}).get('apiKey') or 'surgestack'
-            headers = {'X-Api-Key': prowlarr_api_key, 'Content-Type': 'application/json'}
-            if radarr_enabled:
-                radarr_url = data.get('radarrSettings', {}).get('urlBase') or 'http://radarr:7878'
-                radarr_api_key = data.get('radarrSettings', {}).get('apiKey') or 'surgestack'
-                radarr_payload = {
-                    'name': 'Radarr',
-                    'implementation': 'Radarr',
-                    'configContract': 'RadarrSettings',
-                    'fields': [
-                        {'name': 'apiKey', 'value': radarr_api_key},
-                        {'name': 'baseUrl', 'value': radarr_url}
-                    ],
-                    'syncLevel': 'full',
-                    'enableRss': True,
-                    'enableAutomaticSearch': True,
-                    'enableInteractiveSearch': True,
-                    'isDefault': True
-                }
+            print("Configuring Prowlarr applications...")
+            
+            # First, ensure API keys are available by injecting them if needed
+            def generate_api_key():
+                return str(uuid.uuid4()).replace('-', '')
+            
+            def inject_api_key_if_missing(service_name):
+                if service_name.lower() == 'bazarr':
+                    return inject_bazarr_api_key()
+                else:
+                    return inject_xml_api_key(service_name)
+            
+            def inject_xml_api_key(service_name):
+                config_path = os.path.join(os.path.dirname(__file__), '../../config', service_name, 'config.xml')
+                if not os.path.exists(config_path):
+                    print(f"Config file not found for {service_name}: {config_path}")
+                    return None
+                
                 try:
-                    requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=radarr_payload, timeout=10)
+                    tree = ET.parse(config_path)
+                    root = tree.getroot()
+                    api_key_element = root.find('ApiKey')
+                    
+                    # Check if API key exists and is not empty
+                    if api_key_element is not None and api_key_element.text and api_key_element.text.strip():
+                        print(f"API key already exists for {service_name}")
+                        return api_key_element.text.strip()
+                    
+                    # Generate and inject new API key
+                    new_api_key = generate_api_key()
+                    if api_key_element is None:
+                        api_key_element = ET.SubElement(root, 'ApiKey')
+                    api_key_element.text = new_api_key
+                    
+                    tree.write(config_path, encoding='utf-8', xml_declaration=True)
+                    print(f"✅ Injected new API key for {service_name}: {new_api_key[:8]}...")
+                    return new_api_key
+                    
                 except Exception as e:
-                    pass
-            if sonarr_enabled:
-                sonarr_url = data.get('sonarrSettings', {}).get('urlBase') or 'http://sonarr:8989'
-                sonarr_api_key = data.get('sonarrSettings', {}).get('apiKey') or 'surgestack'
-                sonarr_payload = {
-                    'name': 'Sonarr',
-                    'implementation': 'Sonarr',
-                    'configContract': 'SonarrSettings',
-                    'fields': [
-                        {'name': 'apiKey', 'value': sonarr_api_key},
-                        {'name': 'baseUrl', 'value': sonarr_url}
-                    ],
-                    'syncLevel': 'full',
-                    'enableRss': True,
-                    'enableAutomaticSearch': True,
-                    'enableInteractiveSearch': True,
-                    'isDefault': True
-                }
+                    print(f"Error handling API key for {service_name}: {e}")
+                    return None
+            
+            def inject_bazarr_api_key():
+                import configparser
+                
+                bazarr_config_dir = os.path.join(os.path.dirname(__file__), '../../config', 'bazarr')
+                config_path = os.path.join(bazarr_config_dir, 'config.ini')
+                
+                # Create config directory if it doesn't exist
+                os.makedirs(bazarr_config_dir, exist_ok=True)
+                
+                # Read existing config or create new one
+                config = configparser.ConfigParser()
+                if os.path.exists(config_path):
+                    config.read(config_path)
+                
+                # Check if API key exists
+                if config.has_section('general') and config.has_option('general', 'apikey'):
+                    existing_key = config.get('general', 'apikey')
+                    if existing_key and existing_key.strip():
+                        print(f"API key already exists for bazarr")
+                        return existing_key.strip()
+                
+                # Generate new API key
+                new_api_key = generate_api_key()
+                
+                # Ensure general section exists
+                if not config.has_section('general'):
+                    config.add_section('general')
+                
+                # Set API key
+                config.set('general', 'apikey', new_api_key)
+                
+                # Write config file
                 try:
-                    requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=sonarr_payload, timeout=10)
+                    with open(config_path, 'w') as configfile:
+                        config.write(configfile)
+                    print(f"✅ Injected new API key for bazarr: {new_api_key[:8]}...")
+                    return new_api_key
                 except Exception as e:
-                    pass
+                    print(f"Error writing Bazarr config: {e}")
+                    return None
+            
+            # Inject API keys for all enabled services
+            print("Ensuring API keys are available...")
+            prowlarr_api_key = inject_api_key_if_missing('prowlarr')
+            radarr_api_key = inject_api_key_if_missing('radarr') if radarr_enabled else None
+            sonarr_api_key = inject_api_key_if_missing('sonarr') if sonarr_enabled else None
+            bazarr_api_key = inject_api_key_if_missing('bazarr') if bazarr_enabled else None
+            
+            # Wait for services to restart with new API keys
+            time.sleep(20)
+            
+            print(f"API Keys - Prowlarr: {'Found' if prowlarr_api_key else 'Not found'}, Radarr: {'Found' if radarr_api_key else 'Not found'}, Sonarr: {'Found' if sonarr_api_key else 'Not found'}")
+            
+            if prowlarr_api_key:  # Only proceed if we have a Prowlarr API key
+                prowlarr_url = data.get('prowlarrSettings', {}).get('urlBase') or 'http://prowlarr:9696'
+                headers = {'X-Api-Key': prowlarr_api_key, 'Content-Type': 'application/json'}
+                
+                # Add Radarr application
+                if radarr_enabled and radarr_api_key:
+                    radarr_url = data.get('radarrSettings', {}).get('urlBase') or 'http://radarr:7878'
+                    radarr_payload = {
+                        'name': 'Radarr',
+                        'implementation': 'Radarr',
+                        'configContract': 'RadarrSettings',
+                        'fields': [
+                            {'name': 'apiKey', 'value': radarr_api_key},
+                            {'name': 'baseUrl', 'value': radarr_url}
+                        ],
+                        'syncLevel': 'fullSync',
+                        'enableRss': True,
+                        'enableAutomaticSearch': True,
+                        'enableInteractiveSearch': True,
+                        'isDefault': True
+                    }
+                    try:
+                        response = requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=radarr_payload, timeout=10)
+                        if response.status_code in [200, 201]:
+                            print("✅ Radarr application added to Prowlarr successfully")
+                        else:
+                            print(f"⚠️ Failed to add Radarr application: {response.status_code} - {response.text}")
+                    except Exception as e:
+                        print(f"❌ Error adding Radarr application: {e}")
+                
+                # Add Sonarr application  
+                if sonarr_enabled and sonarr_api_key:
+                    sonarr_url = data.get('sonarrSettings', {}).get('urlBase') or 'http://sonarr:8989'
+                    sonarr_payload = {
+                        'name': 'Sonarr',
+                        'implementation': 'Sonarr',
+                        'configContract': 'SonarrSettings',
+                        'fields': [
+                            {'name': 'apiKey', 'value': sonarr_api_key},
+                            {'name': 'baseUrl', 'value': sonarr_url}
+                        ],
+                        'syncLevel': 'fullSync',
+                        'enableRss': True,
+                        'enableAutomaticSearch': True,
+                        'enableInteractiveSearch': True,
+                        'isDefault': True
+                    }
+                    try:
+                        response = requests.post(f'{prowlarr_url}/api/v1/applications', headers=headers, json=sonarr_payload, timeout=10)
+                        if response.status_code in [200, 201]:
+                            print("✅ Sonarr application added to Prowlarr successfully")
+                        else:
+                            print(f"⚠️ Failed to add Sonarr application: {response.status_code} - {response.text}")
+                    except Exception as e:
+                        print(f"❌ Error adding Sonarr application: {e}")
+            else:
+                print("⚠️ Could not get Prowlarr API key - skipping application configuration")
+        
+        # Configure Bazarr with Radarr/Sonarr connections using real API keys
+        if bazarr_enabled and bazarr_api_key:
+            print("Configuring Bazarr with Radarr/Sonarr connections...")
+            import configparser
+            
+            bazarr_config_dir = os.path.join(os.path.dirname(__file__), '../../config', 'bazarr')
+            bazarr_config_path = os.path.join(bazarr_config_dir, 'config.ini')
+            
+            # Ensure directory exists
+            os.makedirs(bazarr_config_dir, exist_ok=True)
+            
+            # Read existing config or create new one
+            config = configparser.ConfigParser()
+            if os.path.exists(bazarr_config_path):
+                config.read(bazarr_config_path)
+            
+            # Ensure required sections exist
+            if not config.has_section('general'):
+                config.add_section('general')
+            
+            # Set Bazarr API key
+            config.set('general', 'apikey', bazarr_api_key)
+            
+            # Configure Radarr connection if enabled
+            if radarr_enabled and radarr_api_key:
+                if not config.has_section('radarr'):
+                    config.add_section('radarr')
+                
+                config.set('radarr', 'enabled', 'True')
+                config.set('radarr', 'ip', 'surge-radarr')
+                config.set('radarr', 'port', '7878')
+                config.set('radarr', 'base_url', '')
+                config.set('radarr', 'ssl', 'False')
+                config.set('radarr', 'apikey', radarr_api_key)
+                config.set('radarr', 'full_update', 'Daily')
+                config.set('radarr', 'only_monitored', 'False')
+                print(f"✅ Configured Bazarr connection to Radarr")
+            
+            # Configure Sonarr connection if enabled
+            if sonarr_enabled and sonarr_api_key:
+                if not config.has_section('sonarr'):
+                    config.add_section('sonarr')
+                
+                config.set('sonarr', 'enabled', 'True')
+                config.set('sonarr', 'ip', 'surge-sonarr')
+                config.set('sonarr', 'port', '8989')
+                config.set('sonarr', 'base_url', '')
+                config.set('sonarr', 'ssl', 'False')
+                config.set('sonarr', 'apikey', sonarr_api_key)
+                config.set('sonarr', 'full_update', 'Daily')
+                config.set('sonarr', 'only_monitored', 'False')
+                print(f"✅ Configured Bazarr connection to Sonarr")
+            
+            # Write the updated config
+            try:
+                with open(bazarr_config_path, 'w') as configfile:
+                    config.write(configfile)
+                print(f"✅ Bazarr configuration saved to {bazarr_config_path}")
+            except Exception as e:
+                print(f"❌ Error writing Bazarr config: {e}")
+        else:
+            if bazarr_enabled:
+                print("⚠️ Bazarr enabled but no API key available - skipping Bazarr configuration")
+        
+        # Configure Overseerr with service API keys
+        overseerr_enabled = 'overseerr' in enabled
+        if overseerr_enabled:
+            print("Configuring Overseerr with service API keys...")
+            try:
+                import subprocess
+                script_path = os.path.join(os.path.dirname(__file__), '../../scripts/configure-overseerr.py')
+                if os.path.exists(script_path):
+                    result = subprocess.run([
+                        'python3', script_path, 
+                        '--storage-path', storage_path
+                    ], capture_output=True, text=True, timeout=30)
+                    
+                    if result.returncode == 0:
+                        print("✅ Overseerr configuration completed successfully")
+                    else:
+                        print(f"⚠️ Overseerr configuration failed: {result.stderr}")
+                else:
+                    print("⚠️ Overseerr configuration script not found")
+            except Exception as e:
+                print(f"❌ Error configuring Overseerr: {e}")
+        else:
+            print("ℹ️ Overseerr not enabled - skipping configuration")
+
+        # Enhanced auto-configuration: Discover and propagate API keys
+        time.sleep(10)  # Give services more time to start
+        
+        try:
+            # Run API discovery and auto-configuration
+            import subprocess
+            script_path = os.path.join(os.path.dirname(__file__), '../../scripts/api-discovery.py')
+            if os.path.exists(script_path):
+                storage_path = os.path.expandvars(data.get('storagePath', '/opt/surge'))
+                subprocess.run([
+                    'python3', script_path, 
+                    '--storage-path', storage_path
+                ], capture_output=True, text=True, timeout=60)
+                print("API discovery and auto-configuration completed")
+        except Exception as e:
+            print(f"API discovery failed: {e}")
 
         if result.returncode == 0:
             return jsonify({'status': 'deployed', 'output': result.stdout, 'services': list(enabled)})

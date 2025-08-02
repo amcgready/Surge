@@ -41,7 +41,6 @@ declare -A SERVICE_CONFIGS=(
     ["prowlarr"]="config/prowlarr/config.xml"
     ["tautulli"]="config/tautulli/config.ini"
     ["imagemaid"]="config/imagemaid/config.yml"
-    ["zilean"]="config/zilean/appsettings.json"
 )
 
 # Discord webhook notification function

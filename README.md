@@ -234,6 +234,12 @@ When you configure shared variables, they're automatically applied to:
 
 # Test Discord webhook
 ./surge config test-webhook
+
+# Fix directory ownership for Docker containers
+./surge fix-ownership [path]
+
+# Configure Overseerr with service API keys
+./surge configure-overseerr
 ```
 
 ### **Discord Notification Controls**

@@ -114,38 +114,6 @@ services:
     networks:
       - surge-network
 
-  zilean-db:
-    image: postgres:16-alpine
-    container_name: surge-zilean-db
-    environment:
-      - POSTGRES_DB=zilean
-      - POSTGRES_USER=zilean
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - ${STORAGE_PATH}/Zilean/db:/var/lib/postgresql/data
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-
-  zilean:
-    image: ipromknight/zilean:latest
-    container_name: surge-zilean
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-      - ConnectionStrings__DefaultConnection=Host=surge-zilean-db;Database=zilean;Username=zilean;Password=${POSTGRES_PASSWORD}
-    volumes:
-      - ${STORAGE_PATH}/Zilean/config:/app/data
-    ports:
-      - "${ZILEAN_PORT:-8181}:8181"
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-    depends_on:
-      - zilean-db
-
   cli-debrid:
     image: godver3/cli_debrid:latest
     container_name: surge-cli-debrid

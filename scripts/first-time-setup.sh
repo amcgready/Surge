@@ -81,6 +81,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Source API key utilities
+source "$SCRIPT_DIR/api-key-utils.sh"
+
 print_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -627,6 +630,17 @@ configure_services_post_deployment() {
     sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
     print_success "All files and folders in $STORAGE_PATH are now owned by $PUID:$PGID. (Locks removed)"
 
+    # Run automatic API discovery and configuration
+    print_info "🔧 Running automatic service configuration..."
+    if [ -x "$SCRIPT_DIR/auto-config.sh" ]; then
+        "$SCRIPT_DIR/auto-config.sh" --storage-path "$STORAGE_PATH" --wait-timeout 120
+        if [ $? -eq 0 ]; then
+            print_success "Automatic service configuration completed!"
+        else
+            print_warning "Automatic configuration had some issues, but services should still work"
+        fi
+    fi
+
     print_success "Service configuration completed!"
 }
 # Generate homepage.yaml widgets for all enabled services
@@ -1044,7 +1058,6 @@ create_service_directories() {
         [Prowlarr]="config"
         [NZBGet]="config downloads"
         [RDT-Client]="config downloads"
-        [Zilean]="config"
         [cli_debrid]="config"
         [Decypharr]="config"
         [Kometa]="config"
@@ -1060,7 +1073,7 @@ create_service_directories() {
     )
 
     # Only create folders for enabled services
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zilean" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         # shellcheck disable=SC2154

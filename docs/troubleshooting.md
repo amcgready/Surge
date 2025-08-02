@@ -20,26 +20,83 @@ This guide covers common issues and their solutions when running Surge.
    - **Missing directories**: Run deployment script again
    - **Configuration errors**: Reset service configuration
 
-### Permission Denied Errors
+### STORAGE_PATH Environment Variable Not Set
 
-**Problem**: Services can't write to mounted directories.
+**Problem**: Docker Compose shows warnings like "The 'STORAGE_PATH' variable is not set" and services can't find their configuration.
+
+**Common Symptoms**:
+- Applications not appearing in Prowlarr UI
+- Configuration files not being created properly
+- Services fail to start or connect to each other
+- Warning messages in Docker Compose logs
 
 **Solution**:
-1. Check your user/group IDs:
+1. Check your `.env` file:
+   ```bash
+   grep STORAGE_PATH .env
+   ```
+
+2. If missing, add the STORAGE_PATH variable:
+   ```bash
+   echo "STORAGE_PATH=/mnt/mycloudpr4100/Surge" >> .env
+   ```
+
+3. Or edit `.env` manually and add:
+   ```bash
+   # Storage configuration
+   STORAGE_PATH=/path/to/your/storage/location
+   ```
+
+4. Restart all services:
+   ```bash
+   docker compose down
+   docker compose up -d
+   ```
+
+**Note**: Replace `/path/to/your/storage/location` with your actual storage path. For NAS setups, this is typically something like `/mnt/nas-name/Surge`.
+
+### Permission Denied Errors
+
+**Problem**: Services can't write to mounted directories or configs are locked.
+
+**Common Symptoms**:
+- Overseerr config directory is locked/inaccessible
+- Services fail to create configuration files
+- "Permission denied" errors in container logs
+
+**Solution**:
+1. Use the built-in ownership fix command:
+   ```bash
+   ./surge fix-ownership
+   ```
+
+2. For custom storage paths:
+   ```bash
+   ./surge fix-ownership /path/to/your/storage
+   ```
+
+3. Manual approach - Check your user/group IDs:
    ```bash
    id
    ```
 
-2. Update `.env` with correct values:
+4. Update `.env` with correct values:
    ```bash
    PUID=1000  # Your user ID
    PGID=1000  # Your group ID
    ```
 
-3. Fix directory permissions:
+5. Manual fix directory permissions:
    ```bash
-   sudo chown -R $USER:$USER /opt/surge
+   sudo chown -R $PUID:$PGID $STORAGE_PATH
    ```
+
+6. Restart affected containers:
+   ```bash
+   docker-compose restart
+   ```
+
+**Note**: The `fix-ownership` command automatically reads your PUID/PGID from `.env` and applies the correct ownership.
 
 ### Port Already in Use
 
@@ -205,6 +262,113 @@ This guide covers common issues and their solutions when running Surge.
 1. Check provider settings
 2. Verify Radarr/Sonarr API connections
 3. Check language profiles
+
+### Prowlarr
+
+**Applications Not Showing in UI**:
+
+**Problem**: Radarr and Sonarr applications don't appear in Prowlarr's Settings > Apps section, even though they should be automatically configured.
+
+**Common Symptoms**:
+- Empty Applications list in Prowlarr UI
+- "STORAGE_PATH variable is not set" warnings in Docker logs
+- Prowlarr can't sync indexers to Radarr/Sonarr
+- Applications missing after deployment
+
+**Automated Solution**:
+
+The deployment script now automatically configures Prowlarr applications using Prowlarr's REST API. This approach is more reliable than XML file manipulation.
+
+If the automatic configuration fails during deployment, you can run it manually:
+
+```bash
+# Run the API-based automated configuration
+python3 scripts/prowlarr-api-config.py
+
+# Or test the integrated automation
+python3 scripts/test-automation.py
+```
+
+**How the Automation Works**:
+
+1. **Waits for all services** (Prowlarr, Radarr, Sonarr) to start and generate their API keys
+2. **Extracts API keys** from each service's configuration file  
+3. **Uses Prowlarr's REST API** to add Radarr and Sonarr applications
+4. **Configures proper URLs** using Docker container names (`surge-radarr:7878`, `surge-sonarr:8989`)
+5. **Enables all features** including RSS feeds, automatic search, and interactive search
+
+**Manual Troubleshooting Steps**:
+
+1. **Check Environment Variables**:
+   ```bash
+   grep STORAGE_PATH .env
+   ```
+   If missing, add:
+   ```bash
+   echo "STORAGE_PATH=/mnt/mycloudpr4100/Surge" >> .env
+   ```
+
+2. **Verify Applications in Configuration**:
+   ```bash
+   # Check XML config (primary source)
+   grep -A5 -B5 "ApplicationDefinition" /mnt/mycloudpr4100/Surge/Prowlarr/config/config.xml
+   
+   # Check database (secondary)
+   sqlite3 /mnt/mycloudpr4100/Surge/Prowlarr/config/prowlarr.db "SELECT Name, Implementation FROM Applications;"
+   ```
+
+3. **Restart Services with Proper Environment**:
+   ```bash
+   # Stop and restart all services
+   docker compose down
+   docker compose up -d
+   
+   # Or restart just Prowlarr
+   docker compose restart prowlarr
+   ```
+
+4. **Clear Browser Cache**:
+   - Hard refresh: Ctrl+F5 or Ctrl+Shift+R
+   - Try incognito/private mode
+   - Try different browser
+
+5. **Check Service Connectivity**:
+   ```bash
+   # Verify all services are running
+   docker compose ps
+   
+   # Test if Radarr/Sonarr are accessible
+   curl -H "X-Api-Key: YOUR_RADARR_API_KEY" http://localhost:7878/api/v3/system/status
+   curl -H "X-Api-Key: YOUR_SONARR_API_KEY" http://localhost:8989/api/v3/system/status
+   ```
+
+6. **Manual Application Configuration** (Last Resort):
+   If automated configuration fails, try adding applications manually through the Prowlarr UI:
+   - Go to Settings > Apps > Add Application
+   - Select Radarr/Sonarr
+   - Enter the internal container URLs:
+     - Radarr: `http://surge-radarr:7878`
+     - Sonarr: `http://surge-sonarr:8989`
+   - Use the API keys from their respective config files
+   
+   Get API keys with:
+   ```bash
+   # Radarr API Key
+   grep -o '<ApiKey>[^<]*' /mnt/mycloudpr4100/Surge/Radarr/config/config.xml | cut -d'>' -f2
+   
+   # Sonarr API Key  
+   grep -o '<ApiKey>[^<]*' /mnt/mycloudpr4100/Surge/Sonarr/config/config.xml | cut -d'>' -f2
+   ```
+
+7. **Force UI Refresh**:
+   If applications are in the configuration but not showing:
+   ```bash
+   # Clear all browser data for the site
+   # Or try accessing Prowlarr from a different device/network
+   # Sometimes the issue is client-side caching
+   ```
+
+**Note**: The automated configuration uses XML-first approach which is Prowlarr's primary configuration method. Applications may not appear if Prowlarr cannot establish connections to Radarr/Sonarr. Ensure all services are running and accessible.
 
 ## Update Issues
 
