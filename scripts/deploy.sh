@@ -220,6 +220,10 @@ configure_services() {
     
     # Brief wait for containers to start writing config files
     print_info "Waiting for services to create configuration files..."
+    sleep 30  # Increased wait time for better service initialization
+    
+    # Additional wait for API key generation
+    print_info "Allowing extra time for API key generation..."
     sleep 15
     
     # Check if Python is available
@@ -249,6 +253,29 @@ sys.exit(0 if success else 1)
         fi
     else
         print_info "Prowlarr not running, skipping application configuration"
+    fi
+    
+    # Configure Bazarr applications (connect to Radarr and Sonarr)  
+    if docker compose ps bazarr | grep -q "Up"; then
+        print_info "Configuring Bazarr applications..."
+        if python3 -c "
+import sys
+sys.path.append('$SCRIPT_DIR')
+from service_config import configure_bazarr_applications
+success = configure_bazarr_applications()
+sys.exit(0 if success else 1)
+"; then
+            print_success "Bazarr applications configured successfully!"
+            print_info "💡 If Radarr/Sonarr don't appear in Bazarr settings, restart Bazarr:"
+            print_info "💡 Go to http://localhost:6767 → Settings → General → Restart"
+        else
+            print_warning "Failed to configure Bazarr applications. You can try again manually:"
+            print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
+            print_info "💡 After configuration, restart Bazarr to pick up the new connections:"
+            print_info "💡 You can restart Bazarr from its web interface or restart the deployment"
+        fi
+    else
+        print_info "Bazarr not running, skipping application configuration"
     fi
     
     # Configure Overseerr settings

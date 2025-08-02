@@ -526,6 +526,143 @@ def add_applications_to_prowlarr_db(db_path, radarr_api_key, sonarr_api_key):
     
     return success_count > 0
 
+def configure_bazarr_applications():
+    """Configure Bazarr connections to Radarr and Sonarr."""
+    print("🎬 Configuring Bazarr applications...")
+    
+    storage_path = find_storage_path()
+    print(f"📁 Using storage path: {storage_path}")
+    
+    # Get API keys from config files with retry logic
+    radarr_config = os.path.join(storage_path, "Radarr", "config", "config.xml")
+    sonarr_config = os.path.join(storage_path, "Sonarr", "config", "config.xml") 
+    bazarr_config = os.path.join(storage_path, "Bazarr", "config", "config", "config.yaml")
+    
+    print(f"🔍 Checking for Radarr config at: {radarr_config}")
+    print(f"🔍 Checking for Sonarr config at: {sonarr_config}")
+    print(f"🔍 Checking for Bazarr YAML config at: {bazarr_config}")
+    
+    # Wait for config files to exist with retries
+    max_retries = 6
+    retry_delay = 10
+    
+    for attempt in range(max_retries):
+        radarr_api_key = get_api_key_from_xml(radarr_config)
+        sonarr_api_key = get_api_key_from_xml(sonarr_config)
+        
+        if radarr_api_key and sonarr_api_key:
+            print(f"✅ Found API keys on attempt {attempt + 1}")
+            break
+        elif attempt < max_retries - 1:
+            print(f"⏳ API keys not ready, waiting {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+            time.sleep(retry_delay)
+        else:
+            print("❌ Could not get API keys after all retries")
+            if not radarr_api_key:
+                print(f"   - Radarr API key missing from {radarr_config}")
+            if not sonarr_api_key:
+                print(f"   - Sonarr API key missing from {sonarr_config}")
+            return False
+    
+    # Check if Bazarr YAML config exists
+    if not os.path.exists(bazarr_config):
+        print(f"❌ Bazarr YAML config not found: {bazarr_config}")
+        print("⚠️ Bazarr might not be fully initialized yet")
+        return False
+    
+    # Read and update Bazarr YAML configuration
+    try:
+        import yaml
+        
+        # Read existing config
+        with open(bazarr_config, 'r') as f:
+            config_data = yaml.safe_load(f)
+        
+        print("📝 Updating Bazarr YAML configuration...")
+        
+        # Enable Radarr and Sonarr usage
+        if 'general' not in config_data:
+            config_data['general'] = {}
+        
+        config_data['general']['use_radarr'] = True
+        config_data['general']['use_sonarr'] = True
+        
+        # Configure Radarr connection
+        if 'radarr' not in config_data:
+            config_data['radarr'] = {}
+            
+        config_data['radarr'].update({
+            'apikey': radarr_api_key,
+            'ip': 'surge-radarr',
+            'port': 7878,
+            'base_url': '/',
+            'ssl': False,
+            'full_update': 'Daily',
+            'only_monitored': False,
+            'movies_sync': 60,
+            'http_timeout': 60
+        })
+        
+        # Configure Sonarr connection
+        if 'sonarr' not in config_data:
+            config_data['sonarr'] = {}
+            
+        config_data['sonarr'].update({
+            'apikey': sonarr_api_key,
+            'ip': 'surge-sonarr', 
+            'port': 8989,
+            'base_url': '/',
+            'ssl': False,
+            'full_update': 'Daily',
+            'only_monitored': False,
+            'series_sync': 60,
+            'http_timeout': 60
+        })
+        
+        # Write updated config back to file
+        with open(bazarr_config, 'w') as f:
+            yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
+            
+        print("✅ Bazarr YAML configuration updated successfully!")
+        print(f"📝 Configuration written to: {bazarr_config}")
+        print(f"🔗 Radarr connection: surge-radarr:7878 (API: {radarr_api_key[:8]}...)")
+        print(f"🔗 Sonarr connection: surge-sonarr:8989 (API: {sonarr_api_key[:8]}...)")
+        
+        # Attempt to restart Bazarr container to pick up new configuration
+        print("� Attempting to restart Bazarr container to pick up new configuration...")
+        try:
+            import subprocess
+            result = subprocess.run(['docker', 'compose', 'restart', 'bazarr'], 
+                                  capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(__file__)))
+            if result.returncode == 0:
+                print("✅ Bazarr container restarted successfully!")
+                print("💡 Bazarr should now show Radarr and Sonarr connections in Settings")
+            else:
+                print(f"⚠️ Could not restart Bazarr container: {result.stderr}")
+                print("💡 Please restart Bazarr manually via web interface or Docker Compose")
+        except Exception as e:
+            print(f"⚠️ Could not restart Bazarr container: {e}")
+            print("💡 Please restart Bazarr manually via web interface or Docker Compose")
+        
+        return True
+        
+    except ImportError:
+        print("❌ PyYAML not available. Installing...")
+        try:
+            import subprocess
+            subprocess.check_call(['pip3', 'install', 'PyYAML'])
+            print("✅ PyYAML installed, please run the configuration again")
+            return False
+        except Exception as e:
+            print(f"❌ Could not install PyYAML: {e}")
+            print("💡 Please install PyYAML manually: pip3 install PyYAML")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error configuring Bazarr: {e}")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
+    configure_bazarr_applications()
