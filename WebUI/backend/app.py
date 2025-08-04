@@ -150,10 +150,10 @@ def deploy_services():
 
         # CineSync: all Docker env vars and advanced options
         cinesync_defaults = {
-            'origin_directory': '/mnt/mycloudpr4100/Surge/CineSync/Origin',
-            'destination_directory': '/mnt/mycloudpr4100/Surge/CineSync/Destination',
+            'origin_directory': '/downloads',
+            'destination_directory': '/media',
             'api_key': 'surgestack',
-            'port': 8080,
+            'port': 8082,
             'host': '0.0.0.0',
             'log_level': 'info',
             'username': 'admin',

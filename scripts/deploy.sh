@@ -184,7 +184,7 @@ deploy_services() {
     if [ "$deployment_type" = "minimal" ]; then
         export COMPOSE_PROFILES="$media_server,homepage"
     else
-        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler,gaps"
+        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler,gaps,cinesync"
     fi
     
     # Deploy
@@ -198,6 +198,7 @@ deploy_services() {
     
     print_info "Access your services:"
     echo "  - Homepage Dashboard: http://localhost:3000"
+    echo "  - CineSync Media Manager: http://localhost:8082"
     case $media_server in
         plex)
             echo "  - Plex Media Server: http://localhost:32400/web"

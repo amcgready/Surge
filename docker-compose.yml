@@ -181,11 +181,20 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
+      - ORIGIN_DIRECTORY=${STORAGE_PATH}/downloads
+      - DESTINATION_DIRECTORY=${STORAGE_PATH}/media
+    ports:
+      - "${CINESYNC_PORT:-8082}:8082"
+      - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
       - ${STORAGE_PATH}/Cinesync/config:/config
+      - ${STORAGE_PATH}/media:/media
+      - ${STORAGE_PATH}/downloads:/downloads
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - cinesync
 
   placeholdarr:
     image: ghcr.io/theindiearmy/placeholdarr:queue_monitoring-latest
@@ -267,6 +276,43 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: surge-watchtower
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_INTERVAL:-86400}
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_WEBHOOK:-}
+      - WATCHTOWER_NOTIFICATIONS_LEVEL=info
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - watchtower
+
+  scheduler:
+    image: alpine/cron:latest
+    container_name: surge-scheduler
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ${STORAGE_PATH}/Scheduler/config:/config
+      - ${STORAGE_PATH}/logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts:/scripts:ro
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - scheduler
 
 networks:
   surge-network:

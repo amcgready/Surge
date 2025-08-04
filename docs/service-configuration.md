@@ -19,6 +19,14 @@ Surge automatically configures service interconnections so that your media manag
 - **Search Integration**: Radarr/Sonarr can search through all Prowlarr indexers
 - **Centralized Configuration**: Manage all indexers from one place
 
+### CineSync - Media Library Manager
+- **Web Interface**: Modern web dashboard accessible at http://localhost:8082
+- **File Organization**: Organizes media files using symbolic links from `/downloads` to `/media`
+- **Real-time Monitoring**: Automatically detects and processes new media files
+- **Media Server Integration**: Supports Plex, Jellyfin, and Emby integration
+- **Smart Categorization**: Automatic separation of 4K content, anime, and kids content
+- **Auto-configured Paths**: Origin directory set to downloads, destination to organized media folders
+
 ## How It Works
 
 ### API Key Generation
@@ -79,6 +87,7 @@ All services use the `surge-network` Docker network, allowing them to communicat
 - `surge-prowlarr:9696`
 - `surge-overseerr:5055`
 - `surge-tautulli:8181`
+- `surge-cinesync:8082`
 
 ## Deployment Integration
 

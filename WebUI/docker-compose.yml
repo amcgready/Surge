@@ -6,6 +6,9 @@ services:
     ports:
       - "5001:5001"
     environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
       - FLASK_ENV=production
     restart: unless-stopped
   webui-frontend:
@@ -14,6 +17,9 @@ services:
     ports:
       - "3100:3000"
     environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
       - CHOKIDAR_USEPOLLING=true
     restart: unless-stopped
     depends_on:
