@@ -453,7 +453,41 @@ function App() {
     userId: '',
     groupId: '',
     umask: '',
-    tz: ''
+    tz: '',
+    // Zurg Configuration
+    zurgToken: '',
+    // Media Server Configuration
+    plexSettings: {
+      HOSTNAME: 'PlexServer',
+      TZ: 'UTC',
+      PLEX_CLAIM: '',
+      ADVERTISE_IP: '',
+      PLEX_UID: 1000,
+      PLEX_GID: 1000,
+      CHANGE_CONFIG_DIR_OWNERSHIP: true,
+      ALLOWED_NETWORKS: '',
+      extra_env: {},
+      extra_args: '',
+    },
+    jellyfinSettings: {
+      TZ: 'UTC',
+      JELLYFIN_PublishedServerUrl: '',
+      JELLYFIN_LOG_DIR: '',
+      JELLYFIN_DATA_DIR: '',
+      JELLYFIN_CONFIG_DIR: '',
+      JELLYFIN_CACHE_DIR: '',
+      JELLYFIN_FFMPEG_PATH: '',
+      extra_env: {},
+      extra_args: '',
+    },
+    embySettings: {
+      TZ: 'UTC',
+      EMBY_DATA_DIR: '',
+      EMBY_CONFIG_DIR: '',
+      EMBY_CACHE_DIR: '',
+      extra_env: {},
+      extra_args: '',
+    }
   });
 
   // Autodetect URLs and API keys (example: fetch from backend or localStorage)
@@ -646,6 +680,104 @@ function App() {
                   </Tooltip>
                 ))}
               </Box>
+              
+              {/* Media Server Configuration */}
+              {config.mediaServer && (
+                <Box mt={4} p={2} sx={{ background: '#1a1a1a', borderRadius: 2, border: '1px solid #333' }}>
+                  <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>
+                    {coreServers.find(s => s.key === config.mediaServer)?.name} Configuration
+                  </Typography>
+                  
+                  {config.mediaServer === 'plex' && (
+                    <Box>
+                      <Box display="flex" gap={2} mb={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', marginBottom: 8 }}>Server Name</Typography>
+                          <input
+                            type="text"
+                            value={config.plexSettings.HOSTNAME}
+                            onChange={(e) => setConfig(prev => ({
+                              ...prev,
+                              plexSettings: { ...prev.plexSettings, HOSTNAME: e.target.value }
+                            }))}
+                            placeholder="PlexServer"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                          <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
+                            The friendly name for your Plex server
+                          </Typography>
+                        </Box>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', marginBottom: 8 }}>Plex Claim Token (Optional)</Typography>
+                          <input
+                            type="text"
+                            value={config.plexSettings.PLEX_CLAIM}
+                            onChange={(e) => setConfig(prev => ({
+                              ...prev,
+                              plexSettings: { ...prev.plexSettings, PLEX_CLAIM: e.target.value }
+                            }))}
+                            placeholder="claim-xxxxxxxxx"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                          <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
+                            Get from <a href="https://plex.tv/claim" target="_blank" rel="noopener noreferrer" style={{ color: '#07938f' }}>plex.tv/claim</a>
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Box mt={3} p={2} sx={{ background: '#252525', borderRadius: 1, border: '1px solid #444' }}>
+                        <Typography style={{ color: '#fff', fontWeight: 'bold', marginBottom: 8 }}>
+                          🎬 Automatic Library Creation
+                        </Typography>
+                        <Typography style={{ color: '#aaa', fontSize: 14 }}>
+                          Surge will automatically create Plex libraries based on your CineSync folder structure:
+                        </Typography>
+                        <Box mt={1} ml={2}>
+                          <Typography style={{ color: '#fff', fontSize: 13 }}>• Movies</Typography>
+                          <Typography style={{ color: '#fff', fontSize: 13 }}>• TV Shows</Typography>
+                          <Typography style={{ color: '#fff', fontSize: 13 }}>• Anime Movies</Typography>
+                          <Typography style={{ color: '#fff', fontSize: 13 }}>• Anime Series</Typography>
+                        </Box>
+                        <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
+                          Libraries will be created automatically after deployment with proper metadata agents.
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  
+                  {config.mediaServer === 'jellyfin' && (
+                    <Box>
+                      <Box display="flex" gap={2} mb={2}>
+                        <Box flex={1}>
+                          <Typography style={{ color: '#fff', marginBottom: 8 }}>Published Server URL</Typography>
+                          <input
+                            type="text"
+                            value={config.jellyfinSettings.JELLYFIN_PublishedServerUrl}
+                            onChange={(e) => setConfig(prev => ({
+                              ...prev,
+                              jellyfinSettings: { ...prev.jellyfinSettings, JELLYFIN_PublishedServerUrl: e.target.value }
+                            }))}
+                            placeholder="https://jellyfin.yourdomain.com"
+                            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+                          />
+                          <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
+                            The external URL for your Jellyfin server
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  
+                  {config.mediaServer === 'emby' && (
+                    <Box>
+                      <Typography style={{ color: '#fff', marginBottom: 8 }}>Emby Configuration</Typography>
+                      <Typography style={{ color: '#aaa', fontSize: 14 }}>
+                        Basic Emby setup with default configuration. Advanced settings can be configured after deployment.
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              )}
             </Box>
           )}
           {activeStep === 2 && (

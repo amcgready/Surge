@@ -184,7 +184,7 @@ deploy_services() {
     if [ "$deployment_type" = "minimal" ]; then
         export COMPOSE_PROFILES="$media_server,homepage"
     else
-        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler,gaps,cinesync"
+        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,gaps,cinesync"
     fi
     
     # Deploy
@@ -218,6 +218,17 @@ configure_services() {
     
     # Set storage path environment variable
     export STORAGE_PATH="/mnt/mycloudpr4100/Surge"
+    
+    # Generate CineSync configuration if CineSync is enabled
+    if echo "$COMPOSE_PROFILES" | grep -q "cinesync"; then
+        print_info "Generating CineSync configuration..."
+        if "$SCRIPT_DIR/configure-cinesync.sh"; then
+            print_success "CineSync configuration generated successfully!"
+        else
+            print_warning "Failed to generate CineSync configuration. You can run it manually:"
+            print_warning "  $SCRIPT_DIR/configure-cinesync.sh"
+        fi
+    fi
     
     # Brief wait for containers to start writing config files
     print_info "Waiting for services to create configuration files..."

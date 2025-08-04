@@ -106,6 +106,7 @@ def deploy_services():
         # Zurg: all documented Docker env vars and advanced options
         zurg_defaults = {
             'destination': '/mnt/Zurg',
+            'downloads_path': '/downloads',
             'api_key': 'surgestack',
             'log_level': 'info',
             'host': '0.0.0.0',
@@ -124,6 +125,11 @@ def deploy_services():
         for k, v in zurg_defaults.items():
             if k not in data['zurgSettings']:
                 data['zurgSettings'][k] = v
+        
+        # Handle Real Debrid token for Zurg
+        if 'zurgToken' in data and data['zurgToken']:
+            # Store the Real Debrid token for Zurg configuration
+            data['zurgSettings']['rd_token'] = data['zurgToken']
 
         # NZBGet: all Docker env vars and advanced options
         nzbget_defaults = {
@@ -150,12 +156,81 @@ def deploy_services():
 
         # CineSync: all Docker env vars and advanced options
         cinesync_defaults = {
-            'origin_directory': '/downloads',
-            'destination_directory': '/media',
+            # Directory Paths
+            'source_dir': '/downloads',
+            'destination_dir': '/media',
+            'use_source_structure': False,
+            # Media Organization Configuration
+            'cinesync_layout': True,
+            'anime_separation': True,
+            '4k_separation': True,
+            'kids_separation': False,
+            # Custom folder paths
+            'custom_show_folder': 'Shows',
+            'custom_4kshow_folder': '4KShows',
+            'custom_anime_show_folder': 'AnimeShows',
+            'custom_movie_folder': 'Movies',
+            'custom_4kmovie_folder': '4KMovies',
+            'custom_anime_movie_folder': 'AnimeMovies',
+            'custom_kids_movie_folder': 'KidsMovies',
+            'custom_kids_show_folder': 'KidsShows',
+            # Resolution-Based Organization
+            'show_resolution_structure': False,
+            'movie_resolution_structure': False,
+            # Logging Configuration
+            'log_level': 'INFO',
+            # Rclone Mount Configuration
+            'rclone_mount': False,
+            'mount_check_interval': 30,
+            # TMDb/IMDB Configuration
+            'tmdb_api_key': '',
+            'language': 'English',
+            'anime_scan': False,
+            'tmdb_folder_id': False,
+            'imdb_folder_id': False,
+            'tvdb_folder_id': False,
+            'rename_enabled': False,
+            'mediainfo_parser': False,
+            'rename_tags': 'Resolution',
+            # Movie Collection Settings
+            'movie_collection_enabled': False,
+            # System Configuration
+            'relative_symlink': False,
+            'max_cores': 1,
+            'max_processes': 15,
+            # File Handling Configuration
+            'skip_extras_folder': True,
+            'junk_max_size_mb': 5,
+            'allowed_extensions': '.mp4,.mkv,.srt,.avi,.mov,.divx,.strm',
+            'skip_adult_patterns': True,
+            # Real-Time Monitoring Configuration
+            'sleep_time': 60,
+            'symlink_cleanup_interval': 600,
+            # Plex Integration Configuration
+            'enable_plex_update': False,
+            'plex_url': 'http://localhost:32400',
+            'plex_token': '',
+            # CineSync Server Configuration
+            'cinesync_ip': '0.0.0.0',
+            'cinesync_api_port': 8082,
+            'cinesync_ui_port': 5173,
+            'cinesync_auth_enabled': True,
+            'cinesync_username': 'admin',
+            'cinesync_password': 'admin',
+            # MediaHub Service Configuration
+            'mediahub_auto_start': True,
+            'rtm_auto_start': False,
+            'file_operations_auto_mode': True,
+            # Database Configuration
+            'db_throttle_rate': 100,
+            'db_max_retries': 10,
+            'db_retry_delay': 1.0,
+            'db_batch_size': 1000,
+            'db_max_workers': 20,
+            # Legacy settings for backward compatibility
             'api_key': 'surgestack',
             'port': 8082,
             'host': '0.0.0.0',
-            'log_level': 'info',
             'username': 'admin',
             'password': 'surge',
             'enable_ssl': False,
@@ -634,6 +709,45 @@ def deploy_services():
         except Exception as e:
             print(f"⚠️ Error setting directory ownership: {e}")
 
+        # Write configuration to .env file for Docker Compose
+        import os
+        env_file_path = os.path.join(os.path.dirname(__file__), '../../.env')
+        env_updates = {}
+        
+        # Add Real Debrid token for Zurg if provided
+        if 'zurgSettings' in data and 'rd_token' in data['zurgSettings'] and data['zurgSettings']['rd_token']:
+            env_updates['RD_API_TOKEN'] = data['zurgSettings']['rd_token']
+            print(f"✅ Setting Real Debrid token for Zurg")
+        
+        # Add storage path
+        if 'storagePath' in data and data['storagePath']:
+            env_updates['STORAGE_PATH'] = data['storagePath']
+        
+        # Update .env file with new values
+        if env_updates:
+            try:
+                # Read existing .env file
+                env_content = {}
+                if os.path.exists(env_file_path):
+                    with open(env_file_path, 'r') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith('#') and '=' in line:
+                                key, value = line.split('=', 1)
+                                env_content[key] = value
+                
+                # Update with new values
+                env_content.update(env_updates)
+                
+                # Write back to .env file
+                with open(env_file_path, 'w') as f:
+                    for key, value in env_content.items():
+                        f.write(f"{key}={value}\n")
+                
+                print(f"✅ Updated .env file with configuration")
+            except Exception as e:
+                print(f"⚠️ Error updating .env file: {e}")
+
         # Compose up only enabled services
         cmd = ['docker', 'compose', '-f', '../docker-compose.yml', 'up', '-d'] + list(enabled)
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -908,6 +1022,38 @@ def deploy_services():
                 print("API discovery and auto-configuration completed")
         except Exception as e:
             print(f"API discovery failed: {e}")
+
+        # Configure Plex libraries based on CineSync structure
+        if 'plex' in enabled:
+            print("Configuring Plex libraries...")
+            try:
+                plex_config_script = os.path.join(os.path.dirname(__file__), '../../scripts/configure-plex-libraries.py')
+                if os.path.exists(plex_config_script):
+                    storage_path = os.path.expandvars(data.get('storagePath', '/opt/surge'))
+                    
+                    # Get server name from config
+                    server_name = data.get('plexSettings', {}).get('HOSTNAME', 'PlexServer')
+                    
+                    cmd = [
+                        'python3', plex_config_script,
+                        '--storage-path', storage_path,
+                        '--server-name', server_name
+                    ]
+                    
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                    
+                    if result.returncode == 0:
+                        print("✅ Plex library configuration completed successfully")
+                        print(result.stdout)
+                    else:
+                        print(f"⚠️ Plex library configuration failed: {result.stderr}")
+                        print(f"Output: {result.stdout}")
+                else:
+                    print("⚠️ Plex library configuration script not found")
+            except Exception as e:
+                print(f"❌ Error configuring Plex libraries: {e}")
+        else:
+            print("ℹ️ Plex not selected as media server - skipping library configuration")
 
         if result.returncode == 0:
             return jsonify({'status': 'deployed', 'output': result.stdout, 'services': list(enabled)})

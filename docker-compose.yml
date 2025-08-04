@@ -111,12 +111,23 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
+      - ZURG_DOWNLOADS_PATH=${ZURG_DOWNLOADS_PATH:-/downloads}
     volumes:
       - ${STORAGE_PATH}/Zurg/config:/app/config
-      - ${STORAGE_PATH}/Zurg/downloads:/downloads
+      - ${STORAGE_PATH}/downloads/Zurg:/data:shared
+    ports:
+      - "${ZURG_PORT:-9999}:9999"
     restart: ${RESTART_POLICY:-unless-stopped}
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse:/dev/fuse
+    security_opt:
+      - apparmor:unconfined
     networks:
       - surge-network
+    profiles:
+      - zurg
 
   cli-debrid:
     image: godver3/cli_debrid:latest
@@ -181,14 +192,83 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
-      - ORIGIN_DIRECTORY=${STORAGE_PATH}/downloads
-      - DESTINATION_DIRECTORY=${STORAGE_PATH}/media
+      # Directory Paths
+      - SOURCE_DIR=${CINESYNC_SOURCE_DIR:-${STORAGE_PATH}/downloads/Zurg/__all__}
+      - DESTINATION_DIR=${CINESYNC_DESTINATION_DIR:-${STORAGE_PATH}/downloads/CineSync}
+      - USE_SOURCE_STRUCTURE=${CINESYNC_USE_SOURCE_STRUCTURE:-false}
+      # Media Organization Configuration
+      - CINESYNC_LAYOUT=${CINESYNC_LAYOUT:-true}
+      - ANIME_SEPARATION=${CINESYNC_ANIME_SEPARATION:-true}
+      - 4K_SEPARATION=${CINESYNC_4K_SEPARATION:-true}
+      - KIDS_SEPARATION=${CINESYNC_KIDS_SEPARATION:-false}
+      # Custom folder paths
+      - CUSTOM_SHOW_FOLDER=${CINESYNC_CUSTOM_SHOW_FOLDER:-Shows}
+      - CUSTOM_4KSHOW_FOLDER=${CINESYNC_CUSTOM_4KSHOW_FOLDER:-4KShows}
+      - CUSTOM_ANIME_SHOW_FOLDER=${CINESYNC_CUSTOM_ANIME_SHOW_FOLDER:-AnimeShows}
+      - CUSTOM_MOVIE_FOLDER=${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}
+      - CUSTOM_4KMOVIE_FOLDER=${CINESYNC_CUSTOM_4KMOVIE_FOLDER:-4KMovies}
+      - CUSTOM_ANIME_MOVIE_FOLDER=${CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER:-AnimeMovies}
+      - CUSTOM_KIDS_MOVIE_FOLDER=${CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER:-KidsMovies}
+      - CUSTOM_KIDS_SHOW_FOLDER=${CINESYNC_CUSTOM_KIDS_SHOW_FOLDER:-KidsShows}
+      # Resolution-Based Organization
+      - SHOW_RESOLUTION_STRUCTURE=${CINESYNC_SHOW_RESOLUTION_STRUCTURE:-false}
+      - MOVIE_RESOLUTION_STRUCTURE=${CINESYNC_MOVIE_RESOLUTION_STRUCTURE:-false}
+      # Logging Configuration
+      - LOG_LEVEL=${CINESYNC_LOG_LEVEL:-INFO}
+      # Rclone Mount Configuration
+      - RCLONE_MOUNT=${CINESYNC_RCLONE_MOUNT:-false}
+      - MOUNT_CHECK_INTERVAL=${CINESYNC_MOUNT_CHECK_INTERVAL:-30}
+      # TMDb/IMDB Configuration
+      - TMDB_API_KEY=${CINESYNC_TMDB_API_KEY:-${TMDB_API_KEY}}
+      - LANGUAGE=${CINESYNC_LANGUAGE:-English}
+      - ANIME_SCAN=${CINESYNC_ANIME_SCAN:-false}
+      - TMDB_FOLDER_ID=${CINESYNC_TMDB_FOLDER_ID:-false}
+      - IMDB_FOLDER_ID=${CINESYNC_IMDB_FOLDER_ID:-false}
+      - TVDB_FOLDER_ID=${CINESYNC_TVDB_FOLDER_ID:-false}
+      - RENAME_ENABLED=${CINESYNC_RENAME_ENABLED:-false}
+      - MEDIAINFO_PARSER=${CINESYNC_MEDIAINFO_PARSER:-false}
+      - RENAME_TAGS=${CINESYNC_RENAME_TAGS:-Resolution}
+      # Movie Collection Settings
+      - MOVIE_COLLECTION_ENABLED=${CINESYNC_MOVIE_COLLECTION_ENABLED:-false}
+      # System Configuration
+      - RELATIVE_SYMLINK=${CINESYNC_RELATIVE_SYMLINK:-false}
+      - MAX_CORES=${CINESYNC_MAX_CORES:-1}
+      - MAX_PROCESSES=${CINESYNC_MAX_PROCESSES:-15}
+      # File Handling Configuration
+      - SKIP_EXTRAS_FOLDER=${CINESYNC_SKIP_EXTRAS_FOLDER:-true}
+      - JUNK_MAX_SIZE_MB=${CINESYNC_JUNK_MAX_SIZE_MB:-5}
+      - ALLOWED_EXTENSIONS=${CINESYNC_ALLOWED_EXTENSIONS:-.mp4,.mkv,.srt,.avi,.mov,.divx,.strm}
+      - SKIP_ADULT_PATTERNS=${CINESYNC_SKIP_ADULT_PATTERNS:-true}
+      # Real-Time Monitoring Configuration
+      - SLEEP_TIME=${CINESYNC_SLEEP_TIME:-60}
+      - SYMLINK_CLEANUP_INTERVAL=${CINESYNC_SYMLINK_CLEANUP_INTERVAL:-600}
+      # Plex Integration Configuration
+      - ENABLE_PLEX_UPDATE=${CINESYNC_ENABLE_PLEX_UPDATE:-false}
+      - PLEX_URL=${CINESYNC_PLEX_URL:-http://localhost:32400}
+      - PLEX_TOKEN=${CINESYNC_PLEX_TOKEN:-}
+      # CineSync Server Configuration
+      - CINESYNC_IP=${CINESYNC_IP:-0.0.0.0}
+      - CINESYNC_API_PORT=${CINESYNC_API_PORT:-8082}
+      - CINESYNC_UI_PORT=${CINESYNC_UI_PORT:-5173}
+      - CINESYNC_AUTH_ENABLED=${CINESYNC_AUTH_ENABLED:-true}
+      - CINESYNC_USERNAME=${CINESYNC_USERNAME:-admin}
+      - CINESYNC_PASSWORD=${CINESYNC_PASSWORD:-admin}
+      # MediaHub Service Configuration
+      - MEDIAHUB_AUTO_START=${CINESYNC_MEDIAHUB_AUTO_START:-true}
+      - RTM_AUTO_START=${CINESYNC_RTM_AUTO_START:-false}
+      - FILE_OPERATIONS_AUTO_MODE=${CINESYNC_FILE_OPERATIONS_AUTO_MODE:-true}
+      # Database Configuration
+      - DB_THROTTLE_RATE=${CINESYNC_DB_THROTTLE_RATE:-100}
+      - DB_MAX_RETRIES=${CINESYNC_DB_MAX_RETRIES:-10}
+      - DB_RETRY_DELAY=${CINESYNC_DB_RETRY_DELAY:-1.0}
+      - DB_BATCH_SIZE=${CINESYNC_DB_BATCH_SIZE:-1000}
+      - DB_MAX_WORKERS=${CINESYNC_DB_MAX_WORKERS:-20}
     ports:
       - "${CINESYNC_PORT:-8082}:8082"
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
       - ${STORAGE_PATH}/Cinesync/config:/config
-      - ${STORAGE_PATH}/media:/media
+      - ${STORAGE_PATH}/Cinesync/config/.env:/app/.env:ro
       - ${STORAGE_PATH}/downloads:/downloads
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
@@ -297,7 +377,7 @@ services:
       - watchtower
 
   scheduler:
-    image: alpine/cron:latest
+    image: crazymax/cron:latest
     container_name: surge-scheduler
     environment:
       - PUID=${PUID:-1000}

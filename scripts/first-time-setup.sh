@@ -352,6 +352,26 @@ gather_custom_preferences() {
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
+        read -p "Enable Zurg (Real-Debrid filesystem)? [y/N]: " enable_zurg
+        ENABLE_ZURG=$([[ "$enable_zurg" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        
+        # Prompt for RD_API_TOKEN if Zurg is enabled
+        if [ "$ENABLE_ZURG" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
+            echo ""
+            print_info "Zurg requires a Real-Debrid API token to function"
+            read -p "Real-Debrid API Token (required for Zurg): " zurg_rd_token
+            RD_API_TOKEN=${zurg_rd_token}
+        fi
+        
+        # Prompt for custom Zurg downloads path if Zurg is enabled
+        if [ "$ENABLE_ZURG" = "true" ]; then
+            echo ""
+            print_info "Zurg downloads destination"
+            echo "Default: Uses standard Surge downloads directory"
+            read -p "Custom Zurg downloads path (optional): " zurg_downloads_path
+            ZURG_DOWNLOADS_PATH=${zurg_downloads_path:-}
+        fi
+        
         ENABLE_ZILEAN="true"  # Always enable Zilean
         
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
@@ -531,7 +551,7 @@ gather_custom_preferences() {
         fi
         echo "• Auto-connection to Radarr and Sonarr"
         
-        if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ]; then
+        if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ] && [ "$ENABLE_ZURG" != "true" ]; then
             read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
             RD_API_TOKEN=${prowlarr_rd_token:-}
         fi
@@ -685,6 +705,10 @@ configure_homepage_widgets() {
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
         echo "  - name: RDT-Client" >> "$homepage_yaml"
         echo "    url: http://localhost:6500" >> "$homepage_yaml"
+    fi
+    if [ "$ENABLE_ZURG" = "true" ]; then
+        echo "  - name: Zurg" >> "$homepage_yaml"
+        echo "    url: http://localhost:9999" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
         echo "  - name: cli_debrid" >> "$homepage_yaml"
@@ -965,6 +989,7 @@ ENABLE_BAZARR=${ENABLE_BAZARR:-true}
 ENABLE_PROWLARR=${ENABLE_PROWLARR:-true}
 ENABLE_NZBGET=${ENABLE_NZBGET:-true}
 ENABLE_RDT_CLIENT=${ENABLE_RDT_CLIENT:-false}
+ENABLE_ZURG=${ENABLE_ZURG:-false}
 ENABLE_ZILEAN=${ENABLE_ZILEAN:-true}
 ENABLE_CLI_DEBRID=${ENABLE_CLI_DEBRID:-false}
 ENABLE_DECYPHARR=${ENABLE_DECYPHARR:-false}
@@ -990,6 +1015,7 @@ DECYPHARR_PORT=8282
 TAUTULLI_PORT=8182
 OVERSEERR_PORT=5055
 RDT_CLIENT_PORT=6500
+ZURG_PORT=9999
 KOMETA_PORT=5556
 PLEX_PORT=${PLEX_PORT:-32400}
 EMBY_PORT=${EMBY_PORT:-8096}
@@ -1020,6 +1046,7 @@ DISCORD_NOTIFY_SYSTEM=${DISCORD_NOTIFY_SYSTEM:-false}
 NZBGET_USER=${NZBGET_USER:-admin}
 NZBGET_PASS=${NZBGET_PASS:-tegbzn6789}
 RD_API_TOKEN=${RD_API_TOKEN:-}
+ZURG_DOWNLOADS_PATH=${ZURG_DOWNLOADS_PATH:-}
 AD_API_TOKEN=${AD_API_TOKEN:-}
 PREMIUMIZE_API_TOKEN=${PREMIUMIZE_API_TOKEN:-}
 RD_USERNAME=${RD_USERNAME:-}
@@ -1058,6 +1085,7 @@ create_service_directories() {
         [Prowlarr]="config"
         [NZBGet]="config downloads"
         [RDT-Client]="config downloads"
+        [Zurg]="config downloads"
         [cli_debrid]="config"
         [Decypharr]="config"
         [Kometa]="config"
@@ -1073,7 +1101,7 @@ create_service_directories() {
     )
 
     # Only create folders for enabled services
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         # shellcheck disable=SC2154
@@ -1208,6 +1236,10 @@ show_next_steps() {
             echo "   - RDT-Client: http://localhost:6500"
         fi
         
+        if [ "$ENABLE_ZURG" = "true" ]; then
+            echo "   - Zurg: http://localhost:9999"
+        fi
+        
         if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
             echo "   - cli_debrid: Available via CLI"
         fi
@@ -1293,6 +1325,10 @@ display_final_access_info() {
     
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
         echo "  🌐 RDT-Client (Real-Debrid): http://localhost:6500"
+    fi
+    
+    if [ "$ENABLE_ZURG" = "true" ]; then
+        echo "  🗂️  Zurg (Real-Debrid Filesystem): http://localhost:9999"
     fi
     
     if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
