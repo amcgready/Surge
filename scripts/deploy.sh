@@ -184,7 +184,7 @@ deploy_services() {
     if [ "$deployment_type" = "minimal" ]; then
         export COMPOSE_PROFILES="$media_server,homepage"
     else
-        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler"
+        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,watchtower,scheduler,gaps"
     fi
     
     # Deploy
@@ -276,6 +276,30 @@ sys.exit(0 if success else 1)
         fi
     else
         print_info "Bazarr not running, skipping application configuration"
+    fi
+    
+    # Configure GAPS applications (connect to Radarr and Plex with TMDB)
+    if docker compose ps gaps | grep -q "Up"; then
+        print_info "Configuring GAPS applications..."
+        if python3 -c "
+import sys
+sys.path.append('$SCRIPT_DIR')
+from service_config import configure_gaps_applications
+success = configure_gaps_applications()
+sys.exit(0 if success else 1)
+"; then
+            print_success "GAPS applications configured successfully!"
+            print_info "💡 GAPS is now accessible at http://localhost:8484"
+            print_info "💡 The service is configured with your TMDB API key and Radarr connection"
+            print_info "💡 Discord notifications will be enabled if webhook URL is configured"
+        else
+            print_warning "Failed to configure GAPS applications. You can try again manually:"
+            print_warning "  python3 -c 'from scripts.service_config import configure_gaps_applications; configure_gaps_applications()'"
+            print_info "💡 Make sure TMDB_API_KEY is set in your .env file"
+            print_info "💡 GAPS requires this key to search for missing movies"
+        fi
+    else
+        print_info "GAPS not running, skipping application configuration"
     fi
     
     # Configure Overseerr settings

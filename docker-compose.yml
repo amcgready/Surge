@@ -49,6 +49,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - bazarr
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -83,6 +85,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - nzbget
 
   rdt-client:
     image: rogerfar/rdtclient:latest
@@ -167,6 +171,8 @@ services:
     restart: "no"
     networks:
       - surge-network
+    profiles:
+      - posterizarr
 
   cinesync:
     image: sureshfizzy/cinesync:latest
@@ -223,6 +229,28 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - tautulli
+
+  gaps:
+    image: housewrecker/gaps:latest
+    container_name: surge-gaps
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - ENABLE_SSL=false
+      - ENABLE_LOGIN=false
+      - BASE_URL=
+    volumes:
+      - ${STORAGE_PATH}/GAPS/config:/usr/data
+    ports:
+      - "8484:8484"
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+    profiles:
+      - gaps
 
   homepage:
     image: ghcr.io/gethomepage/homepage:latest

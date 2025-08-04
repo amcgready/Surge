@@ -662,7 +662,256 @@ def configure_bazarr_applications():
         print(f"❌ Error configuring Bazarr: {e}")
         return False
 
+def get_tmdb_api_key():
+    """Get TMDB API key from environment variables."""
+    import os
+    tmdb_key = os.environ.get('TMDB_API_KEY')
+    if not tmdb_key:
+        # Try reading from .env file in project root
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        env_file = os.path.join(project_root, '.env')
+        if os.path.exists(env_file):
+            with open(env_file, 'r') as f:
+                for line in f:
+                    if line.startswith('TMDB_API_KEY='):
+                        tmdb_key = line.split('=', 1)[1].strip()
+                        break
+    return tmdb_key
+
+def get_discord_webhook():
+    """Get Discord webhook URL from environment variables."""
+    import os
+    discord_webhook = os.environ.get('DISCORD_WEBHOOK_URL')
+    if not discord_webhook:
+        # Try reading from .env file in project root
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        env_file = os.path.join(project_root, '.env')
+        if os.path.exists(env_file):
+            with open(env_file, 'r') as f:
+                for line in f:
+                    if line.startswith('DISCORD_WEBHOOK_URL='):
+                        discord_webhook = line.split('=', 1)[1].strip()
+                        break
+    return discord_webhook
+
+def get_plex_token():
+    """Get Plex token from Plex configuration."""
+    storage_path = find_storage_path()
+    plex_config = os.path.join(storage_path, "Plex", "config", "Preferences.xml")
+    
+    if not os.path.exists(plex_config):
+        print(f"⚠️ Plex config not found: {plex_config}")
+        return None
+    
+    try:
+        tree = ET.parse(plex_config)
+        root = tree.getroot()
+        
+        # Look for PlexOnlineToken attribute
+        token = root.get('PlexOnlineToken')
+        if token:
+            return token.strip()
+            
+        print("⚠️ PlexOnlineToken not found in Plex configuration")
+        return None
+        
+    except Exception as e:
+        print(f"❌ Error reading Plex config: {e}")
+        return None
+
+def configure_gaps_applications():
+    """Configure GAPS connections automatically using the GAPS REST API."""
+    print("🎯 Configuring GAPS applications via REST API...")
+    
+    storage_path = find_storage_path()
+    print(f"📁 Using storage path: {storage_path}")
+    
+    # Get API keys and tokens
+    radarr_config = os.path.join(storage_path, "Radarr", "config", "config.xml")
+    
+    print(f"🔍 Checking for Radarr config at: {radarr_config}")
+    
+    # Wait for Radarr API key with retries
+    max_retries = 6
+    retry_delay = 10
+    
+    for attempt in range(max_retries):
+        radarr_api_key = get_api_key_from_xml(radarr_config)
+        
+        if radarr_api_key:
+            print(f"✅ Found Radarr API key on attempt {attempt + 1}")
+            break
+        elif attempt < max_retries - 1:
+            print(f"⏳ Radarr API key not ready, waiting {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+            time.sleep(retry_delay)
+        else:
+            print("❌ Could not get Radarr API key after all retries")
+            print(f"   - Radarr API key missing from {radarr_config}")
+            return False
+    
+    # Get TMDB API key
+    tmdb_api_key = get_tmdb_api_key()
+    if not tmdb_api_key:
+        print("❌ TMDB API key not found in environment or .env file")
+        print("💡 Make sure TMDB_API_KEY is set in your .env file")
+        return False
+    
+    # Get Discord webhook (optional)
+    discord_webhook = get_discord_webhook()
+    
+    # Get Plex token
+    plex_token = get_plex_token()
+    if not plex_token:
+        print("⚠️ Plex token not found - GAPS will work but may have limited Plex integration")
+        print("💡 Make sure Plex is claimed and configured")
+    
+    # Wait for GAPS to be ready (it needs time to start up)
+    gaps_url = "http://localhost:8484"
+    max_gaps_retries = 12
+    gaps_retry_delay = 10
+    
+    print("⏳ Waiting for GAPS to be ready...")
+    for attempt in range(max_gaps_retries):
+        try:
+            import urllib.request
+            import urllib.error
+            
+            # Try to access GAPS homepage
+            req = urllib.request.Request(f"{gaps_url}/", headers={'User-Agent': 'Surge-Config/1.0'})
+            response = urllib.request.urlopen(req, timeout=10)
+            if response.status == 200:
+                print(f"✅ GAPS is ready on attempt {attempt + 1}")
+                break
+        except (urllib.error.URLError, urllib.error.HTTPError, Exception) as e:
+            if attempt < max_gaps_retries - 1:
+                print(f"⏳ GAPS not ready yet, waiting {gaps_retry_delay}s... (attempt {attempt + 1}/{max_gaps_retries})")
+                time.sleep(gaps_retry_delay)
+            else:
+                print(f"❌ GAPS not accessible after {max_gaps_retries} attempts")
+                print(f"   - Could not connect to {gaps_url}")
+                print(f"   - Last error: {e}")
+                return False
+    
+    # Configure GAPS via REST API
+    try:
+        import urllib.request
+        import urllib.parse
+        import json
+        
+        print("📝 Configuring GAPS via REST API...")
+        
+        # 1. Test TMDB API key first
+        test_url = f"{gaps_url}/configuration/test/tmdbKey/{tmdb_api_key}"
+        print(f"🔍 Testing TMDB API key...")
+        
+        req = urllib.request.Request(test_url, headers={'User-Agent': 'Surge-Config/1.0'})
+        req.get_method = lambda: 'PUT'
+        
+        try:
+            response = urllib.request.urlopen(req, timeout=30)
+            test_response = json.loads(response.read().decode('utf-8'))
+            
+            if test_response.get('code') == 20:  # TMDB_KEY_VALID = 20
+                print("✅ TMDB API key is valid")
+            else:
+                print(f"❌ TMDB API key test failed: {test_response}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to test TMDB API key: {e}")
+            return False
+        
+        # 2. Save TMDB API key
+        save_url = f"{gaps_url}/configuration/save/tmdbKey/{tmdb_api_key}"
+        print(f"💾 Saving TMDB API key...")
+        
+        req = urllib.request.Request(save_url, headers={'User-Agent': 'Surge-Config/1.0'})
+        req.get_method = lambda: 'POST'
+        
+        try:
+            response = urllib.request.urlopen(req, timeout=30)
+            save_response = json.loads(response.read().decode('utf-8'))
+            
+            if save_response.get('code') == 23:  # TMDB_KEY_SAVE_SUCCESSFUL = 23
+                print("✅ TMDB API key saved successfully")
+            else:
+                print(f"❌ TMDB API key save failed: {save_response}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to save TMDB API key: {e}")
+            return False
+        
+        # 3. Add Plex server (if token available)
+        if plex_token:
+            print(f"🎬 Adding Plex server...")
+            plex_url = f"{gaps_url}/configuration/add/plex"
+            
+            # Prepare form data for Plex server
+            plex_data = {
+                'address': 'surge-plex',
+                'port': '32400',
+                'plexToken': plex_token
+            }
+            
+            # Encode form data
+            encoded_data = urllib.parse.urlencode(plex_data).encode('utf-8')
+            
+            req = urllib.request.Request(
+                plex_url, 
+                data=encoded_data,
+                headers={
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'User-Agent': 'Surge-Config/1.0'
+                }
+            )
+            
+            try:
+                response = urllib.request.urlopen(req, timeout=30)
+                if response.status == 200:
+                    print("✅ Plex server added successfully")
+                else:
+                    print(f"⚠️ Plex server add returned status: {response.status}")
+                    
+            except Exception as e:
+                print(f"⚠️ Failed to add Plex server (non-critical): {e}")
+                print("💡 You can add Plex server manually in GAPS web interface")
+        
+        print("\n" + "="*60)
+        print("🎯 GAPS Configuration Completed Successfully!")
+        print("="*60)
+        print("✅ GAPS is now fully configured and ready to use")
+        print("✅ TMDB API key configured automatically")
+        print(f"✅ TMDB API key: {tmdb_api_key[:8]}...")
+        
+        if plex_token:
+            print("✅ Plex server configured automatically")
+            print(f"✅ Plex token: {plex_token[:8]}...")
+        else:
+            print("⚠️ Plex server not configured (token not found)")
+            
+        if discord_webhook:
+            print("ℹ️ Discord webhook available for notifications")
+            print(f"ℹ️ Webhook: {discord_webhook[:50]}...")
+        
+        print("\n🌟 Next Steps:")
+        print("1. Visit http://localhost:8484 to access GAPS")
+        print("2. Go to Libraries tab to scan your Plex libraries")
+        print("3. Go to Recommended tab to find missing movies")
+        print("4. Configure notifications in Settings if desired")
+        print("="*60)
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error configuring GAPS via API: {e}")
+        print("💡 GAPS may need more time to start up, or there may be a network issue")
+        print("💡 You can configure GAPS manually at http://localhost:8484")
+        print(f"💡 Use TMDB API key: {tmdb_api_key}")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
     configure_bazarr_applications()
+    configure_gaps_applications()
