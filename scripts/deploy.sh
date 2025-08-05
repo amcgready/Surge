@@ -95,6 +95,9 @@ create_directories() {
     
     mkdir -p "$DATA_ROOT"/{media/{movies,tv,music},downloads,config,logs}
     
+    # Ensure logs directory exists for post-deployment logging
+    mkdir -p "$PROJECT_DIR/logs"
+    
     # Fix ownership for all directories (1000:1000 matches PUID:PGID used in containers)
     print_info "Setting proper ownership for storage directories..."
     if [ "$(id -u)" -eq 0 ]; then
@@ -196,6 +199,13 @@ deploy_services() {
     # Configure services automatically
     configure_services
     
+    # Run post-deployment configuration (in background to not block)
+    print_info "Starting post-deployment configuration in background..."
+    if [ -f "$SCRIPT_DIR/post-deploy-config.sh" ]; then
+        nohup bash "$SCRIPT_DIR/post-deploy-config.sh" > "$PROJECT_DIR/logs/post-deploy.log" 2>&1 &
+        print_info "Post-deployment configuration running in background. Check logs/post-deploy.log for progress."
+    fi
+    
     print_info "Access your services:"
     echo "  - Homepage Dashboard: http://localhost:3000"
     echo "  - CineSync Media Manager: http://localhost:8082"
@@ -216,8 +226,9 @@ deploy_services() {
 configure_services() {
     print_info "Configuring service connections automatically..."
     
-    # Set storage path environment variable
-    export STORAGE_PATH="/mnt/mycloudpr4100/Surge"
+    # Read STORAGE_PATH from .env file or use default
+    STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+    export STORAGE_PATH
     
     # Generate CineSync configuration if CineSync is enabled
     if echo "$COMPOSE_PROFILES" | grep -q "cinesync"; then
@@ -327,10 +338,9 @@ sys.exit(0 if success else 1)
     # Configure service API keys if needed (only if config files don't exist)
     if [ -f "$SCRIPT_DIR/inject-api-keys.py" ]; then
         # Check if API keys need to be generated (only for new installations)
-        storage_path="/mnt/mycloudpr4100/Surge"
-        if [ ! -f "$storage_path/Prowlarr/config/config.xml" ] || [ ! -f "$storage_path/Radarr/config/config.xml" ] || [ ! -f "$storage_path/Sonarr/config/config.xml" ]; then
+        if [ ! -f "$STORAGE_PATH/Prowlarr/config/config.xml" ] || [ ! -f "$STORAGE_PATH/Radarr/config/config.xml" ] || [ ! -f "$STORAGE_PATH/Sonarr/config/config.xml" ]; then
             print_info "Generating initial API keys for new services..."
-            if python3 "$SCRIPT_DIR/inject-api-keys.py" --generate-all --config-dir "$storage_path" 2>/dev/null; then
+            if python3 "$SCRIPT_DIR/inject-api-keys.py" --generate-all --config-dir "$STORAGE_PATH" 2>/dev/null; then
                 print_success "Initial API keys generated successfully!"
             else
                 print_info "API keys will be generated automatically when services start"

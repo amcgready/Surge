@@ -6,7 +6,14 @@
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_FILE="$PROJECT_DIR/configs/cinesync-env.template"
-OUTPUT_DIR="$PROJECT_DIR/data/Cinesync/config"
+
+# Read STORAGE_PATH from .env file
+if [ -f "$PROJECT_DIR/.env" ]; then
+    STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r')
+fi
+STORAGE_PATH=${STORAGE_PATH:-/opt/surge}
+
+OUTPUT_DIR="$STORAGE_PATH/Cinesync/config"
 OUTPUT_FILE="$OUTPUT_DIR/.env"
 
 print_info() {

@@ -139,6 +139,56 @@ EOF
     fi
 }
 
+# Configure Plex libraries
+configure_plex_libraries() {
+    log_info "Configuring Plex libraries based on CineSync folder structure..."
+    
+    # Wait for Plex to be fully ready
+    if ! wait_for_service "Plex" 32400; then
+        log_error "Plex is not ready, skipping library configuration"
+        return 1
+    fi
+    
+    # Additional wait for Plex to be fully initialized
+    log_info "Waiting additional 60 seconds for Plex to fully initialize..."
+    sleep 60
+    
+    # Check if the Plex library configuration script exists
+    if [ ! -f "$SCRIPT_DIR/configure-plex-libraries.py" ]; then
+        log_error "Plex library configuration script not found"
+        return 1
+    fi
+    
+    # Set environment variables for the script to read CineSync config
+    # Read all CineSync-related environment variables from .env and docker-compose
+    export STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_ROOT/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r')
+    
+    # CineSync layout and separation settings
+    export CINESYNC_LAYOUT=$(grep "^CINESYNC_LAYOUT=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "true")
+    export CINESYNC_ANIME_SEPARATION=$(grep "^CINESYNC_ANIME_SEPARATION=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "true")
+    export CINESYNC_4K_SEPARATION=$(grep "^CINESYNC_4K_SEPARATION=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "false")
+    export CINESYNC_KIDS_SEPARATION=$(grep "^CINESYNC_KIDS_SEPARATION=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "false")
+    
+    # CineSync custom folder names (read from .env or use docker-compose defaults)
+    export CINESYNC_CUSTOM_MOVIE_FOLDER=$(grep "^CINESYNC_CUSTOM_MOVIE_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "Movies")
+    export CINESYNC_CUSTOM_SHOW_FOLDER=$(grep "^CINESYNC_CUSTOM_SHOW_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "TV Series")
+    export CINESYNC_CUSTOM_4KMOVIE_FOLDER=$(grep "^CINESYNC_CUSTOM_4KMOVIE_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "4K Movies")
+    export CINESYNC_CUSTOM_4KSHOW_FOLDER=$(grep "^CINESYNC_CUSTOM_4KSHOW_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "4K Series")
+    export CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER=$(grep "^CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "Anime Movies")
+    export CINESYNC_CUSTOM_ANIME_SHOW_FOLDER=$(grep "^CINESYNC_CUSTOM_ANIME_SHOW_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "Anime Series")
+    export CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER=$(grep "^CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "Kids Movies")
+    export CINESYNC_CUSTOM_KIDS_SHOW_FOLDER=$(grep "^CINESYNC_CUSTOM_KIDS_SHOW_FOLDER=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "Kids Series")
+    
+    # Run the Plex library configuration script
+    log_info "Running Plex library configuration script..."
+    if python3 "$SCRIPT_DIR/configure-plex-libraries.py" --plex-url "http://localhost:32400" --storage-path "$STORAGE_PATH"; then
+        log_info "✅ Plex libraries configured successfully"
+    else
+        log_error "❌ Failed to configure Plex libraries"
+        return 1
+    fi
+}
+
 # Main execution
 main() {
     log_info "Starting post-deployment configuration..."
@@ -163,6 +213,11 @@ main() {
     # Configure applications
     if docker ps --format "table {{.Names}}" | grep -q "prowlarr"; then
         configure_prowlarr_apps
+    fi
+    
+    # Configure Plex libraries (if Plex is running)
+    if docker ps --format "table {{.Names}}" | grep -q "plex"; then
+        configure_plex_libraries
     fi
     
     # Run full auto-configuration

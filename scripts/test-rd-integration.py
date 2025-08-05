@@ -6,6 +6,7 @@ Tests the complete flow from WebUI to Zurg configuration
 """
 
 import sys
+import os
 from pathlib import Path
 
 def test_rd_token_integration():
@@ -17,8 +18,8 @@ def test_rd_token_integration():
     test_config = {
         "mediaAutomation": {"zurg": True},
         "mediaServer": "plex",
-        "storagePath": "/opt/surge",
-        "zurgToken": "QTK54XU5XMF32XL5ULGBFM4DUQP6RHLL7KP2KMX563LGT2TLVZRQ",
+        "storagePath": os.getenv("STORAGE_PATH", "/opt/surge"),
+        "zurgToken": os.getenv("REAL_DEBRID_API_TOKEN", "your_real_debrid_token_here"),
         "zurgSettings": {
             "destination": "/mnt/Zurg",
             "downloads_path": "/downloads",
@@ -101,7 +102,10 @@ def test_current_env_file():
     print("\n🔍 Testing Current Environment File")
     print("=" * 40)
     
-    env_file = Path("/home/adam/Desktop/Surge/.env")
+    # Use script directory to find project root
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    env_file = project_root / ".env"
     
     if not env_file.exists():
         print("  ❌ .env file not found")
@@ -135,7 +139,10 @@ def test_zurg_template():
     print("\n🔍 Testing Zurg Configuration Template")
     print("=" * 42)
     
-    template_file = Path("/home/adam/Desktop/Surge/configs/zurg-config.yml.template")
+    # Use script directory to find project root  
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    template_file = project_root / "configs" / "zurg-config.yml.template"
     
     if not template_file.exists():
         print("  ❌ Zurg template not found")

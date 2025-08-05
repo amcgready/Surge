@@ -1,6 +1,6 @@
 {
   "main": {
-    "apiKey": "d755e24ef2c14addbf65398c5acf3b6a",
+    "apiKey": "",
     "applicationTitle": "Surge Overseerr",
     "applicationUrl": "",
     "csrfProtection": false,
@@ -27,7 +27,7 @@
       "name": "Radarr",
       "hostname": "surge-radarr",
       "port": 7878,
-      "apiKey": "e4335b552c154cd2b37edae89c6d3f8f",
+      "apiKey": "",
       "useSsl": false,
       "baseUrl": "",
       "activeProfileId": 1,
@@ -48,7 +48,7 @@
       "name": "Sonarr",
       "hostname": "surge-sonarr",
       "port": 8989,
-      "apiKey": "98b2481b22fc49439d55cf6f267f0a13",
+      "apiKey": "",
       "useSsl": false,
       "baseUrl": "",
       "activeProfileId": 1,
@@ -69,7 +69,7 @@
       "name": "Tautulli",
       "hostname": "surge-tautulli",
       "port": 8181,
-      "apiKey": "fd731ccc576f41d2ab46f683cfe3a0c3",
+      "apiKey": "",
       "useSsl": false,
       "baseUrl": "",
       "externalUrl": ""

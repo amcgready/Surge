@@ -15,9 +15,10 @@ import sqlite3
 def find_storage_path():
     """Find the correct storage path for configurations."""
     possible_paths = [
-        "/mnt/mycloudpr4100/Surge",
-        os.path.expanduser("~/Desktop/Surge/data"),
-        "data"
+        os.environ.get('STORAGE_PATH'),  # STORAGE_PATH environment variable
+        os.environ.get('DATA_ROOT'),     # DATA_ROOT environment variable
+        "/opt/surge",                    # Default installation path
+        "data"                          # Local data directory
     ]
     
     for path in possible_paths:

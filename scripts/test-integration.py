@@ -6,6 +6,7 @@ Demonstrates the complete workflow for setting up Plex with automated library cr
 """
 
 import sys
+import os
 import time
 
 def test_setup_integration():
@@ -16,7 +17,7 @@ def test_setup_integration():
     # Simulate WebUI configuration data
     test_config = {
         "mediaServer": "plex",
-        "storagePath": "/opt/surge",
+        "storagePath": os.getenv("STORAGE_PATH", "/opt/surge"),
         "plexSettings": {
             "HOSTNAME": "Surge Media Server",
             "TZ": "UTC",
@@ -117,7 +118,7 @@ def show_command_examples():
     print("Create libraries with custom server name:")
     print("  python3 scripts/configure-plex-libraries.py \\")
     print("    --server-name 'My Media Server' \\")
-    print("    --storage-path /opt/surge")
+    print(f"    --storage-path {os.getenv('STORAGE_PATH', '/opt/surge')}")
     print()
     
     print("Test the complete setup:")

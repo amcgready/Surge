@@ -22,10 +22,10 @@ class PlexLibraryManager:
     def find_storage_path(self):
         """Find the correct storage path for configurations."""
         possible_paths = [
-            os.environ.get('DATA_ROOT'),
-            '/opt/surge',
-            '/mnt/mycloudpr4100/Surge',
-            './data'
+            os.environ.get('STORAGE_PATH'),  # STORAGE_PATH environment variable
+            os.environ.get('DATA_ROOT'),     # DATA_ROOT environment variable 
+            '/opt/surge',                    # Default installation path
+            './data'                        # Local data directory
         ]
         
         for path in possible_paths:
@@ -124,30 +124,57 @@ class PlexLibraryManager:
             return []
     
     def get_cinesync_folders(self):
-        """Get CineSync folder structure from configuration."""
-        cinesync_folders = {
-            'Movies': '/data/movies',
-            'TV Shows': '/data/tv', 
-            'Anime Movies': '/data/movies/anime',
-            'Anime Series': '/data/tv/anime'
-        }
+        """Get CineSync folder structure by reading the actual configuration from environment and docker-compose."""
+        cinesync_folders = {}
         
-        # Try to read from CineSync config or environment variables
-        env_mappings = {
-            'CINESYNC_CUSTOM_MOVIE_FOLDER': ('Movies', '/data/movies'),
-            'CINESYNC_CUSTOM_SHOW_FOLDER': ('TV Shows', '/data/tv'),
-            'CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER': ('Anime Movies', '/data/movies/anime'),
-            'CINESYNC_CUSTOM_ANIME_SHOW_FOLDER': ('Anime Series', '/data/tv/anime')
-        }
+        # Define the media base paths inside the container
+        media_base = "/data"
         
-        for env_var, (lib_name, _) in env_mappings.items():
-            custom_folder = os.environ.get(env_var)
-            if custom_folder:
-                # Update the path but keep the structure
-                if 'movie' in env_var.lower():
-                    cinesync_folders[lib_name] = f"/data/movies/{custom_folder}" if custom_folder != 'Movies' else '/data/movies'
-                else:
-                    cinesync_folders[lib_name] = f"/data/tv/{custom_folder}" if custom_folder != 'Shows' else '/data/tv'
+        # Read CineSync configuration from environment or docker-compose defaults
+        # This ensures we match exactly what the user has configured
+        
+        # Check if CineSync layout is enabled (if disabled, no custom folders are created)
+        cinesync_layout = os.environ.get('CINESYNC_LAYOUT', 'true').lower() == 'true'
+        if not cinesync_layout:
+            print("⚠️ CineSync layout is disabled - using basic folder structure")
+            cinesync_folders['Movies'] = f"{media_base}/movies"
+            cinesync_folders['TV Shows'] = f"{media_base}/tv"
+            return cinesync_folders
+        
+        # Get separation settings (determines which extra libraries are created)
+        anime_separation = os.environ.get('CINESYNC_ANIME_SEPARATION', 'true').lower() == 'true'
+        k4_separation = os.environ.get('CINESYNC_4K_SEPARATION', 'false').lower() == 'true'
+        kids_separation = os.environ.get('CINESYNC_KIDS_SEPARATION', 'false').lower() == 'true'
+        
+        # Get custom folder names from environment (these are what users can customize)
+        movie_folder = os.environ.get('CINESYNC_CUSTOM_MOVIE_FOLDER', 'Movies')
+        show_folder = os.environ.get('CINESYNC_CUSTOM_SHOW_FOLDER', 'TV Series')
+        k4_movie_folder = os.environ.get('CINESYNC_CUSTOM_4KMOVIE_FOLDER', '4K Movies')
+        k4_show_folder = os.environ.get('CINESYNC_CUSTOM_4KSHOW_FOLDER', '4K Series')
+        anime_movie_folder = os.environ.get('CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER', 'Anime Movies')
+        anime_show_folder = os.environ.get('CINESYNC_CUSTOM_ANIME_SHOW_FOLDER', 'Anime Series')
+        kids_movie_folder = os.environ.get('CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER', 'Kids Movies')
+        kids_show_folder = os.environ.get('CINESYNC_CUSTOM_KIDS_SHOW_FOLDER', 'Kids Series')
+        
+        # Always create the main libraries (these are required)
+        cinesync_folders[movie_folder] = f"{media_base}/{movie_folder}"
+        cinesync_folders[show_folder] = f"{media_base}/{show_folder}"
+        
+        # Create additional libraries only if the corresponding separation is enabled
+        if k4_separation:
+            cinesync_folders[k4_movie_folder] = f"{media_base}/{k4_movie_folder}"
+            cinesync_folders[k4_show_folder] = f"{media_base}/{k4_show_folder}"
+            print(f"📺 4K separation enabled - will create {k4_movie_folder} and {k4_show_folder} libraries")
+        
+        if anime_separation:
+            cinesync_folders[anime_movie_folder] = f"{media_base}/{anime_movie_folder}"
+            cinesync_folders[anime_show_folder] = f"{media_base}/{anime_show_folder}"
+            print(f"🎌 Anime separation enabled - will create {anime_movie_folder} and {anime_show_folder} libraries")
+        
+        if kids_separation:
+            cinesync_folders[kids_movie_folder] = f"{media_base}/{kids_movie_folder}"
+            cinesync_folders[kids_show_folder] = f"{media_base}/{kids_show_folder}"
+            print(f"👶 Kids separation enabled - will create {kids_movie_folder} and {kids_show_folder} libraries")
         
         return cinesync_folders
     
@@ -233,6 +260,7 @@ class PlexLibraryManager:
     def configure_all_libraries(self, server_name=None):
         """Configure all CineSync-based libraries."""
         print("🎬 Configuring Plex libraries based on CineSync structure...")
+        print("🔍 Reading CineSync configuration...")
         
         # Test connection first
         if not self.test_plex_connection():
@@ -248,10 +276,20 @@ class PlexLibraryManager:
         existing_libs = self.get_existing_libraries()
         existing_names = [lib['title'] for lib in existing_libs]
         
-        print(f"📚 Found {len(existing_libs)} existing libraries: {', '.join(existing_names)}")
+        print(f"📚 Found {len(existing_libs)} existing libraries: {', '.join(existing_names) if existing_names else 'None'}")
         
         # Get CineSync folder structure
         cinesync_folders = self.get_cinesync_folders()
+        
+        if not cinesync_folders:
+            print("❌ No CineSync folders detected. Check your CineSync configuration.")
+            return False
+        
+        print(f"📁 Detected CineSync folder structure based on user configuration:")
+        for lib_name, lib_path in cinesync_folders.items():
+            lib_type = 'movie' if any(keyword in lib_name.lower() for keyword in ['movie', 'film']) or lib_name.lower() in ['movies', '4kmovies', 'animemovies', 'kidsmovies'] else 'show'
+            print(f"  - {lib_name} → {lib_path} ({lib_type})")
+        print()
         
         # Create libraries based on CineSync structure
         success_count = 0
@@ -266,11 +304,17 @@ class PlexLibraryManager:
                 success_count += 1
                 continue
             
-            # Determine library type
-            if 'movie' in lib_name.lower() or lib_name == 'Movies':
+            # Determine library type based on folder name
+            if any(keyword in lib_name.lower() for keyword in ['movie', 'film']):
                 lib_type = 'movie'
-            else:
+            elif any(keyword in lib_name.lower() for keyword in ['show', 'series', 'tv']):
                 lib_type = 'show'
+            else:
+                # Default based on common patterns
+                if lib_name.lower() in ['movies', '4kmovies', 'animemovies', 'kidsmovies']:
+                    lib_type = 'movie'
+                else:
+                    lib_type = 'show'
             
             # Create the library
             if self.create_library(lib_name, lib_type, lib_path):

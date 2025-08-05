@@ -132,8 +132,9 @@ def deploy_services():
             data['zurgSettings']['rd_token'] = data['zurgToken']
 
         # NZBGet: all Docker env vars and advanced options
+        storage_path = data.get('storagePath', '/opt/surge')
         nzbget_defaults = {
-            'destination_directory': '/mnt/mycloudpr4100/Surge/NZBGet/Downloads',
+            'destination_directory': f'{storage_path}/NZBGet/Downloads',
             'api_key': 'surgestack',
             'host': '0.0.0.0',
             'port': 6789,
