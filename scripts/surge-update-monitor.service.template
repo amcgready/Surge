@@ -1,0 +1,30 @@
+[Unit]
+Description=Surge Container Update Monitor
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=%PROJECT_DIR%
+ExecStart=/usr/bin/python3 %PROJECT_DIR%/scripts/update-monitor.py --daemon
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=always
+RestartSec=30
+StandardOutput=append:/var/log/surge-update-monitor.log
+StandardError=append:/var/log/surge-update-monitor.log
+
+# Environment variables
+Environment=UPDATE_CHECK_INTERVAL=3600
+Environment=UPDATE_NOTIFICATIONS=true
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=%PROJECT_DIR% /var/log
+
+[Install]
+WantedBy=multi-user.target

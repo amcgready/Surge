@@ -433,6 +433,29 @@ EOF
 check_and_notify_updates() {
     print_info "Checking for container updates..."
     
+    # Use the new comprehensive update monitor if available
+    local update_monitor="$PROJECT_DIR/scripts/update-monitor.py"
+    if [ -f "$update_monitor" ] && command -v python3 &> /dev/null; then
+        print_info "Using enhanced update monitoring system..."
+        
+        # Run update check
+        if python3 "$update_monitor" --check-once; then
+            print_success "All containers are up to date"
+            return 0
+        else
+            print_warning "Container updates are available"
+            send_discord_notification \
+                "Container Updates Available" \
+                "Updates have been detected for your Surge media stack.\n\nRun \`./surge --update\` to apply updates safely." \
+                "updates" \
+                "16776960"  # Orange color
+            return 1
+        fi
+    fi
+    
+    # Fallback to legacy update checking if new system unavailable
+    print_warning "Using legacy update checking (install python3 for enhanced monitoring)"
+    
     if ! command -v docker &> /dev/null; then
         print_error "Docker not found"
         return 1
@@ -475,7 +498,7 @@ check_and_notify_updates() {
         
         send_discord_notification \
             "Container Updates Available" \
-            "Updates are available for the following services:\n\n$update_list\n\nUse \`./surge update\` to apply updates." \
+            "Updates are available for the following services:\n\n$update_list\n\nUse \`./surge --update\` to apply updates." \
             "updates" \
             "16776960"  # Orange color
             

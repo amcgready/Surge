@@ -53,7 +53,10 @@ show_help() {
     echo "  configure-overseerr     - Configure Overseerr with service API keys"
     echo ""
     echo "Management Commands:"
-    echo "  update                  - Update all containers to latest versions"
+    echo "  --update                - Update all containers to latest versions"
+    echo "  --update --check        - Check for updates without applying them"
+    echo "  --update --force        - Force update even if no updates detected"
+    echo "  --update --monitor-start - Start background update monitoring"
     echo "  status                  - Show status of all services"
     echo "  logs [service]          - View logs (all services or specific service)"
     echo "  restart                 - Restart all services"
@@ -147,7 +150,7 @@ case ${1:-} in
         fi
         exec "$SCRIPT_DIR/scripts/exec.sh" "${@:2}"
         ;;
-    update)
+    update|--update)
         exec "$SCRIPT_DIR/scripts/update.sh" "${@:2}"
         ;;
     status|logs|restart|cleanup|health|reset)
