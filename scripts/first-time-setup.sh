@@ -104,6 +104,78 @@ print_step() {
     echo -e "${PURPLE}[STEP]${NC} $1"
 }
 
+# Progress bar function with time estimate
+show_progress_bar() {
+    local message="$1"
+    local duration="${2:-30}"  # Default 30 seconds
+    local steps=50
+    
+    # Calculate delay using shell arithmetic (fallback if bc not available)
+    if command -v bc >/dev/null 2>&1; then
+        local delay=$(echo "scale=2; $duration / $steps" | bc -l)
+    else
+        local delay=$((duration * 100 / steps))  # Use centiseconds
+        delay="0.$(printf "%02d" $delay)"
+    fi
+    
+    echo -e "${CYAN}[PROGRESS]${NC} $message"
+    echo -ne "["
+    
+    for ((i=0; i<=steps; i++)); do
+        # Calculate percentage
+        local percent=$((i * 100 / steps))
+        
+        # Show progress bar
+        if [ $i -lt $steps ]; then
+            echo -ne "="
+        else
+            echo -ne "="
+        fi
+        
+        # Show percentage and time remaining
+        local remaining=$((duration - (i * duration / steps)))
+        if [ $i -eq $steps ]; then
+            echo -e "] ${GREEN}100%${NC} - Complete!"
+        else
+            echo -ne "\r["
+            for ((j=0; j<i; j++)); do echo -ne "="; done
+            for ((j=i; j<steps; j++)); do echo -ne " "; done
+            echo -ne "] ${YELLOW}$percent%${NC} - ETA: ${remaining}s"
+        fi
+        
+        # Don't sleep on last iteration
+        if [ $i -lt $steps ]; then
+            if command -v bc >/dev/null 2>&1; then
+                sleep "$delay"
+            else
+                # Fallback: use basic sleep with integer seconds
+                sleep 1
+            fi
+        fi
+    done
+    echo
+}
+
+# Quick progress bar for shorter operations
+show_quick_progress() {
+    local message="$1"
+    local duration="${2:-10}"  # Default 10 seconds
+    
+    echo -e "${CYAN}[PROGRESS]${NC} $message"
+    echo -ne "Working: "
+    
+    local spinner_chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    local spinner_length=${#spinner_chars}
+    
+    for ((i=0; i<duration; i++)); do
+        local char_index=$((i % spinner_length))
+        echo -ne "${spinner_chars:$char_index:1}"
+        echo -ne "\b"
+        sleep 1
+    done
+    echo -e "${GREEN}✓${NC} Complete!"
+}
+
 # Check if this is first run
 check_first_run() {
     if [ -f "$PROJECT_DIR/.surge_initialized" ]; then
@@ -576,6 +648,7 @@ gather_custom_preferences() {
 # Create download directories with proper permissions
 create_download_directories() {
     print_step "Creating download directories..."
+    show_quick_progress "Setting up directory structure..." 8
     
     # Create directory structure
     mkdir -p "$STORAGE_PATH/downloads/"{nzbget,rdt-client,completed,incomplete}
@@ -600,7 +673,13 @@ configure_services_post_deployment() {
     
     # Wait for services to start up
     print_info "Waiting for services to initialize..."
+    show_progress_bar "Services are starting up and creating configuration files..." 30
     sleep 30
+    
+    # Allow additional time for API key generation
+    print_info "Allowing extra time for API key generation..."
+    show_progress_bar "Services are generating API keys and finalizing setup..." 25
+    sleep 25
     
     # Skipping browser prompt and user authentication confirmation; proceeding directly to API key extraction and configuration
 
@@ -621,7 +700,9 @@ configure_services_post_deployment() {
 
     # Configure Prowlarr indexers and connections
     if [ "$ENABLE_PROWLARR" = "true" ]; then
-        configure_prowlarr_comprehensive
+        print_info "Connecting Prowlarr to Radarr and Sonarr..."
+        show_quick_progress "Setting up Prowlarr indexers and connections..." 20
+        connect_prowlarr_to_arr_services
         if [ $? -ne 0 ]; then
             print_error "Failed to add Prowlarr connections or indexers! Please check your authentication and try again."
         fi
@@ -630,6 +711,7 @@ configure_services_post_deployment() {
     # Configure NZBGet comprehensive automation
     if [ "$ENABLE_NZBGET" = "true" ]; then
         print_info "🔧 Running NZBGet comprehensive automation..."
+        show_quick_progress "Configuring NZBGet automation settings..." 15
         python3 "$SCRIPT_DIR/configure-nzbget.py" "$STORAGE_PATH"
         if [ $? -eq 0 ]; then
             print_success "NZBGet automation completed successfully!"
@@ -655,6 +737,7 @@ configure_services_post_deployment() {
 
     # Run automatic API discovery and configuration
     print_info "🔧 Running automatic service configuration..."
+    show_progress_bar "Running advanced API discovery and service configuration..." 60
     if [ -x "$SCRIPT_DIR/auto-config.sh" ]; then
         "$SCRIPT_DIR/auto-config.sh" --storage-path "$STORAGE_PATH" --wait-timeout 120
         if [ $? -eq 0 ]; then
@@ -669,6 +752,7 @@ configure_services_post_deployment() {
 # Generate homepage.yaml widgets for all enabled services
 configure_homepage_widgets() {
     print_step "🖥️  Configuring Homepage widgets..."
+    show_quick_progress "Generating homepage dashboard configuration..." 8
     local homepage_yaml="$PROJECT_DIR/homepage.yaml"
     echo "services:" > "$homepage_yaml"
 
@@ -778,6 +862,64 @@ connect_prowlarr_to_arr_services() {
     fi
 }
 
+# Add application connection to Prowlarr (Radarr/Sonarr)
+add_prowlarr_app_connection() {
+    local app_name=$1
+    local app_api_key=$2
+    local app_port=$3
+    local prowlarr_api_key=$(get_prowlarr_api_key)
+    
+    if [ -n "$app_api_key" ] && [ -n "$prowlarr_api_key" ]; then
+        print_info "Adding $app_name connection to Prowlarr..."
+        
+        # Determine app type and settings
+        local app_implementation=""
+        local app_base_url=""
+        case "$app_name" in
+            "radarr")
+                app_implementation="Radarr"
+                app_base_url="http://surge-radarr:7878"
+                ;;
+            "sonarr")
+                app_implementation="Sonarr"
+                app_base_url="http://surge-sonarr:8989"
+                ;;
+            *)
+                print_warning "Unknown application: $app_name"
+                return 1
+                ;;
+        esac
+        
+        local app_data='{
+            "enable": true,
+            "name": "'$app_implementation'",
+            "fields": [
+                {"name": "prowlarrUrl", "value": "http://surge-prowlarr:9696"},
+                {"name": "baseUrl", "value": "'$app_base_url'"},
+                {"name": "apiKey", "value": "'$app_api_key'"},
+                {"name": "syncCategories", "value": [5000,5030,5040,5045,5050,5060,5070,5080]}
+            ],
+            "implementationName": "'$app_implementation'",
+            "implementation": "'$app_implementation'",
+            "configContract": "'$app_implementation'Settings",
+            "tags": []
+        }'
+        
+        curl -s -X POST "http://localhost:9696/api/v1/applications" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: $prowlarr_api_key" \
+            -d "$app_data" > /dev/null
+            
+        if [ $? -eq 0 ]; then
+            print_success "$app_name connection added to Prowlarr"
+        else
+            print_warning "Failed to add $app_name connection to Prowlarr"
+        fi
+    else
+        print_warning "Missing API keys for $app_name connection to Prowlarr"
+    fi
+}
+
 # Add Prowlarr as an indexer in Sonarr and Radarr
 add_prowlarr_to_arr() {
     local service=$1
@@ -825,6 +967,7 @@ configure_arr_download_clients() {
     # Configure RDT-Client if enabled
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
         print_info "🌐 Running RDT-Client comprehensive automation..."
+        show_quick_progress "Configuring RDT-Client and Torrentio settings..." 12
         if [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
             python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"
             if [ $? -eq 0 ]; then
@@ -974,6 +1117,7 @@ configure_tautulli_media_server() {
 # Create configuration file
 create_config() {
     print_step "Creating configuration file..."
+    show_quick_progress "Generating .env configuration..." 5
     
 
     cat > "$PROJECT_DIR/.env" << EOF
@@ -1086,6 +1230,7 @@ EOF
 # Create per-container directory structure
 create_service_directories() {
     print_step "Creating per-service directory structure..."
+    show_quick_progress "Setting up individual service directories..." 12
 
     # List of services and their required subfolders
     declare -A service_folders
@@ -1153,6 +1298,7 @@ create_directories() {
 # Create initial service configurations
 create_service_configs() {
     print_step "Creating initial service configurations..."
+    show_quick_progress "Preparing configuration templates..." 10
     
     # Create Kometa config template
     mkdir -p "$PROJECT_DIR/initial-configs"
@@ -1208,7 +1354,7 @@ show_next_steps() {
         deploy_stack "$MEDIA_SERVER"
         # Ensure Prowlarr indexers are configured after deployment
         if [ "$ENABLE_PROWLARR" = "true" ]; then
-            configure_prowlarr_comprehensive
+            connect_prowlarr_to_arr_services
         fi
     else
         echo ""
@@ -1274,12 +1420,16 @@ deploy_stack() {
     
     # Run the deployment script
     if [ -f "$SCRIPT_DIR/deploy.sh" ]; then
+        print_step "🚀 Deploying Surge stack..."
+        show_progress_bar "Starting containers and initializing services..." 45
         bash "$SCRIPT_DIR/deploy.sh" "$media_server"
         
         if [ $? -eq 0 ]; then
             print_success "Surge stack deployed successfully!"
             
             # Run comprehensive post-deployment configuration
+            print_step "Running post-deployment configuration..."
+            show_progress_bar "Connecting services and configuring automation..." 90
             configure_services_post_deployment
             
             display_final_access_info "$media_server"
