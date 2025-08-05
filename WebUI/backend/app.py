@@ -74,7 +74,6 @@ def deploy_services():
             'nzbget': 'nzbget',
             'rdtclient': 'rdt-client',
             'zurg': 'zurg',
-            'zilean': 'zilean',
             'cliDebrid': 'cli-debrid',
             'decypharr': 'decypharr',
             'posterizarr': 'posterizarr',
@@ -395,21 +394,6 @@ def deploy_services():
         for k, v in rdtclient_defaults.items():
             if k not in data['rdtclientSettings']:
                 data['rdtclientSettings'][k] = v
-
-        # Zilean
-        zilean_defaults = {
-            'API_KEY': '',
-            'ZURG_URL': '',
-            'LOG_LEVEL': 'info',
-            'PORT': 8080,
-            'extra_env': {},
-            'extra_args': '',
-        }
-        if 'zileanSettings' not in data:
-            data['zileanSettings'] = {}
-        for k, v in zilean_defaults.items():
-            if k not in data['zileanSettings']:
-                data['zileanSettings'][k] = v
 
         # Gaps
         gaps_defaults = {

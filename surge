@@ -98,7 +98,6 @@ show_help() {
     echo "  ✅ First-time setup wizard"
     echo "  ✅ Request management with Overseerr"
     echo "  ✅ Indexer management with Prowlarr + Torrentio"
-    echo "  ✅ DMM content search with Zilean"
     echo "  ✅ Automatic updates (Watchtower)"
     echo "  ✅ Scheduled asset processing"
     echo "  ✅ Shared assets folder for all services"

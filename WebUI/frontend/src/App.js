@@ -43,7 +43,6 @@ function App() {
   const [showNZBGetAdvanced, setShowNZBGetAdvanced] = React.useState(false);
   const [showRdtClientAdvanced, setShowRdtClientAdvanced] = React.useState(false);
   const [showGapsAdvanced, setShowGapsAdvanced] = React.useState(false);
-  const [showZileanAdvanced, setShowZileanAdvanced] = React.useState(false);
   const [showCliDebridAdvanced, setShowCliDebridAdvanced] = React.useState(false);
   const [showImageMaidAdvanced, setShowImageMaidAdvanced] = React.useState(false);
   const [showCineSyncAdvanced, setShowCineSyncAdvanced] = React.useState(false); // Only used in CineSync section now
@@ -3148,7 +3147,7 @@ function App() {
                   )}
                 </Box>
               )}
-              {/* TODO: Add advanced config UI for Placeholdarr, NZBGet, RDT-Client, Gaps, Zilean, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc. */}
+              {/* TODO: Add advanced config UI for Placeholdarr, NZBGet, RDT-Client, Gaps, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc. */}
               {/* Placeholdarr */}
               {contentEnhancement.placeholdarr && (
                 <Box sx={{ background: '#232323', borderRadius: 2, p: 2, mb: 2, mt: 2, border: '2px solid #07938f' }}>
@@ -3215,7 +3214,7 @@ function App() {
                   )}
                 </Box>
               )}
-              {/* Repeat similar advanced config UI for NZBGet, RDT-Client, Gaps, Zilean, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc., matching backend-documented options */}
+              {/* Repeat similar advanced config UI for NZBGet, RDT-Client, Gaps, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc., matching backend-documented options */}
             </Box>
           )}
           {activeStep === 6 && (

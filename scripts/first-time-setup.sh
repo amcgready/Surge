@@ -228,7 +228,6 @@ gather_auto_preferences() {
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
-    ENABLE_ZILEAN="true"  # Always enable Zilean
     ENABLE_CLI_DEBRID="false"
     ENABLE_DECYPHARR="false"
     ENABLE_WATCHTOWER="true"
@@ -372,8 +371,6 @@ gather_custom_preferences() {
             ZURG_DOWNLOADS_PATH=${zurg_downloads_path:-}
         fi
         
-        ENABLE_ZILEAN="true"  # Always enable Zilean
-        
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
         ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
@@ -407,7 +404,6 @@ gather_custom_preferences() {
         ENABLE_PROWLARR="true"
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
-        ENABLE_ZILEAN="true"  # Always enable Zilean
         ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="false"
@@ -423,7 +419,6 @@ gather_custom_preferences() {
         ENABLE_PROWLARR="true"
         ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
-        ENABLE_ZILEAN="true"  # Always enable Zilean
         ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="true"
@@ -546,9 +541,6 @@ gather_custom_preferences() {
         echo ""
         echo "📡 Prowlarr will be auto-configured with:"
         echo "• Torrentio indexer (requires Real-Debrid API key)"
-        if [ "$ENABLE_ZILEAN" = "true" ]; then
-            echo "• Zilean integration"
-        fi
         echo "• Auto-connection to Radarr and Sonarr"
         
         if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ] && [ "$ENABLE_ZURG" != "true" ]; then
@@ -728,10 +720,6 @@ configure_homepage_widgets() {
     if [ "$ENABLE_DECYPHARR" = "true" ]; then
         echo "  - name: Decypharr" >> "$homepage_yaml"
         echo "    url: http://localhost:8282" >> "$homepage_yaml"
-    fi
-    if [ "$ENABLE_ZILEAN" = "true" ]; then
-        echo "  - name: Zilean" >> "$homepage_yaml"
-        echo "    url: http://localhost:8181" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_GAPS" = "true" ]; then
         echo "  - name: GAPS" >> "$homepage_yaml"
@@ -1015,7 +1003,6 @@ ENABLE_PROWLARR=${ENABLE_PROWLARR:-true}
 ENABLE_NZBGET=${ENABLE_NZBGET:-true}
 ENABLE_RDT_CLIENT=${ENABLE_RDT_CLIENT:-false}
 ENABLE_ZURG=${ENABLE_ZURG:-false}
-ENABLE_ZILEAN=${ENABLE_ZILEAN:-true}
 ENABLE_CLI_DEBRID=${ENABLE_CLI_DEBRID:-false}
 ENABLE_DECYPHARR=${ENABLE_DECYPHARR:-false}
 ENABLE_KOMETA=${ENABLE_KOMETA:-true}
@@ -1035,7 +1022,6 @@ SONARR_PORT=${SONARR_PORT:-8989}
 PROWLARR_PORT=9696
 BAZARR_PORT=6767
 NZBGET_PORT=6789
-ZILEAN_PORT=8181
 DECYPHARR_PORT=8282
 TAUTULLI_PORT=8182
 OVERSEERR_PORT=5055
@@ -1385,10 +1371,6 @@ display_final_access_info() {
     print_info "🔧 Automatic Configuration Completed:"
     if [ -n "$RD_API_TOKEN" ]; then
         echo "  ✅ Torrentio indexer auto-configured with your Real-Debrid token"
-    fi
-    
-    if [ "$ENABLE_ZILEAN" = "true" ]; then
-        echo "  ✅ Zilean indexer auto-configured in Prowlarr"
     fi
     
     echo "  ✅ Prowlarr connected to Radarr and Sonarr"
