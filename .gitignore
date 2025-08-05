@@ -91,3 +91,4 @@ config/sonarr/config.xml
 config/tautulli/config.ini
 .env.backup.20250727_183050
 .surge_initialized
+config/overseerr/settings.json
