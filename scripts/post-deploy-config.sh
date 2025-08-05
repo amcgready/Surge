@@ -220,6 +220,27 @@ main() {
         configure_plex_libraries
     fi
     
+    # Configure RDT-Client automation (if RDT-Client is running)
+    if docker ps --format "table {{.Names}}" | grep -q "rdt-client"; then
+        log_info "Configuring RDT-Client automation..."
+        if [ -f "$SCRIPT_DIR/configure-rdt-client.py" ] && [ -n "$RD_API_TOKEN" ]; then
+            if python3 "$SCRIPT_DIR/configure-rdt-client.py" "$STORAGE_PATH"; then
+                log_info "✅ RDT-Client configuration completed successfully"
+            else
+                log_error "❌ RDT-Client configuration failed"
+            fi
+        elif [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
+            log_info "Running comprehensive RDT-Client and Torrentio setup..."
+            if python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"; then
+                log_info "✅ RDT-Client and Torrentio setup completed successfully"
+            else
+                log_error "❌ RDT-Client and Torrentio setup failed"
+            fi
+        else
+            log_info "⚠️ RDT-Client detected but no automation scripts found"
+        fi
+    fi
+    
     # Run full auto-configuration
     if [ -f "$SCRIPT_DIR/auto-config.sh" ]; then
         log_info "Running full auto-configuration..."

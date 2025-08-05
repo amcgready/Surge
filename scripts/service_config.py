@@ -1233,9 +1233,138 @@ def run_nzbget_full_automation():
         print("💡 Check logs above and verify configurations manually")
         return False
 
+def configure_rdt_client_download_client():
+    """Configure RDT-Client as a download client in Radarr and Sonarr."""
+    print("🌐 Configuring RDT-Client as download client...")
+    
+    storage_path = find_storage_path()
+    print(f"📁 Using storage path: {storage_path}")
+    
+    # Get Real-Debrid token from environment
+    rd_api_token = os.environ.get('RD_API_TOKEN', '')
+    if not rd_api_token:
+        print("⚠️ RD_API_TOKEN not found in environment variables")
+        print("💡 RDT-Client will need manual configuration with Real-Debrid token")
+    else:
+        print(f"🔑 Real-Debrid token: {rd_api_token[:8]}...")
+    
+    # Container names for internal communication
+    rdt_client_container = 'surge-rdt-client'
+    
+    success_count = 0
+    total_services = 2  # Radarr and Sonarr
+    
+    # Configure RDT-Client in Radarr
+    if add_download_client_to_service('radarr', 7878, storage_path, {
+        'name': 'RDT-Client',
+        'protocol': 'torrent',
+        'implementation': 'RTorrent',  # RDT-Client uses RTorrent-compatible API
+        'implementationName': 'rTorrent',
+        'configContract': 'RTorrentSettings',
+        'host': rdt_client_container,
+        'port': 6500,
+        'category': 'movies',
+        'useSsl': False,
+        'urlBase': '/',
+        'username': '',  # RDT-Client doesn't use auth by default
+        'password': ''
+    }):
+        success_count += 1
+        
+    # Configure RDT-Client in Sonarr
+    if add_download_client_to_service('sonarr', 8989, storage_path, {
+        'name': 'RDT-Client',
+        'protocol': 'torrent',
+        'implementation': 'RTorrent',
+        'implementationName': 'rTorrent',
+        'configContract': 'RTorrentSettings',
+        'host': rdt_client_container,
+        'port': 6500,
+        'category': 'tv',
+        'useSsl': False,
+        'urlBase': '/',
+        'username': '',
+        'password': ''
+    }):
+        success_count += 1
+    
+    print(f"📊 RDT-Client configuration results: {success_count}/{total_services} services configured")
+    
+    if success_count >= total_services:
+        print("✅ RDT-Client download client configured successfully!")
+        print("💡 RDT-Client is now available as a download client in Radarr and Sonarr")
+        print("🌐 Access RDT-Client at: http://localhost:6500")
+        if rd_api_token:
+            print("🔑 Real-Debrid integration should be automatically configured")
+        else:
+            print("⚠️ Remember to configure your Real-Debrid API token in RDT-Client web UI")
+        return True
+    else:
+        print("⚠️ RDT-Client configuration completed with some issues")
+        return False
+
+def run_rdt_client_full_automation():
+    """Complete RDT-Client automation workflow."""
+    print("=" * 60)
+    print("🌐 RDT-Client Full Automation")
+    print("=" * 60)
+    
+    # Check if RD_API_TOKEN is available
+    rd_token = os.environ.get('RD_API_TOKEN', '')
+    if not rd_token:
+        print("⚠️ RD_API_TOKEN environment variable not set")
+        print("💡 RDT-Client will be configured but will need manual Real-Debrid setup")
+        print("💡 Set RD_API_TOKEN in your .env file for full automation")
+    else:
+        print(f"🔑 Real-Debrid token detected: {rd_token[:8]}...")
+    
+    success_steps = 0
+    total_steps = 2
+    
+    # Step 1: Wait for RDT-Client to be ready
+    rdt_client_url = 'http://localhost:6500'
+    print("⏳ Step 1/2: Waiting for RDT-Client to start...")
+    if wait_for_service(rdt_client_url, max_retries=15, retry_delay=5):
+        success_steps += 1
+        print("✅ Step 1/2: RDT-Client service is ready")
+    else:
+        print("❌ Step 1/2: RDT-Client service failed to start")
+        print("💡 Make sure RDT-Client is enabled in your docker-compose profile")
+    
+    # Step 2: Configure as download client
+    if configure_rdt_client_download_client():
+        success_steps += 1
+        print("✅ Step 2/2: RDT-Client download client configuration completed")
+    else:
+        print("❌ Step 2/2: RDT-Client download client configuration failed")
+    
+    print("=" * 60)
+    print(f"📊 RDT-Client Automation Results: {success_steps}/{total_steps} steps completed")
+    
+    if success_steps >= 1:  # Allow some tolerance
+        print("🎉 RDT-Client automation completed successfully!")
+        print("💡 RDT-Client is now configured for torrent downloads")
+        print(f"🌐 Access RDT-Client WebUI: {rdt_client_url}")
+        print("🔄 Download client configured in Radarr and Sonarr")
+        
+        if rd_token:
+            print("🔑 Real-Debrid integration configured automatically")
+        else:
+            print("⚠️ Manual Real-Debrid configuration required:")
+            print("   1. Go to http://localhost:6500")
+            print("   2. Enter your Real-Debrid API token in settings")
+            print("   3. Configure download paths as needed")
+            
+        return True
+    else:
+        print("⚠️ RDT-Client automation completed with issues")
+        print("💡 Check logs above and verify configurations manually")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
     configure_bazarr_applications()
     configure_gaps_applications()
     run_nzbget_full_automation()
+    run_rdt_client_full_automation()

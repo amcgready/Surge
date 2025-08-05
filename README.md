@@ -52,13 +52,40 @@ Surge includes pre-configured **[Torrentio](https://github.com/dreulavelle/Prowl
 
 The Torrentio indexer is automatically available in Prowlarr and just needs your Real-Debrid API key for configuration.
 
-#### Torrentio Setup Instructions:
-1. Access Prowlarr at `http://localhost:9696`
-2. Go to **Settings** → **Indexers** → **Add Indexer**
-3. Search for "**Torrentio**" and select it
-4. Enter your **Real-Debrid API key** in the configuration
-5. Customize provider options and quality filters as needed
-6. **Save** and the indexer will be available to Radarr/Sonarr
+### 🌐 RDT-Client Full Automation
+Surge now includes **complete RDT-Client automation** that eliminates all manual configuration:
+
+#### ✨ **Zero-Configuration Setup**
+- **Automatic Real-Debrid Integration**: Uses your RD_API_TOKEN from setup
+- **Torrentio Indexer**: Automatically configured in Prowlarr with your Real-Debrid credentials
+- **Download Client Setup**: Seamlessly integrated with Radarr and Sonarr
+- **No Manual Steps**: Everything configured during deployment
+
+#### 🔧 **What Gets Automated**
+- ✅ RDT-Client container configuration with Real-Debrid API token
+- ✅ Torrentio indexer added to Prowlarr with quality filters and provider settings
+- ✅ RDT-Client configured as download client in Radarr (movies)
+- ✅ RDT-Client configured as download client in Sonarr (TV shows)
+- ✅ Proper category management and Docker networking
+- ✅ SSL and security settings optimized
+
+#### 🚀 **Ready-to-Use Results**
+After deployment with RDT-Client enabled:
+- **Immediate Functionality**: Search and download torrents via Real-Debrid
+- **Integrated Workflow**: Radarr/Sonarr → Torrentio → RDT-Client → Real-Debrid
+- **Quality Control**: Automatic quality filtering and provider selection
+- **Secure Configuration**: No exposed credentials or hardcoded paths
+
+#### Manual Setup (Legacy - Not Required)
+*For reference only - this is now fully automated:*
+1. ~~Access Prowlarr at `http://localhost:9696`~~
+2. ~~Go to **Settings** → **Indexers** → **Add Indexer**~~
+3. ~~Search for "**Torrentio**" and select it~~
+4. ~~Enter your **Real-Debrid API key** in the configuration~~
+5. ~~Customize provider options and quality filters as needed~~
+6. ~~**Save** and the indexer will be available to Radarr/Sonarr~~
+
+**💡 With Surge's automation, simply enable RDT-Client during setup and everything is configured automatically!**
 
 ## 📋 Prerequisites
 

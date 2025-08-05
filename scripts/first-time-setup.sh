@@ -836,8 +836,22 @@ configure_arr_download_clients() {
     
     # Configure RDT-Client if enabled
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-        configure_rdt_client_in_arr "radarr" "7878"
-        configure_rdt_client_in_arr "sonarr" "8989"
+        print_info "🌐 Running RDT-Client comprehensive automation..."
+        if [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
+            python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"
+            if [ $? -eq 0 ]; then
+                print_success "RDT-Client and Torrentio automation completed successfully!"
+            else
+                print_warning "RDT-Client automation had some issues, manual configuration may be needed"
+                # Fallback to old method
+                configure_rdt_client_in_arr "radarr" "7878"
+                configure_rdt_client_in_arr "sonarr" "8989"
+            fi
+        else
+            # Fallback to old method
+            configure_rdt_client_in_arr "radarr" "7878"
+            configure_rdt_client_in_arr "sonarr" "8989"
+        fi
     fi
 }
 
