@@ -635,6 +635,17 @@ configure_services_post_deployment() {
         fi
     fi
 
+    # Configure NZBGet comprehensive automation
+    if [ "$ENABLE_NZBGET" = "true" ]; then
+        print_info "🔧 Running NZBGet comprehensive automation..."
+        python3 "$SCRIPT_DIR/configure-nzbget.py" "$STORAGE_PATH"
+        if [ $? -eq 0 ]; then
+            print_success "NZBGet automation completed successfully!"
+        else
+            print_warning "NZBGet automation had some issues, manual configuration may be needed"
+        fi
+    fi
+
     # Configure download clients in Radarr/Sonarr
     configure_arr_download_clients
 

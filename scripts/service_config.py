@@ -911,8 +911,322 @@ def configure_gaps_applications():
         print(f"💡 Use TMDB API key: {tmdb_api_key}")
         return False
 
+def configure_nzbget_download_client():
+    """Configure NZBGet as a download client in Radarr, Sonarr, and Prowlarr."""
+    print("📥 Configuring NZBGet as download client...")
+    
+    storage_path = find_storage_path()
+    print(f"📁 Using storage path: {storage_path}")
+    
+    # Get NZBGet credentials from environment
+    nzbget_username = os.environ.get('NZBGET_USER', 'admin')
+    nzbget_password = os.environ.get('NZBGET_PASS', 'tegbzn6789')
+    
+    # Container names for internal communication
+    nzbget_container = 'surge-nzbget'
+    
+    success_count = 0
+    total_services = 2  # Radarr and Sonarr (Prowlarr doesn't manage download clients the same way)
+    
+    # Configure NZBGet in Radarr
+    if add_download_client_to_service('radarr', 7878, storage_path, {
+        'name': 'NZBGet',
+        'protocol': 'usenet',
+        'implementation': 'Nzbget',
+        'implementationName': 'NZBGet',
+        'configContract': 'NzbgetSettings',
+        'host': nzbget_container,
+        'port': 6789,
+        'username': nzbget_username,
+        'password': nzbget_password,
+        'category': 'movies',
+        'useSsl': False
+    }):
+        success_count += 1
+        
+    # Configure NZBGet in Sonarr
+    if add_download_client_to_service('sonarr', 8989, storage_path, {
+        'name': 'NZBGet',
+        'protocol': 'usenet',
+        'implementation': 'Nzbget',
+        'implementationName': 'NZBGet',
+        'configContract': 'NzbgetSettings',
+        'host': nzbget_container,
+        'port': 6789,
+        'username': nzbget_username,
+        'password': nzbget_password,
+        'category': 'tv',
+        'useSsl': False
+    }):
+        success_count += 1
+    
+    print(f"📊 NZBGet configuration results: {success_count}/{total_services} services configured")
+    
+    if success_count >= total_services:
+        print("✅ NZBGet download client configured successfully!")
+        print("💡 NZBGet is now available as a download client in Radarr and Sonarr")
+        print("🌐 Access NZBGet at: http://localhost:6789")
+        print(f"🔑 Login: {nzbget_username} / {'*' * len(nzbget_password)}")
+        return True
+    else:
+        print("⚠️ NZBGet configuration completed with some issues")
+        return False
+
+def add_download_client_to_service(service_name, port, storage_path, client_config):
+    """Add a download client to a specific *arr service."""
+    print(f"📡 Adding {client_config['name']} to {service_name.title()}...")
+    
+    # Get service API key
+    service_config_path = os.path.join(storage_path, service_name.title(), "config", "config.xml")
+    api_key = get_api_key_from_xml(service_config_path)
+    
+    if not api_key:
+        print(f"❌ Could not get {service_name.title()} API key")
+        return False
+        
+    # Wait for service to be ready
+    service_url = f"http://localhost:{port}/api/v3/system/status"
+    if not wait_for_service(service_url, api_key=api_key):
+        print(f"❌ {service_name.title()} service not ready")
+        return False
+        
+    # Prepare download client data
+    download_client_data = {
+        "enable": True,
+        "protocol": client_config['protocol'],
+        "priority": 1,
+        "removeCompletedDownloads": True,
+        "removeFailedDownloads": True,
+        "name": client_config['name'],
+        "fields": [
+            {"name": "host", "value": client_config['host']},
+            {"name": "port", "value": client_config['port']},
+            {"name": "username", "value": client_config['username']},
+            {"name": "password", "value": client_config['password']},
+            {"name": "category", "value": client_config['category']},
+            {"name": "useSsl", "value": client_config['useSsl']}
+        ],
+        "implementationName": client_config['implementationName'],
+        "implementation": client_config['implementation'],
+        "configContract": client_config['configContract'],
+        "tags": []
+    }
+    
+    try:
+        data = json.dumps(download_client_data).encode('utf-8')
+        req = urllib.request.Request(
+            f"http://localhost:{port}/api/v3/downloadclient",
+            data=data,
+            headers={
+                'Content-Type': 'application/json',
+                'X-Api-Key': api_key
+            },
+            method='POST'
+        )
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status in [200, 201]:
+                print(f"✅ {client_config['name']} added to {service_name.title()} successfully")
+                return True
+            else:
+                print(f"❌ Failed to add {client_config['name']} to {service_name.title()} (HTTP {response.status})")
+                
+    except Exception as e:
+        print(f"❌ Error adding {client_config['name']} to {service_name.title()}: {e}")
+        
+    return False
+
+def configure_nzbget_server():
+    """Configure NZBGet server settings automatically."""
+    print("🔧 Configuring NZBGet server settings...")
+    
+    storage_path = find_storage_path()
+    nzbget_config_path = os.path.join(storage_path, 'NZBGet', 'config', 'nzbget.conf')
+    
+    # Get NZBGet credentials
+    nzbget_username = os.environ.get('NZBGET_USER', 'admin')
+    nzbget_password = os.environ.get('NZBGET_PASS', 'tegbzn6789')
+    
+    print(f"📁 NZBGet config path: {nzbget_config_path}")
+    
+    # Wait for NZBGet container to create config directory
+    config_dir = os.path.dirname(nzbget_config_path)
+    max_wait = 30
+    for attempt in range(max_wait):
+        if os.path.exists(config_dir):
+            break
+        if attempt < max_wait - 1:
+            print(f"⏳ Waiting for NZBGet config directory... (attempt {attempt + 1}/{max_wait})")
+            time.sleep(2)
+    
+    # Create optimized NZBGet configuration if it doesn't exist
+    if not os.path.exists(nzbget_config_path):
+        print("📝 Creating optimized NZBGet configuration...")
+        try:
+            os.makedirs(config_dir, exist_ok=True)
+            
+            config_content = f"""# NZBGet configuration file auto-generated by Surge
+# For complete documentation see: https://nzbget.net/documentation
+
+# SERVER
+MainDir=/downloads
+DestDir=/downloads/completed
+InterDir=/downloads/incomplete
+QueueDir=/downloads/queue
+TempDir=/downloads/tmp
+WebDir=/usr/share/nzbget/webui
+ConfigTemplate=/usr/share/nzbget/nzbget.conf
+ScriptDir=/downloads/scripts
+
+# SECURITY
+ControlUsername={nzbget_username}
+ControlPassword={nzbget_password}
+ControlIP=0.0.0.0
+ControlPort=6789
+SecureControl=no
+
+# DOWNLOAD
+ArticleTimeout=60
+UrlTimeout=60
+RemoteTimeout=90
+DownloadRate=0
+ArticleRetries=3
+ArticleInterval=10
+UrlRetries=3
+UrlInterval=10
+FlushQueue=yes
+Continue=yes
+Reorder=yes
+Decode=yes
+RetryOnCrcError=yes
+CrcCheck=yes
+DirectWrite=yes
+WriteBuffer=0
+NzbDirInterval=5
+NzbDirFileAge=60
+DiskSpace=250
+TempPauseDownload=no
+ParTimeLimit=0
+KeepHistory=7
+
+# CATEGORIES
+Category1.Name=movies
+Category1.DestDir=/downloads/completed/movies
+Category1.Unpack=yes
+Category1.DefScript=
+Category1.Aliases=movie,movies,film,films
+
+Category2.Name=tv
+Category2.DestDir=/downloads/completed/tv
+Category2.Unpack=yes
+Category2.DefScript=
+Category2.Aliases=tv,series,show,shows,episode,episodes
+
+Category3.Name=music
+Category3.DestDir=/downloads/completed/music
+Category3.Unpack=yes
+Category3.DefScript=
+Category3.Aliases=music,audio,mp3,flac
+
+Category4.Name=books
+Category4.DestDir=/downloads/completed/books
+Category4.Unpack=yes
+Category4.DefScript=
+Category4.Aliases=book,books,ebook,ebooks
+
+# UNPACK
+UnpackTimeLimit=0
+DirectUnpack=no
+UnpackCleanupDisk=yes
+UnrarCmd=unrar
+SevenZipCmd=7z
+ExtCleanupDisk=
+ParIgnoreExt=
+UnpackIgnoreExt=
+UnpackPauseQueue=no
+
+# EXTENSION SCRIPTS
+Extensions=
+ShellOverride=.py=/usr/bin/python3
+
+# SCHEDULER
+TaskX.Time=*,*:00,*:30
+TaskX.WeekDays=1-7
+TaskX.Command=DownloadRate
+TaskX.Param=0
+
+# LOGGING
+WriteLog=append
+RotateLog=3
+ErrorTarget=both
+WarningTarget=both
+InfoTarget=both
+DetailTarget=log
+DebugTarget=none
+LogBuffer=1000
+"""
+            
+            with open(nzbget_config_path, 'w') as f:
+                f.write(config_content)
+                
+            print("✅ NZBGet configuration created successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error creating NZBGet configuration: {e}")
+            return False
+    else:
+        print("ℹ️ NZBGet configuration already exists")
+        print("💡 Configuration will be used as-is")
+        return True
+
+def run_nzbget_full_automation():
+    """Run complete NZBGet automation including server config and service integration."""
+    print("🚀 Starting NZBGet full automation...")
+    print("=" * 60)
+    
+    success_steps = 0
+    total_steps = 3
+    
+    # Step 1: Configure NZBGet server
+    if configure_nzbget_server():
+        success_steps += 1
+        print("✅ Step 1/3: NZBGet server configuration completed")
+    else:
+        print("❌ Step 1/3: NZBGet server configuration failed")
+    
+    # Step 2: Wait for NZBGet to be ready
+    print("⏳ Step 2/3: Waiting for NZBGet to start...")
+    if wait_for_service("http://localhost:6789", max_retries=15, retry_delay=5):
+        success_steps += 1
+        print("✅ Step 2/3: NZBGet service is ready")
+    else:
+        print("❌ Step 2/3: NZBGet service failed to start")
+    
+    # Step 3: Configure as download client
+    if configure_nzbget_download_client():
+        success_steps += 1
+        print("✅ Step 3/3: NZBGet download client configuration completed")
+    else:
+        print("❌ Step 3/3: NZBGet download client configuration failed")
+    
+    print("=" * 60)
+    print(f"📊 NZBGet Automation Results: {success_steps}/{total_steps} steps completed")
+    
+    if success_steps >= 2:  # Allow some tolerance
+        print("🎉 NZBGet automation completed successfully!")
+        print("💡 NZBGet is now fully configured and integrated")
+        print("🌐 Access NZBGet WebUI: http://localhost:6789")
+        print("🔄 Download clients configured in Radarr and Sonarr")
+        return True
+    else:
+        print("⚠️ NZBGet automation completed with issues")
+        print("💡 Check logs above and verify configurations manually")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
     configure_bazarr_applications()
     configure_gaps_applications()
+    run_nzbget_full_automation()

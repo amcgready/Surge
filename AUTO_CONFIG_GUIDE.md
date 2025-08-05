@@ -11,6 +11,8 @@ The auto-configuration system automatically connects:
 - **Overseerr** ↔ Radarr/Sonarr (request management)
 - **Placeholdarr** ↔ Radarr/Sonarr (placeholder files)
 - **Tautulli** connection details prepared
+- **NZBGet** ↔ Radarr/Sonarr (download client integration)
+- **Prowlarr** ↔ Radarr/Sonarr (indexer management)
 
 ## 🚀 How It Works
 
@@ -51,6 +53,8 @@ python3 scripts/api-discovery.py --storage-path /opt/surge
 | Bazarr | ✅ Full | config.ini file |
 | GAPS | ✅ Full | application.properties |
 | Placeholdarr | ✅ Full | config.yml file |
+| NZBGet | ✅ Full | nzbget.conf + API integration |
+| Prowlarr | ✅ Full | REST API integration |
 | Overseerr | ⚠️ Partial | Configuration prepared for import |
 | Tautulli | ⚠️ Partial | Connection details prepared |
 
