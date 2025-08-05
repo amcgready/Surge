@@ -43,6 +43,24 @@ configs/**/*.sqlite
 # Test data
 test-data/
 
+# Test files and validation scripts
+scripts/test-*.py
+scripts/validate-*.sh
+test_*.py
+*_test.py
+
+# Security audit documentation (keep but don't track changes)
+SECURITY_AUDIT_RESULTS.md
+CRITICAL_SECURITY_FIX.md
+COMPREHENSIVE_SECURITY_AUDIT.md
+
+# Development artifacts and accidentally created directories
+--help/
+--*/
+tmp/
+temp/
+debug/
+
 # Docker override files
 docker-compose.override.yml
 docker-compose.local.yml

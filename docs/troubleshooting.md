@@ -38,7 +38,7 @@ This guide covers common issues and their solutions when running Surge.
 
 2. If missing, add the STORAGE_PATH variable:
    ```bash
-   echo "STORAGE_PATH=/mnt/mycloudpr4100/Surge" >> .env
+   echo "STORAGE_PATH=/opt/surge" >> .env
    ```
 
 3. Or edit `.env` manually and add:
@@ -305,16 +305,16 @@ python3 scripts/test-automation.py
    ```
    If missing, add:
    ```bash
-   echo "STORAGE_PATH=/mnt/mycloudpr4100/Surge" >> .env
+   echo "STORAGE_PATH=/opt/surge" >> .env
    ```
 
 2. **Verify Applications in Configuration**:
    ```bash
    # Check XML config (primary source)
-   grep -A5 -B5 "ApplicationDefinition" /mnt/mycloudpr4100/Surge/Prowlarr/config/config.xml
+   grep -A5 -B5 "ApplicationDefinition" /opt/surge/Prowlarr/config/config.xml
    
    # Check database (secondary)
-   sqlite3 /mnt/mycloudpr4100/Surge/Prowlarr/config/prowlarr.db "SELECT Name, Implementation FROM Applications;"
+   sqlite3 /opt/surge/Prowlarr/config/prowlarr.db "SELECT Name, Implementation FROM Applications;"
    ```
 
 3. **Restart Services with Proper Environment**:
@@ -354,10 +354,10 @@ python3 scripts/test-automation.py
    Get API keys with:
    ```bash
    # Radarr API Key
-   grep -o '<ApiKey>[^<]*' /mnt/mycloudpr4100/Surge/Radarr/config/config.xml | cut -d'>' -f2
+   grep -o '<ApiKey>[^<]*' /opt/surge/Radarr/config/config.xml | cut -d'>' -f2
    
    # Sonarr API Key  
-   grep -o '<ApiKey>[^<]*' /mnt/mycloudpr4100/Surge/Sonarr/config/config.xml | cut -d'>' -f2
+   grep -o '<ApiKey>[^<]*' /opt/surge/Sonarr/config/config.xml | cut -d'>' -f2
    ```
 
 7. **Force UI Refresh**:

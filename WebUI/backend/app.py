@@ -105,7 +105,7 @@ def deploy_services():
 
         # Zurg: all documented Docker env vars and advanced options
         zurg_defaults = {
-            'destination': '/mnt/Zurg',
+            'destination': '/mnt/zurg',
             'downloads_path': '/downloads',
             'api_key': 'surgestack',
             'log_level': 'info',

@@ -12,6 +12,15 @@ import os
 import time
 import sqlite3
 
+# Service URL configuration for security and flexibility
+SERVICE_URLS = {
+    'prowlarr': os.environ.get('PROWLARR_URL', 'http://localhost:9696'),
+    'radarr': os.environ.get('RADARR_URL', 'http://localhost:7878'),
+    'sonarr': os.environ.get('SONARR_URL', 'http://localhost:8989'),
+    'gaps': os.environ.get('GAPS_URL', 'http://localhost:8484'),
+    'nzbget': os.environ.get('NZBGET_URL', 'http://localhost:6789')
+}
+
 def find_storage_path():
     """Find the correct storage path for configurations."""
     possible_paths = [
@@ -204,7 +213,7 @@ def test_prowlarr_api(api_key, max_retries=6):
     
     for attempt in range(max_retries):
         try:
-            success, result = make_api_request('http://localhost:9696/api/v1/system/status', headers)
+            success, result = make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/system/status", headers)
             if success:
                 print(f"✅ Connected to Prowlarr API (version {result.get('version', 'unknown')})")
                 return True
@@ -236,12 +245,12 @@ def configure_prowlarr_via_api(prowlarr_api_key, radarr_api_key, sonarr_api_key)
     
     # Clean up existing applications
     print("🔄 Cleaning up existing applications...")
-    success, existing_apps = make_api_request('http://localhost:9696/api/v1/applications', headers)
+    success, existing_apps = make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/applications", headers)
     if success and existing_apps:
         for app in existing_apps:
             if app['name'] in ['Radarr', 'Sonarr']:
                 print(f"🗑️ Removing existing {app['name']} application...")
-                make_api_request(f"http://localhost:9696/api/v1/applications/{app['id']}", headers, method='DELETE')
+                make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/applications/{app['id']}", headers, method='DELETE')
     
     # Add Radarr application
     print("➕ Adding Radarr application...")
@@ -263,7 +272,7 @@ def configure_prowlarr_via_api(prowlarr_api_key, radarr_api_key, sonarr_api_key)
         ]
     }
     
-    success, result = make_api_request('http://localhost:9696/api/v1/applications', headers, radarr_data, 'POST')
+    success, result = make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/applications", headers, radarr_data, 'POST')
     if not success:
         print(f"❌ Failed to add Radarr: {result}")
         return False
@@ -289,7 +298,7 @@ def configure_prowlarr_via_api(prowlarr_api_key, radarr_api_key, sonarr_api_key)
         ]
     }
     
-    success, result = make_api_request('http://localhost:9696/api/v1/applications', headers, sonarr_data, 'POST')
+    success, result = make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/applications", headers, sonarr_data, 'POST')
     if not success:
         print(f"❌ Failed to add Sonarr: {result}")
         return False
@@ -298,7 +307,7 @@ def configure_prowlarr_via_api(prowlarr_api_key, radarr_api_key, sonarr_api_key)
     # Verify configuration
     print("🔍 Verifying configuration...")
     time.sleep(2)
-    success, final_apps = make_api_request('http://localhost:9696/api/v1/applications', headers)
+    success, final_apps = make_api_request(f"{SERVICE_URLS['prowlarr']}/api/v1/applications", headers)
     if success and final_apps:
         print(f"✅ Configuration complete! Found {len(final_apps)} applications:")
         for app in final_apps:
@@ -355,7 +364,7 @@ def configure_prowlarr_applications(storage_path=None):
     
     if success:
         print("✅ Prowlarr applications configured successfully via API!")
-        print("💡 Applications should now be visible in Prowlarr UI at http://localhost:9696")
+        print(f"💡 Applications should now be visible in Prowlarr UI at {SERVICE_URLS['prowlarr']}")
         print("💡 Go to Settings → Apps to see Radarr and Sonarr")
         return True
     else:
@@ -767,7 +776,7 @@ def configure_gaps_applications():
         print("💡 Make sure Plex is claimed and configured")
     
     # Wait for GAPS to be ready (it needs time to start up)
-    gaps_url = "http://localhost:8484"
+    gaps_url = SERVICE_URLS['gaps']
     max_gaps_retries = 12
     gaps_retry_delay = 10
     
@@ -896,7 +905,7 @@ def configure_gaps_applications():
             print(f"ℹ️ Webhook: {discord_webhook[:50]}...")
         
         print("\n🌟 Next Steps:")
-        print("1. Visit http://localhost:8484 to access GAPS")
+        print(f"1. Visit {SERVICE_URLS['gaps']} to access GAPS")
         print("2. Go to Libraries tab to scan your Plex libraries")
         print("3. Go to Recommended tab to find missing movies")
         print("4. Configure notifications in Settings if desired")
@@ -907,7 +916,7 @@ def configure_gaps_applications():
     except Exception as e:
         print(f"❌ Error configuring GAPS via API: {e}")
         print("💡 GAPS may need more time to start up, or there may be a network issue")
-        print("💡 You can configure GAPS manually at http://localhost:8484")
+        print(f"💡 You can configure GAPS manually at {SERVICE_URLS['gaps']}")
         print(f"💡 Use TMDB API key: {tmdb_api_key}")
         return False
 
@@ -965,7 +974,7 @@ def configure_nzbget_download_client():
     if success_count >= total_services:
         print("✅ NZBGet download client configured successfully!")
         print("💡 NZBGet is now available as a download client in Radarr and Sonarr")
-        print("🌐 Access NZBGet at: http://localhost:6789")
+        print(f"🌐 Access NZBGet at: {SERVICE_URLS['nzbget']}")
         print(f"🔑 Login: {nzbget_username} / {'*' * len(nzbget_password)}")
         return True
     else:
@@ -1197,7 +1206,7 @@ def run_nzbget_full_automation():
     
     # Step 2: Wait for NZBGet to be ready
     print("⏳ Step 2/3: Waiting for NZBGet to start...")
-    if wait_for_service("http://localhost:6789", max_retries=15, retry_delay=5):
+    if wait_for_service(SERVICE_URLS['nzbget'], max_retries=15, retry_delay=5):
         success_steps += 1
         print("✅ Step 2/3: NZBGet service is ready")
     else:
@@ -1216,7 +1225,7 @@ def run_nzbget_full_automation():
     if success_steps >= 2:  # Allow some tolerance
         print("🎉 NZBGet automation completed successfully!")
         print("💡 NZBGet is now fully configured and integrated")
-        print("🌐 Access NZBGet WebUI: http://localhost:6789")
+        print(f"🌐 Access NZBGet WebUI: {SERVICE_URLS['nzbget']}")
         print("🔄 Download clients configured in Radarr and Sonarr")
         return True
     else:

@@ -313,8 +313,8 @@ function App() {
       cinesyncAuthEnabled: true,
       cinesyncUsername: 'admin',
       cinesyncPassword: 'admin',
-      origin_directory: '/mnt/mycloudpr4100/Surge/CineSync/Origin',
-      destination_directory: '/mnt/mycloudpr4100/Surge/CineSync/Destination',
+      origin_directory: '/opt/surge/CineSync/Origin',
+      destination_directory: '/opt/surge/CineSync/Destination',
       rcloneMount: false,
       mountCheckInterval: 30,
       tmdbApiKey: '',
@@ -353,8 +353,8 @@ function App() {
       dbBatchSize: 1000,
       dbMaxWorkers: 20,
       // Backend config fields
-      origin_directory: '/mnt/mycloudpr4100/Surge/CineSync/Origin',
-      destination_directory: '/mnt/mycloudpr4100/Surge/CineSync/Destination',
+      origin_directory: '/opt/surge/CineSync/Origin',
+      destination_directory: '/opt/surge/CineSync/Destination',
       port: 8080,
       host: '0.0.0.0',
       username: 'admin',
@@ -897,8 +897,8 @@ function App() {
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Auth Enabled</Typography><select name="cinesync_cinesyncAuthEnabled" value={config.cinesyncSettings.cinesyncAuthEnabled ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncAuthEnabled: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Username</Typography><input name="cinesync_cinesyncUsername" value={config.cinesyncSettings.cinesyncUsername || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncUsername: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Password</Typography><input name="cinesync_cinesyncPassword" value={config.cinesyncSettings.cinesyncPassword || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncPassword: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
-                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
-                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/opt/surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/opt/surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
                             </Box>
                           </Box>
                         )}
@@ -1622,8 +1622,8 @@ function App() {
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Auth Enabled</Typography><select name="cinesync_cinesyncAuthEnabled" value={config.cinesyncSettings.cinesyncAuthEnabled ? 'true' : 'false'} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncAuthEnabled: e.target.value === 'true' } }))} style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}><option value="false">False</option><option value="true">True</option></select></Box>
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Username</Typography><input name="cinesync_cinesyncUsername" value={config.cinesyncSettings.cinesyncUsername || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncUsername: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
                               <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Password</Typography><input name="cinesync_cinesyncPassword" value={config.cinesyncSettings.cinesyncPassword || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, cinesyncPassword: e.target.value } }))} placeholder="admin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
-                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
-                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/mnt/mycloudpr4100/Surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Origin Directory</Typography><input name="cinesync_origin_directory" value={config.cinesyncSettings.origin_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, origin_directory: e.target.value } }))} placeholder="/opt/surge/CineSync/Origin" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
+                              <Box flex={1} minWidth={220}><Typography style={{ color: '#fff' }}>Destination Directory</Typography><input name="cinesync_destination_directory" value={config.cinesyncSettings.destination_directory || ''} onChange={e => setConfig(prev => ({ ...prev, cinesyncSettings: { ...prev.cinesyncSettings, destination_directory: e.target.value } }))} placeholder="/opt/surge/CineSync/Destination" style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }} /></Box>
                             </Box>
                           </Box>
                         )}
@@ -2318,7 +2318,7 @@ function App() {
                         name="nzbget_destinationDirectory"
                         value={config.nzbgetDestinationDirectory || ''}
                         onChange={e => setConfig(prev => ({ ...prev, nzbgetDestinationDirectory: e.target.value }))}
-                        placeholder="/mnt/mycloudpr4100/Surge/NZBGet/Downloads"
+                        placeholder="/opt/surge/NZBGet/Downloads"
                         style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8, '::placeholder': { color: '#bbb' } }}
                       />
                     </Box>
