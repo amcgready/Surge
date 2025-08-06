@@ -67,7 +67,7 @@ tmp/
 temp/
 debug/
 
-# Docker override files
+# Docker override filess
 docker-compose.override.yml
 docker-compose.local.yml
 
@@ -95,3 +95,10 @@ SECURITY_AUDIT_COMPLETE.md
 DEMO_SCRIPTS.md
 scripts/test-deploy-demo.sh
 scripts/test-deploy-quick.sh
+scripts/test-complete-workflow-demo.sh
+scripts/test-setup-demo.sh
+scripts/test-setup-quick.sh
+scripts/test-setup-reconfigure-demo.sh
+scripts/test-update-check-demo.sh
+scripts/test-update-demo.sh
+scripts/test-update-quick.sh

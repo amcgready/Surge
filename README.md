@@ -4,7 +4,56 @@
 
 # Surge - Unified Media Management Stack
 
-Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
+Surge is a comprehensive, one-stop Docker deployment solution 4. **Access your services:**
+   - Homepage Dashboard: http://localhost:3000
+   - Your chosen media server will be available on its default port
+
+## 🎬 Demos
+
+### Interactive Setup Wizard
+*Coming soon - GIF demonstration of the setup process*
+
+### Complete Workflow Demo
+![Surge Complete Workflow](https://p76.tr0.n0.cdn.zight.com/items/rRuR9rve/fc44b7dd-3369-45ef-890b-457e75abecf6.gif?source=viewer&v=f2c9550a59807dfe236b82dddadd8557)
+
+*This demonstrates the complete Surge experience from initial setup through deployment and configuration. Watch as the system automatically detects prerequisites, configures services, deploys containers, discovers API keys, and establishes inter-service connections - all in under 2 minutes.*
+
+### Deployment Process
+![Surge Deployment](https://p76.tr0.n0.cdn.zight.com/items/jkuklxZn/06af7fa8-4604-42b3-b763-51e0e0869e0f.gif?source=viewer&v=63055bb86fbd71801ca2746ef581cbfa)
+
+*Watch the deployment process in action as Surge pulls container images, starts services, creates directory structures, and automatically configures API connections between all services. The deployment includes real-time progress updates and health checks to ensure everything is running perfectly.*
+
+### Automatic Updates
+![Surge Update Process](https://p76.tr0.n0.cdn.zight.com/items/WnunGo7A/ecea1c6b-c782-4896-a3ec-ef02bcdd7ee5.gif?source=viewer&v=65b36f64a7f546cdd73e5781508bc3a8)
+
+*The update system automatically checks for new container versions, backs up configurations, pulls latest images, recreates containers, and sends Discord notifications - all while preserving your settings and data.*
+
+### Key Demo Features
+- **🚀 One-Command Setup**: Interactive wizard guides you through configuration
+- **⚡ Automated Deployment**: Deploy your entire media stack with a single command  
+- **🔄 Zero-Downtime Updates**: Update all containers while preserving configurations
+- **📱 Discord Integration**: Real-time notifications for updates and system events
+- **🏥 Health Monitoring**: Automatic verification that all services are operational
+
+### Try the Demos Yourself
+```bash
+# Clone and test the demo scripts (safe for recording)
+git clone https://github.com/amcgready/Surge.git
+cd Surge
+
+# Setup wizard demo
+./scripts/test-setup-demo.sh
+
+# Deployment demo  
+./scripts/test-deploy-demo.sh
+
+# Update process demo
+./scripts/test-update-demo.sh
+```
+
+*All demo scripts use sanitized data and masked API keys - perfect for screen recordings and documentation.*
+
+## 🔧 Configuration Managementcombines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
 
 ## 🚀 What's Included
 
