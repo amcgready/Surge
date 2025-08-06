@@ -92,3 +92,6 @@ yarn.lock
 .surge_initialized
 scripts/test-rdt-integration.py
 SECURITY_AUDIT_COMPLETE.md
+DEMO_SCRIPTS.md
+scripts/test-deploy-demo.sh
+scripts/test-deploy-quick.sh
