@@ -423,6 +423,21 @@ gather_custom_preferences() {
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
+        # Prompt for RD_API_TOKEN if RDT-Client is enabled but no token is set
+        if [ "$ENABLE_RDT_CLIENT" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
+            echo ""
+            print_warning "RDT-Client requires a Real-Debrid API token to function"
+            print_info "Without a token, RDT-Client will not be deployed"
+            read -p "Real-Debrid API Token (required for RDT-Client): " rdt_rd_token
+            RD_API_TOKEN=${rdt_rd_token}
+            
+            # If still no token provided, disable RDT-Client
+            if [ -z "$RD_API_TOKEN" ]; then
+                print_warning "No Real-Debrid token provided - disabling RDT-Client"
+                ENABLE_RDT_CLIENT="false"
+            fi
+        fi
+        
         read -p "Enable Zurg (Real-Debrid filesystem)? [y/N]: " enable_zurg
         ENABLE_ZURG=$([[ "$enable_zurg" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         
@@ -615,9 +630,11 @@ gather_custom_preferences() {
         echo "• Torrentio indexer (requires Real-Debrid API key)"
         echo "• Auto-connection to Radarr and Sonarr"
         
-        if [ -z "$RD_API_TOKEN" ] && [ "$ENABLE_RDT_CLIENT" != "true" ] && [ "$ENABLE_ZURG" != "true" ]; then
+        if [ -z "$RD_API_TOKEN" ]; then
             read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
             RD_API_TOKEN=${prowlarr_rd_token:-}
+        else
+            print_info "✅ Using Real-Debrid token already provided for RDT-Client/Zurg"
         fi
         
         if [ "$ENABLE_CLI_DEBRID" = "true" ]; then

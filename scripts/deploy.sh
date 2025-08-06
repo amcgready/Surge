@@ -160,6 +160,9 @@ deploy_services() {
     
     cd "$PROJECT_DIR"
     
+    # Read RD_API_TOKEN from .env file to determine if RDT-Client should be deployed
+    RD_API_TOKEN=$(grep "^RD_API_TOKEN=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
+    
     # Base compose files
     COMPOSE_FILES="-f docker-compose.yml"
     
@@ -183,12 +186,23 @@ deploy_services() {
     # Add automation if enabled
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.automation.yml"
     
-    # Set profiles based on deployment type
+    # Build profiles dynamically based on deployment type and available tokens
     if [ "$deployment_type" = "minimal" ]; then
-        export COMPOSE_PROFILES="$media_server,homepage"
+        PROFILES="$media_server,homepage"
     else
-        export COMPOSE_PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,gaps,cinesync"
+        PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,gaps,cinesync"
     fi
+    
+    # Add RDT-Client profile only if RD_API_TOKEN is available
+    if [ -n "$RD_API_TOKEN" ]; then
+        PROFILES="$PROFILES,rdt-client"
+        print_info "✅ Real-Debrid token detected - RDT-Client will be deployed"
+    else
+        print_warning "⚠️ No Real-Debrid token found - RDT-Client will be skipped"
+        print_info "💡 Set RD_API_TOKEN in .env file to enable RDT-Client"
+    fi
+    
+    export COMPOSE_PROFILES="$PROFILES"
     
     # Deploy
     print_info "Starting deployment with profiles: $COMPOSE_PROFILES"
@@ -220,6 +234,17 @@ deploy_services() {
             echo "  - Jellyfin Server: http://localhost:8096"
             ;;
     esac
+    
+    # Show RDT-Client status message
+    if [ -n "$RD_API_TOKEN" ]; then
+        echo "  - RDT-Client (Real-Debrid): http://localhost:6500"
+    else
+        echo ""
+        print_warning "💡 RDT-Client not deployed - no Real-Debrid token found"
+        print_info "   To enable RDT-Client:"
+        print_info "   1. Add RD_API_TOKEN=your_token to .env file"
+        print_info "   2. Run: ./surge deploy $media_server"
+    fi
 }
 
 # Configure services automatically
