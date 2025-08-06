@@ -4,56 +4,7 @@
 
 # Surge - Unified Media Management Stack
 
-Surge is a comprehensive, one-stop Docker deployment solution 4. **Access your services:**
-   - Homepage Dashboard: http://localhost:3000
-   - Your chosen media server will be available on its default port
-
-## 🎬 Demos
-
-### Interactive Setup Wizard
-*Coming soon - GIF demonstration of the setup process*
-
-### Complete Workflow Demo
-![Surge Complete Workflow](https://p76.tr0.n0.cdn.zight.com/items/rRuR9rve/fc44b7dd-3369-45ef-890b-457e75abecf6.gif?source=viewer&v=f2c9550a59807dfe236b82dddadd8557)
-
-*This demonstrates the complete Surge experience from initial setup through deployment and configuration. Watch as the system automatically detects prerequisites, configures services, deploys containers, discovers API keys, and establishes inter-service connections - all in under 2 minutes.*
-
-### Deployment Process
-![Surge Deployment](https://p76.tr0.n0.cdn.zight.com/items/jkuklxZn/06af7fa8-4604-42b3-b763-51e0e0869e0f.gif?source=viewer&v=63055bb86fbd71801ca2746ef581cbfa)
-
-*Watch the deployment process in action as Surge pulls container images, starts services, creates directory structures, and automatically configures API connections between all services. The deployment includes real-time progress updates and health checks to ensure everything is running perfectly.*
-
-### Automatic Updates
-![Surge Update Process](https://p76.tr0.n0.cdn.zight.com/items/WnunGo7A/ecea1c6b-c782-4896-a3ec-ef02bcdd7ee5.gif?source=viewer&v=65b36f64a7f546cdd73e5781508bc3a8)
-
-*The update system automatically checks for new container versions, backs up configurations, pulls latest images, recreates containers, and sends Discord notifications - all while preserving your settings and data.*
-
-### Key Demo Features
-- **🚀 One-Command Setup**: Interactive wizard guides you through configuration
-- **⚡ Automated Deployment**: Deploy your entire media stack with a single command  
-- **🔄 Zero-Downtime Updates**: Update all containers while preserving configurations
-- **📱 Discord Integration**: Real-time notifications for updates and system events
-- **🏥 Health Monitoring**: Automatic verification that all services are operational
-
-### Try the Demos Yourself
-```bash
-# Clone and test the demo scripts (safe for recording)
-git clone https://github.com/amcgready/Surge.git
-cd Surge
-
-# Setup wizard demo
-./scripts/test-setup-demo.sh
-
-# Deployment demo  
-./scripts/test-deploy-demo.sh
-
-# Update process demo
-./scripts/test-update-demo.sh
-```
-
-*All demo scripts use sanitized data and masked API keys - perfect for screen recordings and documentation.*
-
-## 🔧 Configuration Managementcombines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
+Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
 
 ## 🚀 What's Included
 
@@ -135,6 +86,142 @@ After deployment with RDT-Client enabled:
 
 **💡 With Surge's automation, simply enable RDT-Client during setup and everything is configured automatically!**
 
+## 🤖 Complete Automation & Integrations
+
+Surge goes far beyond simple container deployment - it provides **complete automation** of service configurations and inter-service connections. Here's everything that gets automatically configured during deployment:
+
+### 🔗 Automatic Service Connections
+
+#### **Prowlarr Integration Hub**
+- **Auto-discovers API keys** from Radarr, Sonarr, and Bazarr
+- **Automatically adds applications** to Prowlarr:
+  - Radarr configured with proper categories (movies)
+  - Sonarr configured with proper categories (tv, anime)
+  - All sync settings optimized (RSS, automatic search, interactive search)
+- **Pre-configured indexers** including Torrentio for Real-Debrid integration
+- **Quality filters** automatically applied based on service requirements
+
+#### **Download Client Automation**
+- **RDT-Client** automatically configured in Radarr and Sonarr when enabled
+- **NZBGet** automatically added as download client with proper categories
+- **Docker networking** properly configured for container-to-container communication
+- **Download paths** mapped correctly across all services
+
+#### **Subtitle Integration**
+- **Bazarr automatically connects** to both Radarr and Sonarr
+- **Profile matching** - automatically syncs quality profiles
+- **Language preferences** inherited from environment settings
+- **Subtitle providers** pre-configured with optimal settings
+
+### 🎯 API Key Management
+
+#### **Automatic Discovery & Configuration**
+- **Scans container configurations** to discover generated API keys
+- **Waits for services to initialize** and generate their API keys
+- **Automatically injects API keys** between connected services
+- **Validates connections** and retries failed configurations
+- **No manual copy/paste** of API keys required
+
+#### **Services Automatically Connected**
+- **Prowlarr ↔ Radarr**: Movie indexer management
+- **Prowlarr ↔ Sonarr**: TV show indexer management  
+- **Bazarr ↔ Radarr**: Movie subtitle automation
+- **Bazarr ↔ Sonarr**: TV subtitle automation
+- **Overseerr ↔ Radarr**: Movie request fulfillment
+- **Overseerr ↔ Sonarr**: TV request fulfillment
+- **GAPS ↔ Radarr**: Missing movie detection and automation
+- **GAPS ↔ Plex**: Library analysis for missing content
+
+### 📊 Quality Profile Automation
+
+#### **Optimized Defaults**
+- **Radarr**: HD-1080p profile set as default with proper quality cutoffs
+- **Sonarr**: HD-720p/1080p profile configured for TV content
+- **Bazarr**: Multi-language subtitle profiles with fallback options
+- **Size limits** configured to prevent excessive downloads
+- **Quality preferences** aligned across all services
+
+#### **Real-Debrid Optimization**
+When RDT-Client is enabled:
+- **Torrentio indexer** configured with Real-Debrid specific settings
+- **Quality filters** optimized for cached content availability
+- **Provider priorities** set to prefer cached/instant downloads
+- **Timeout settings** configured for debrid service reliability
+
+### 🔄 Metadata & Content Enhancement
+
+#### **Automatic Pipeline Configuration**
+- **ImageMaid**: Configured to clean up media library artwork
+- **Posterizarr**: Set up with custom poster generation for your media server
+- **Kometa**: Configured with metadata sources and collection generation
+- **Sequential processing**: Services run in optimal order to avoid conflicts
+
+#### **Media Server Integration**
+- **Plex/Emby/Jellyfin**: Automatically detected and configured in dependent services
+- **Library paths**: Mapped consistently across all services
+- **Webhook notifications**: Configured for real-time updates
+- **Metadata providers**: TMDB, TVDB, and other sources configured
+
+### 🔔 Notification Automation
+
+#### **Discord Integration**
+When Discord webhook is provided:
+- **Update notifications**: Container updates and deployment status
+- **Processing alerts**: Asset processing pipeline completion
+- **Error monitoring**: Service failures and configuration issues
+- **Media events**: Play/stop/pause events via Tautulli (optional)
+- **Request notifications**: New media requests via Overseerr
+
+#### **Service-Specific Notifications**
+- **Radarr/Sonarr**: Download completion, failed downloads, health issues
+- **Bazarr**: Subtitle download status, missing subtitle alerts
+- **Watchtower**: Container update notifications with detailed change logs
+- **GAPS**: Missing movie detection reports
+
+### 🛡️ Security & Networking
+
+#### **Automatic Security Configuration**
+- **Internal Docker networking**: Services communicate securely without exposing ports
+- **API key rotation**: Supports automatic regeneration when needed
+- **SSL configuration**: HTTPS enabled where supported
+- **Access controls**: Default security settings applied to all services
+
+#### **Path Management**
+- **Consistent volume mapping**: All services use standardized paths
+- **Permission automation**: User/group IDs applied consistently
+- **Backup integration**: Important configs automatically identified for backup
+
+### 🎮 Advanced Automation Features
+
+#### **Health Monitoring**
+- **Service health checks**: Automatic monitoring of all containers
+- **Dependency management**: Services wait for dependencies before starting
+- **Restart policies**: Smart restart logic for failed services
+- **Performance monitoring**: Resource usage tracking and alerts
+
+#### **Update Management**
+- **Staged updates**: Critical services updated in proper sequence
+- **Configuration preservation**: User settings maintained through updates
+- **Rollback capability**: Automatic backup before major changes
+- **Update notifications**: Advanced Discord alerts with change details
+
+#### **Custom Integration Points**
+- **Torrentio indexer**: Pre-loaded in Prowlarr with optimal settings
+- **Real-Debrid automation**: Complete zero-touch configuration
+- **Custom scripts**: Hook points for additional automation
+- **API discovery**: Automatic detection of new service capabilities
+
+### 🚀 Zero-Configuration Results
+
+After Surge deployment, you get:
+- **Fully connected ecosystem**: All services talking to each other
+- **Optimized workflows**: Download → Process → Organize → Notify
+- **Intelligent automation**: Quality control, duplicate detection, error handling
+- **Unified management**: Single dashboard controlling entire stack
+- **Production-ready**: No manual configuration steps required
+
+**This level of automation means you can go from initial setup to a fully operational media management system in under 10 minutes, with zero manual configuration required.**
+
 ## 📋 Prerequisites
 
 - Docker Engine 20.10+
@@ -187,9 +274,30 @@ Surge offers two installation modes to suit different user preferences:
    ./surge setup
    ```
 
+3. **Deploy your stack:**
+   ```bash
+   ./surge deploy <your-chosen-media-server>
+   ```
+
+4. **Access your services:**
+   - Homepage Dashboard: http://localhost:3000
+   - Your chosen media server will be available on its default port
+
 ### **Alternative Setup Methods**
 
-**Option 1: Direct Script Execution**
+**Manual Configuration:**
+```bash
+# Clone and configure manually
+git clone https://github.com/amcgready/Surge.git
+cd Surge
+cp .env.example .env
+# Edit .env with your preferences
+
+# Deploy with chosen media server
+./surge deploy plex     # or emby/jellyfin
+```
+
+**Direct Script Execution:**
 ```bash
 # Auto installation
 ./scripts/first-time-setup.sh --auto
@@ -201,51 +309,49 @@ Surge offers two installation modes to suit different user preferences:
 ./scripts/first-time-setup.sh
 ```
 
-**Option 2: Automated Setup (Legacy)**
+## 🎬 Demos
 
-2. **Deploy your stack:**
-   ```bash
-   ./surge deploy <your-chosen-media-server>
-   ```
+### Complete Workflow Demo
+![Surge Complete Workflow](https://p76.tr0.n0.cdn.zight.com/items/rRuR9rve/fc44b7dd-3369-45ef-890b-457e75abecf6.gif?source=viewer&v=f2c9550a59807dfe236b82dddadd8557)
 
-3. **Access your services:**
-   - Homepage Dashboard: http://localhost:3000
-   - Your chosen media server will be available on its default port
+*This demonstrates the complete Surge experience from initial setup through deployment and configuration. Watch as the system automatically detects prerequisites, configures services, deploys containers, discovers API keys, and establishes inter-service connections - all in under 2 minutes.*
 
-### **Option 2: Manual Setup**
+### Deployment Process
+![Surge Deployment](https://p76.tr0.n0.cdn.zight.com/items/jkuklxZn/06af7fa8-4604-42b3-b763-51e0e0869e0f.gif?source=viewer&v=63055bb86fbd71801ca2746ef581cbfa)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/amcgready/Surge.git
-   cd Surge
-   ```
+*Watch the deployment process in action as Surge pulls container images, starts services, creates directory structures, and automatically configures API connections between all services. The deployment includes real-time progress updates and health checks to ensure everything is running perfectly.*
 
-2. **Configure your setup:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your preferences
-   ```
+### Automatic Updates
+![Surge Update Process](https://p76.tr0.n0.cdn.zight.com/items/WnunGo7A/ecea1c6b-c782-4896-a3ec-ef02bcdd7ee5.gif?source=viewer&v=65b36f64a7f546cdd73e5781508bc3a8)
 
-3. **Choose your media server:**
-   ```bash
-   # For Plex (with full automation)
-   ./surge deploy plex
-   
-   # For Emby  
-   ./surge deploy emby
-   
-   # For Jellyfin
-   ./surge deploy jellyfin
-   
-   # Minimal deployment (core services only)
-   ./surge deploy plex --minimal
-   ```
+*The update system automatically checks for new container versions, backs up configurations, pulls latest images, recreates containers, and sends Discord notifications - all while preserving your settings and data.*
 
-4. **Access your services:**
-   - Homepage Dashboard: http://localhost:3000
-   - Your chosen media server will be available on its default port
+### Key Demo Features
+- **🚀 One-Command Setup**: Interactive wizard guides you through configuration
+- **⚡ Automated Deployment**: Deploy your entire media stack with a single command  
+- **🔄 Zero-Downtime Updates**: Update all containers while preserving configurations
+- **📱 Discord Integration**: Real-time notifications for updates and system events
+- **🏥 Health Monitoring**: Automatic verification that all services are operational
 
-## � Configuration Management
+### Try the Demos Yourself
+```bash
+# Clone and test the demo scripts (safe for recording)
+git clone https://github.com/amcgready/Surge.git
+cd Surge
+
+# Setup wizard demo
+./scripts/test-setup-demo.sh
+
+# Deployment demo  
+./scripts/test-deploy-demo.sh
+
+# Update process demo
+./scripts/test-update-demo.sh
+```
+
+*All demo scripts use sanitized data and masked API keys - perfect for screen recordings and documentation.*
+
+## 🔧 Configuration Management
 
 ### **Automatic Update Detection**
 
@@ -466,12 +572,18 @@ Surge provides easy access to command-line tools:
 ./surge exec services          # Show all available services
 ```
 
-## 🔧 Manual Updates
+## 🔧 Updates
 
-To update manually:
+To update all containers:
 
 ```bash
-./surge update
+./surge --update
+```
+
+To check for updates without applying them:
+
+```bash
+./surge --update --check
 ```
 
 ## 🐛 Troubleshooting

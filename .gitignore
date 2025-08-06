@@ -93,12 +93,6 @@ yarn.lock
 scripts/test-rdt-integration.py
 SECURITY_AUDIT_COMPLETE.md
 DEMO_SCRIPTS.md
-scripts/test-deploy-demo.sh
 scripts/test-deploy-quick.sh
-scripts/test-complete-workflow-demo.sh
-scripts/test-setup-demo.sh
 scripts/test-setup-quick.sh
-scripts/test-setup-reconfigure-demo.sh
-scripts/test-update-check-demo.sh
-scripts/test-update-demo.sh
 scripts/test-update-quick.sh
