@@ -1,7 +1,8 @@
 # Environment files
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+.env.backup*
 
 # Docker volumes and data
 data/
@@ -30,7 +31,22 @@ Thumbs.db
 ehthumbs.db
 Icon?
 
-# Config files with secrets
+# Security - Keys, certificates, and credentials
+*.key
+*.pem
+*.crt
+*.cert
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.p12
+*.pfx
+
+# Config files with secrets (entire config directory to be safe)
+config/
+!config/.gitkeep
+
+# Template configs are in configs/ directory
 configs/**/config.yml
 configs/**/settings.json
 configs/**/*.db
@@ -40,23 +56,13 @@ configs/**/*.sqlite
 *.bak
 *.backup
 
-# Test data
+# Test data and files
 test-data/
-
-# Test files and validation scripts
-scripts/test-*.py
-scripts/validate-*.sh
-test_*.py
+test_*
 *_test.py
+*_test.sh
 
-# Security audit documentation (keep but don't track changes)
-SECURITY_AUDIT_RESULTS.md
-CRITICAL_SECURITY_FIX.md
-COMPREHENSIVE_SECURITY_AUDIT.md
-
-# Development artifacts and accidentally created directories
---help/
---*/
+# Development artifacts
 tmp/
 temp/
 debug/
@@ -65,7 +71,7 @@ debug/
 docker-compose.override.yml
 docker-compose.local.yml
 
-# Node modules (if any)
+# Node modules
 node_modules/
 
 # Python
@@ -78,17 +84,10 @@ env/
 venv/
 .venv/
 
-# Lock files
+# Package lock files
 package-lock.json
 yarn.lock
-test-keys.sh
-config/kometa/config.yml
-config/posterizarr/config.yml
-config/prowlarr/config.xml
-config/radarr/config.xml
-config/scanly/config.yml
-config/sonarr/config.xml
-config/tautulli/config.ini
-.env.backup.20250727_183050
+
+# Surge specific
 .surge_initialized
-config/overseerr/settings.json
+scripts/test-rdt-integration.py
