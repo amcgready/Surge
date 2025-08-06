@@ -91,3 +91,4 @@ yarn.lock
 # Surge specific
 .surge_initialized
 scripts/test-rdt-integration.py
+SECURITY_AUDIT_COMPLETE.md
