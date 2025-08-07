@@ -1903,14 +1903,14 @@ ANIME_SEPARATION=${anime_separation:-true}
 KIDS_SEPARATION=${kids_separation:-false}
 
 # Custom folder paths
-CUSTOM_SHOW_FOLDER=${tv_folder:-TV Series}
-CUSTOM_4KSHOW_FOLDER=${tv_4k_folder:-4K Series}
-CUSTOM_ANIME_SHOW_FOLDER=${anime_tv_folder:-Anime Series}
+CUSTOM_SHOW_FOLDER="${tv_folder:-TV Series}"
+CUSTOM_4KSHOW_FOLDER="${tv_4k_folder:-4K Series}"
+CUSTOM_ANIME_SHOW_FOLDER="${anime_tv_folder:-Anime Series}"
 CUSTOM_MOVIE_FOLDER=${movie_folder:-Movies}
-CUSTOM_4KMOVIE_FOLDER=${movie_4k_folder:-4K Movies}
-CUSTOM_ANIME_MOVIE_FOLDER=${anime_movie_folder:-Anime Movies}
-CUSTOM_KIDS_MOVIE_FOLDER=${kids_movie_folder:-Kids Movies}
-CUSTOM_KIDS_SHOW_FOLDER=${kids_tv_folder:-Kids Series}
+CUSTOM_4KMOVIE_FOLDER="${movie_4k_folder:-4K Movies}"
+CUSTOM_ANIME_MOVIE_FOLDER="${anime_movie_folder:-Anime Movies}"
+CUSTOM_KIDS_MOVIE_FOLDER="${kids_movie_folder:-Kids Movies}"
+CUSTOM_KIDS_SHOW_FOLDER="${kids_tv_folder:-Kids Series}"
 
 # Resolution-Based Organization
 SHOW_RESOLUTION_STRUCTURE=false
