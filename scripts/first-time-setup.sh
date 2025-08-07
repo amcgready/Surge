@@ -256,6 +256,17 @@ gather_auto_preferences() {
         *) print_error "Invalid choice"; exit 1 ;;
     esac
     
+    # Plex server name configuration (required for proper library setup)
+    if [ "$MEDIA_SERVER" = "plex" ]; then
+        echo ""
+        print_info "Plex Server Configuration"
+        echo "Enter a name for your Plex server (required for proper library setup)"
+        echo "This will be displayed in the Plex interface and used for identification"
+        read -p "Plex server name [MyPlexServer]: " plex_server_name
+        PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
+        print_success "Plex server name set to: $PLEX_SERVER_NAME"
+    fi
+    
     # Storage location (simplified)
     echo ""
     print_info "Storage Configuration"
@@ -331,6 +342,17 @@ gather_custom_preferences() {
         3) MEDIA_SERVER="emby" ;;
         *) print_error "Invalid choice"; exit 1 ;;
     esac
+    
+    # Plex server name configuration (required for proper library setup)
+    if [ "$MEDIA_SERVER" = "plex" ]; then
+        echo ""
+        print_info "Plex Server Configuration"
+        echo "Enter a name for your Plex server (required for proper library setup)"
+        echo "This will be displayed in the Plex interface and used for identification"
+        read -p "Plex server name [MyPlexServer]: " plex_server_name
+        PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
+        print_success "Plex server name set to: $PLEX_SERVER_NAME"
+    fi
     
     # Deployment type
     echo ""
@@ -1163,6 +1185,7 @@ CONFIG_DIR=\${DATA_ROOT}/config
 
 # MEDIA SERVER SELECTION
 MEDIA_SERVER=$MEDIA_SERVER
+PLEX_SERVER_NAME=${PLEX_SERVER_NAME:-MyPlexServer}
 
 # SERVICE CONFIGURATION
 ENABLE_RADARR=${ENABLE_RADARR:-true}

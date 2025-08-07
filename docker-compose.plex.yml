@@ -13,7 +13,7 @@ services:
       - TZ=${TZ:-UTC}
       - PLEX_CLAIM=${PLEX_CLAIM:-}
       - ADVERTISE_IP=${PLEX_ADVERTISE_IP:-}
-      - HOSTNAME=SurgePlex
+      - HOSTNAME=${PLEX_SERVER_NAME:-SurgePlex}
     volumes:
       - ${STORAGE_PATH}/Plex/config:/config
       - ${STORAGE_PATH}/Plex/transcode:/transcode
