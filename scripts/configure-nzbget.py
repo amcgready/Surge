@@ -27,9 +27,18 @@ class NZBGetConfigurator:
         self.nzbget_host = os.environ.get('NZBGET_HOST', 'localhost')
         self.nzbget_port = int(os.environ.get('NZBGET_PORT', '6789'))
         self.nzbget_username = os.environ.get('NZBGET_USER', 'admin')
-        self.nzbget_password = os.environ.get('NZBGET_PASS', 'tegbzn6789')
-        if self.nzbget_password == 'tegbzn6789':
-            self.log("⚠️ Using default NZBGet password. For security, set NZBGET_PASS environment variable", "WARNING")
+        self.nzbget_password = os.environ.get('NZBGET_PASS') or self._generate_secure_password()
+        if not os.environ.get('NZBGET_PASS'):
+            self.log("⚠️  No NZBGET_PASS set in environment, using generated password", "WARNING")
+
+    def _generate_secure_password(self):
+        """Generate a secure password for NZBGet if none provided"""
+        import secrets, string
+        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        self.log(f"⚠️  Generated secure NZBGet password: {password}", "WARNING")
+        self.log("⚠️  Please set NZBGET_PASS in your .env file for persistence", "WARNING")
+        return password
+        self.log("⚠️ Using default NZBGet password. For security, set NZBGET_PASS environment variable", "WARNING")
         
         # Container names for internal communication
         self.container_names = {

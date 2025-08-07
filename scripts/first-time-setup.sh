@@ -605,8 +605,14 @@ gather_custom_preferences() {
         read -p "NZBGet username [admin]: " nzbget_user
         NZBGET_USER=${nzbget_user:-admin}
         
-        read -p "NZBGet password [tegbzn6789]: " nzbget_pass
-        NZBGET_PASS=${nzbget_pass:-tegbzn6789}
+        read -p "NZBGet password [auto-generate]: " nzbget_pass
+        if [ -z "$nzbget_pass" ]; then
+            # Generate secure password
+            NZBGET_PASS=$(python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16)))")
+            echo "Generated secure NZBGet password: $NZBGET_PASS"
+        else
+            NZBGET_PASS=$nzbget_pass
+        fi
     fi
     
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
@@ -1218,7 +1224,8 @@ DISCORD_NOTIFY_SYSTEM=${DISCORD_NOTIFY_SYSTEM:-false}
 
 # DOWNLOAD CLIENT SETTINGS
 NZBGET_USER=${NZBGET_USER:-admin}
-NZBGET_PASS=${NZBGET_PASS:-tegbzn6789}
+# Note: NZBGET_PASS should be set in .env file or will be auto-generated
+NZBGET_PASS=${NZBGET_PASS:-}
 RD_API_TOKEN=${RD_API_TOKEN:-}
 ZURG_DOWNLOADS_PATH=${ZURG_DOWNLOADS_PATH:-}
 AD_API_TOKEN=${AD_API_TOKEN:-}

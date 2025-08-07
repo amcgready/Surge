@@ -12,6 +12,11 @@ import os
 import time
 import sqlite3
 
+def generate_secure_password():
+    """Generate a secure password for services"""
+    import secrets, string
+    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+
 # Service URL configuration for security and flexibility
 SERVICE_URLS = {
     'prowlarr': os.environ.get('PROWLARR_URL', 'http://localhost:9696'),
@@ -929,7 +934,9 @@ def configure_nzbget_download_client():
     
     # Get NZBGet credentials from environment
     nzbget_username = os.environ.get('NZBGET_USER', 'admin')
-    nzbget_password = os.environ.get('NZBGET_PASS', 'tegbzn6789')
+    nzbget_password = os.environ.get('NZBGET_PASS') or generate_secure_password()
+    if not os.environ.get('NZBGET_PASS'):
+        print("⚠️  Warning: No NZBGET_PASS set, using generated password")
     
     # Container names for internal communication
     nzbget_container = 'surge-nzbget'
@@ -1054,7 +1061,9 @@ def configure_nzbget_server():
     
     # Get NZBGet credentials
     nzbget_username = os.environ.get('NZBGET_USER', 'admin')
-    nzbget_password = os.environ.get('NZBGET_PASS', 'tegbzn6789')
+    nzbget_password = os.environ.get('NZBGET_PASS') or generate_secure_password()
+    if not os.environ.get('NZBGET_PASS'):
+        print("⚠️  Warning: No NZBGET_PASS set, using generated password")
     
     print(f"📁 NZBGet config path: {nzbget_config_path}")
     

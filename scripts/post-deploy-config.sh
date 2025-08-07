@@ -220,6 +220,40 @@ main() {
         configure_plex_libraries
     fi
     
+    # Run comprehensive interconnection configuration
+    if [ -f "$SCRIPT_DIR/configure-interconnections.py" ]; then
+        log_info "Running comprehensive service interconnection configuration..."
+        if python3 "$SCRIPT_DIR/configure-interconnections.py" "$STORAGE_PATH"; then
+            log_info "✅ All service interconnections configured successfully"
+        else
+            log_error "❌ Service interconnection configuration failed"
+        fi
+    fi
+    
+    # Configure Tautulli (if Tautulli is running)
+    if docker ps --format "table {{.Names}}" | grep -q "tautulli"; then
+        if [ -f "$SCRIPT_DIR/configure-tautulli.py" ]; then
+            log_info "Configuring Tautulli connection to Plex..."
+            if python3 "$SCRIPT_DIR/configure-tautulli.py" "$STORAGE_PATH"; then
+                log_info "✅ Tautulli configuration completed successfully"
+            else
+                log_error "❌ Tautulli configuration failed"
+            fi
+        fi
+    fi
+    
+    # Configure Kometa (if Kometa is running)
+    if docker ps --format "table {{.Names}}" | grep -q "kometa"; then
+        if [ -f "$SCRIPT_DIR/configure-kometa.py" ]; then
+            log_info "Configuring Kometa connection to Plex..."
+            if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
+                log_info "✅ Kometa configuration completed successfully"
+            else
+                log_error "❌ Kometa configuration failed"
+            fi
+        fi
+    fi
+    
     # Configure RDT-Client automation (if RDT-Client is running)
     if docker ps --format "table {{.Names}}" | grep -q "rdt-client"; then
         log_info "Configuring RDT-Client automation..."
