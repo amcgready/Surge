@@ -46,6 +46,9 @@ show_help() {
     echo "  auto-config --service S - Configure specific service only"
     echo "  auto-config --discover  - Discover API keys without configuring"
     echo "  post-config             - Run post-deployment configuration"
+    echo "  advanced [cmd] [service] - Configure advanced options for services"
+    echo "  advanced list           - List services with advanced configuration"
+    echo "  advanced config <srv>   - Configure advanced options for a service"
     echo "  troubleshoot            - Diagnose API connection issues"
     echo "  api-keys                - Manage API keys (discover, configure)"
     echo "  inject-keys             - Generate and inject API keys into configs"
@@ -90,10 +93,11 @@ show_help() {
     echo "  2. Deploy: ./surge deploy <media-server>"
     echo "  3. Access: http://localhost:3000"
     echo ""
-    echo "Command-Line Tools:"
-    echo "  ./surge exec scanly scan      # Run media scan"
-    echo "  ./surge exec scanly organize  # Organize files"
-    echo "  ./surge exec kometa '--run'   # Run metadata update"
+    echo "Examples:"
+    echo "  ./surge advanced config prowlarr       # Configure Prowlarr advanced options"
+    echo "  ./surge config setup                   # Setup shared variables"
+    echo "  ./surge exec scanly scan               # Run media scan"
+    echo "  ./surge exec kometa '--run'            # Run metadata update"
     echo ""
     echo "Features:"
     echo "  ✅ First-time setup wizard"
@@ -122,6 +126,9 @@ case ${1:-} in
         ;;
     auto-config)
         exec "$SCRIPT_DIR/scripts/auto-config.sh" "${@:2}"
+        ;;
+    advanced)
+        exec "$SCRIPT_DIR/scripts/advanced-config.sh" "${@:2}"
         ;;
     post-config)
         exec "$SCRIPT_DIR/scripts/post-deploy-config.sh" "${@:2}"
