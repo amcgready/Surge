@@ -1370,6 +1370,68 @@ def run_rdt_client_full_automation():
         print("💡 Check logs above and verify configurations manually")
         return False
 
+def configure_homepage_automation():
+    """Configure Homepage dashboard automatically."""
+    print("🏠 Configuring Homepage dashboard...")
+    
+    try:
+        import subprocess
+        script_path = os.path.join(os.path.dirname(__file__), 'configure-homepage.py')
+        
+        if not os.path.exists(script_path):
+            print(f"❌ Homepage configuration script not found: {script_path}")
+            return False
+        
+        # Run the Homepage configuration script
+        result = subprocess.run(['python3', script_path], 
+                              capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            print("✅ Homepage configuration completed successfully!")
+            print("🏠 Homepage dashboard is now configured with all enabled services")
+            return True
+        else:
+            print(f"❌ Homepage configuration failed: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error running Homepage configuration: {e}")
+        return False
+
+def configure_posterizarr_automation():
+    """Configure Posterizarr poster management automatically."""
+    print("🎨 Configuring Posterizarr poster management...")
+    
+    # Check if Posterizarr is enabled
+    if os.environ.get('ENABLE_POSTERIZARR', 'false').lower() != 'true':
+        print("ℹ️ Posterizarr is not enabled - skipping configuration")
+        return True
+    
+    try:
+        import subprocess
+        script_path = os.path.join(os.path.dirname(__file__), 'configure-posterizarr.py')
+        
+        if not os.path.exists(script_path):
+            print(f"❌ Posterizarr configuration script not found: {script_path}")
+            return False
+        
+        # Run the Posterizarr configuration script
+        result = subprocess.run(['python3', script_path], 
+                              capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            print("✅ Posterizarr configuration completed successfully!")
+            print("🎨 Posterizarr is now configured for automated poster management")
+            return True
+        else:
+            print(f"❌ Posterizarr configuration failed: {result.stderr}")
+            print("💡 Posterizarr may still work manually - check container logs")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error running Posterizarr configuration: {e}")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
@@ -1377,3 +1439,5 @@ if __name__ == '__main__':
     configure_gaps_applications()
     run_nzbget_full_automation()
     run_rdt_client_full_automation()
+    configure_homepage_automation()
+    configure_posterizarr_automation()

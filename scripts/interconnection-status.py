@@ -49,7 +49,8 @@ class SurgeInterconnectionChecker:
             'kometa': os.environ.get('ENABLE_KOMETA', 'false').lower() == 'true',
             'gaps': os.environ.get('ENABLE_GAPS', 'false').lower() == 'true',
             'posterizarr': os.environ.get('ENABLE_POSTERIZARR', 'false').lower() == 'true',
-            'cinesync': os.environ.get('ENABLE_CINESYNC', 'false').lower() == 'true'
+            'cinesync': os.environ.get('ENABLE_CINESYNC', 'false').lower() == 'true',
+            'homepage': True  # Homepage is always enabled
         }
         
         for service, enabled in service_checks.items():
@@ -245,7 +246,8 @@ class SurgeInterconnectionChecker:
             'plex': 32400, 'emby': 8096, 'jellyfin': 8096,
             'radarr': 7878, 'sonarr': 8989, 'prowlarr': 9696,
             'bazarr': 6767, 'overseerr': 5055, 'tautulli': 8182,
-            'nzbget': 6789, 'rdt-client': 6500, 'gaps': 8484
+            'nzbget': 6789, 'rdt-client': 6500, 'gaps': 8484,
+            'posterizarr': 5060, 'homepage': 3000
         }
         
         for service in self.enabled_services:

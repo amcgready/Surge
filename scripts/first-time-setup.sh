@@ -792,6 +792,28 @@ configure_services_post_deployment() {
         fi
     fi
 
+    # Configure Homepage dashboard
+    print_info "🏠 Configuring Homepage dashboard..."
+    show_quick_progress "Setting up Homepage dashboard with all enabled services..." 15
+    if python3 "$SCRIPT_DIR/configure-homepage.py" "$STORAGE_PATH"; then
+        print_success "Homepage dashboard configuration completed!"
+        print_info "📊 Homepage dashboard available at: http://localhost:${HOMEPAGE_PORT:-3000}"
+    else
+        print_warning "Homepage configuration had some issues, but basic dashboard should work"
+    fi
+
+    # Configure Posterizarr if enabled
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+        print_info "🎨 Configuring Posterizarr poster management..."
+        show_quick_progress "Setting up automated poster management..." 10
+        if python3 "$SCRIPT_DIR/configure-posterizarr.py" "$STORAGE_PATH"; then
+            print_success "Posterizarr configuration completed!"
+            print_info "🎨 Posterizarr available at: http://localhost:${POSTERIZARR_PORT:-5060}"
+        else
+            print_warning "Posterizarr configuration had some issues, manual setup may be needed"
+        fi
+    fi
+
     print_success "Service configuration completed!"
 }
 # Generate homepage.yaml widgets for all enabled services

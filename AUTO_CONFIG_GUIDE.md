@@ -13,6 +13,8 @@ The auto-configuration system automatically connects:
 - **Tautulli** connection details prepared
 - **NZBGet** ↔ Radarr/Sonarr (download client integration)
 - **Prowlarr** ↔ Radarr/Sonarr (indexer management)
+- **Homepage** dashboard with service widgets and API integration
+- **Posterizarr** ↔ Radarr/Sonarr (automated poster management)
 
 ## 🚀 How It Works
 
