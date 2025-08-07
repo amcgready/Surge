@@ -562,6 +562,11 @@ gather_custom_preferences() {
         ASSET_PROCESSING_SCHEDULE=${asset_schedule:-"0 2 * * *"}
     fi
     
+    # CineSync Media Organization Configuration
+    if [ "$ENABLE_CINESYNC" = "true" ]; then
+        configure_cinesync_organization
+    fi
+    
     # API Keys and External Services
     echo ""
     print_info "External Services & Notifications"
@@ -712,6 +717,112 @@ create_download_directories() {
     print_success "Download directories created and configured"
 }
 
+# Interactive CineSync Media Organization Configuration
+configure_cinesync_organization() {
+    echo ""
+    print_info "🎬 CineSync Media Organization Setup"
+    echo ""
+    echo "Configure how CineSync organizes your media library:"
+    echo ""
+    
+    # Content separation options
+    echo "📂 Content Separation Options:"
+    echo ""
+    
+    # Anime separation
+    read -p "Separate anime content into dedicated folders? [Y/n]: " anime_separation
+    CINESYNC_ANIME_SEPARATION=$([[ "$anime_separation" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+    
+    if [ "$CINESYNC_ANIME_SEPARATION" = "true" ]; then
+        echo "  📺 Anime content will be organized separately"
+        read -p "    Anime TV folder name [Anime Series]: " anime_tv_name
+        CINESYNC_CUSTOM_ANIME_SHOW_FOLDER=${anime_tv_name:-"Anime Series"}
+        
+        read -p "    Anime movie folder name [Anime Movies]: " anime_movie_name
+        CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER=${anime_movie_name:-"Anime Movies"}
+    fi
+    
+    # 4K separation
+    read -p "Separate 4K content into dedicated folders? [y/N]: " fourk_separation
+    CINESYNC_4K_SEPARATION=$([[ "$fourk_separation" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+    
+    if [ "$CINESYNC_4K_SEPARATION" = "true" ]; then
+        echo "  🎞️ 4K content will be organized separately"
+        read -p "    4K TV folder name [4K Series]: " fourk_tv_name
+        CINESYNC_CUSTOM_4KSHOW_FOLDER=${fourk_tv_name:-"4K Series"}
+        
+        read -p "    4K movie folder name [4K Movies]: " fourk_movie_name
+        CINESYNC_CUSTOM_4KMOVIE_FOLDER=${fourk_movie_name:-"4K Movies"}
+    fi
+    
+    # Kids content separation
+    read -p "Separate family/kids content into dedicated folders? [y/N]: " kids_separation
+    CINESYNC_KIDS_SEPARATION=$([[ "$kids_separation" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+    
+    if [ "$CINESYNC_KIDS_SEPARATION" = "true" ]; then
+        echo "  👶 Kids content will be organized separately"
+        read -p "    Kids TV folder name [Kids Series]: " kids_tv_name
+        CINESYNC_CUSTOM_KIDS_SHOW_FOLDER=${kids_tv_name:-"Kids Series"}
+        
+        read -p "    Kids movie folder name [Kids Movies]: " kids_movie_name
+        CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER=${kids_movie_name:-"Kids Movies"}
+    fi
+    
+    echo ""
+    echo "📁 Standard Library Folders:"
+    
+    # Standard folder names
+    read -p "TV Shows folder name [TV Series]: " tv_folder_name
+    CINESYNC_CUSTOM_SHOW_FOLDER=${tv_folder_name:-"TV Series"}
+    
+    read -p "Movies folder name [Movies]: " movie_folder_name
+    CINESYNC_CUSTOM_MOVIE_FOLDER=${movie_folder_name:-"Movies"}
+    
+    echo ""
+    echo "🔧 Advanced Organization Options:"
+    
+    # Resolution-based organization
+    read -p "Organize by resolution within folders (e.g., Movies/1080p, Movies/720p)? [y/N]: " resolution_structure
+    CINESYNC_SHOW_RESOLUTION_STRUCTURE=$([[ "$resolution_structure" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+    CINESYNC_MOVIE_RESOLUTION_STRUCTURE=$([[ "$resolution_structure" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+    
+    # Source structure preservation
+    read -p "Preserve original source folder structure? [y/N]: " source_structure
+    CINESYNC_USE_SOURCE_STRUCTURE=$([[ "$source_structure" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+    
+    echo ""
+    print_info "✅ CineSync Organization Configuration Complete"
+    echo ""
+    echo "📂 Your media will be organized as follows:"
+    echo "   📺 TV Shows: $CINESYNC_CUSTOM_SHOW_FOLDER"
+    echo "   🎬 Movies: $CINESYNC_CUSTOM_MOVIE_FOLDER"
+    
+    if [ "$CINESYNC_ANIME_SEPARATION" = "true" ]; then
+        echo "   🗾 Anime TV: $CINESYNC_CUSTOM_ANIME_SHOW_FOLDER"
+        echo "   🎌 Anime Movies: $CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER"
+    fi
+    
+    if [ "$CINESYNC_4K_SEPARATION" = "true" ]; then
+        echo "   📺 4K TV: $CINESYNC_CUSTOM_4KSHOW_FOLDER"
+        echo "   🎞️ 4K Movies: $CINESYNC_CUSTOM_4KMOVIE_FOLDER"
+    fi
+    
+    if [ "$CINESYNC_KIDS_SEPARATION" = "true" ]; then
+        echo "   👶 Kids TV: $CINESYNC_CUSTOM_KIDS_SHOW_FOLDER"
+        echo "   🧸 Kids Movies: $CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER"
+    fi
+    
+    if [ "$CINESYNC_SHOW_RESOLUTION_STRUCTURE" = "true" ]; then
+        echo "   📐 Resolution-based sub-folders: Enabled"
+    fi
+    
+    if [ "$CINESYNC_USE_SOURCE_STRUCTURE" = "true" ]; then
+        echo "   📋 Source structure preservation: Enabled"
+    fi
+    
+    echo ""
+}
+
 # Comprehensive post-deployment configuration
 configure_services_post_deployment() {
     print_step "🔧 Configuring service interconnections..."
@@ -811,6 +922,30 @@ configure_services_post_deployment() {
             print_info "🎨 Posterizarr available at: http://localhost:${POSTERIZARR_PORT:-5060}"
         else
             print_warning "Posterizarr configuration had some issues, manual setup may be needed"
+        fi
+    fi
+
+    # Configure CineSync if enabled
+    if [ "$ENABLE_CINESYNC" = "true" ]; then
+        print_info "🎬 Configuring CineSync media synchronization..."
+        show_quick_progress "Setting up media organization automation..." 10
+        if python3 "$SCRIPT_DIR/configure-cinesync.py" "$STORAGE_PATH"; then
+            print_success "CineSync configuration completed!"
+            print_info "🎬 CineSync media organization is now automated"
+        else
+            print_warning "CineSync configuration had some issues, manual setup may be needed"
+        fi
+    fi
+
+    # Configure Placeholdarr if enabled
+    if [ "$ENABLE_PLACEHOLDARR" = "true" ]; then
+        print_info "📄 Configuring Placeholdarr file management..."
+        show_quick_progress "Setting up placeholder file automation..." 10
+        if python3 "$SCRIPT_DIR/configure-placeholdarr.py" "$STORAGE_PATH"; then
+            print_success "Placeholdarr configuration completed!"
+            print_info "📄 Placeholdarr file management is now automated"
+        else
+            print_warning "Placeholdarr configuration had some issues, manual setup may be needed"
         fi
     fi
 
@@ -1228,6 +1363,22 @@ ENABLE_PLACEHOLDARR=${ENABLE_PLACEHOLDARR:-false}
 ENABLE_GAPS=${ENABLE_GAPS:-true}
 ENABLE_WATCHTOWER=${ENABLE_WATCHTOWER:-true}
 ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-true}
+
+# CINESYNC CONFIGURATION
+CINESYNC_ANIME_SEPARATION=${CINESYNC_ANIME_SEPARATION:-true}
+CINESYNC_4K_SEPARATION=${CINESYNC_4K_SEPARATION:-false}
+CINESYNC_KIDS_SEPARATION=${CINESYNC_KIDS_SEPARATION:-false}
+CINESYNC_CUSTOM_SHOW_FOLDER=${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}
+CINESYNC_CUSTOM_MOVIE_FOLDER=${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}
+CINESYNC_CUSTOM_ANIME_SHOW_FOLDER=${CINESYNC_CUSTOM_ANIME_SHOW_FOLDER:-Anime Series}
+CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER=${CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER:-Anime Movies}
+CINESYNC_CUSTOM_4KSHOW_FOLDER=${CINESYNC_CUSTOM_4KSHOW_FOLDER:-4K Series}
+CINESYNC_CUSTOM_4KMOVIE_FOLDER=${CINESYNC_CUSTOM_4KMOVIE_FOLDER:-4K Movies}
+CINESYNC_CUSTOM_KIDS_SHOW_FOLDER=${CINESYNC_CUSTOM_KIDS_SHOW_FOLDER:-Kids Series}
+CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER=${CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER:-Kids Movies}
+CINESYNC_SHOW_RESOLUTION_STRUCTURE=${CINESYNC_SHOW_RESOLUTION_STRUCTURE:-false}
+CINESYNC_MOVIE_RESOLUTION_STRUCTURE=${CINESYNC_MOVIE_RESOLUTION_STRUCTURE:-false}
+CINESYNC_USE_SOURCE_STRUCTURE=${CINESYNC_USE_SOURCE_STRUCTURE:-false}
 
 # NETWORK PORTS
 HOMEPAGE_PORT=${HOMEPAGE_PORT:-3000}

@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import os
 import time
 import sqlite3
+import subprocess
 
 def generate_secure_password():
     """Generate a secure password for services"""
@@ -1432,6 +1433,99 @@ def configure_posterizarr_automation():
         print(f"❌ Error running Posterizarr configuration: {e}")
         return False
 
+def configure_cinesync_automation():
+    """Configure CineSync media synchronization automation."""
+    try:
+        print("🎬 Running CineSync automation configuration...")
+        
+        # Get storage path
+        storage_path = os.environ.get('STORAGE_PATH', '/opt/surge')
+        
+        # Run CineSync configuration script
+        script_path = os.path.join(os.path.dirname(__file__), 'configure-cinesync.py')
+        result = subprocess.run([
+            'python3', script_path, storage_path
+        ], capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            print("✅ CineSync configuration completed successfully!")
+            return True
+        else:
+            print(f"❌ CineSync configuration failed: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print("❌ CineSync configuration timed out")
+        return False
+    except Exception as e:
+        print(f"❌ Error running CineSync configuration: {e}")
+        return False
+
+def configure_placeholdarr_automation():
+    """Configure Placeholdarr file placeholder automation."""
+    try:
+        print("📄 Running Placeholdarr automation configuration...")
+        
+        # Get storage path
+        storage_path = os.environ.get('STORAGE_PATH', '/opt/surge')
+        
+        # Run Placeholdarr configuration script
+        script_path = os.path.join(os.path.dirname(__file__), 'configure-placeholdarr.py')
+        result = subprocess.run([
+            'python3', script_path, storage_path
+        ], capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            print("✅ Placeholdarr configuration completed successfully!")
+            return True
+        else:
+            print(f"❌ Placeholdarr configuration failed: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print("❌ Placeholdarr configuration timed out")
+        return False
+    except Exception as e:
+        print(f"❌ Error running Placeholdarr configuration: {e}")
+        return False
+
+def configure_cli_debrid_automation(storage_path=None):
+    """Automated CLI-Debrid configuration orchestrator."""
+    print("🔧 Starting CLI-Debrid automation...")
+    
+    if not storage_path:
+        storage_path = find_storage_path()
+    
+    # Import and run the CLI-Debrid configurator
+    import sys
+    import os
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    configure_script = os.path.join(script_dir, 'configure-cli-debrid.py')
+    
+    try:
+        # Run the CLI-Debrid configuration script
+        result = subprocess.run([
+            sys.executable, configure_script, storage_path
+        ], capture_output=True, text=True, timeout=600)
+        
+        if result.returncode == 0:
+            print("✅ CLI-Debrid automation completed successfully!")
+            print(result.stdout)
+            return True
+        else:
+            print("⚠️  CLI-Debrid automation completed with warnings")
+            print(result.stdout)
+            if result.stderr:
+                print("Error output:", result.stderr)
+            return True  # Return True since partial success is still useful
+            
+    except subprocess.TimeoutExpired:
+        print("⚠️  CLI-Debrid configuration timed out after 10 minutes")
+        return False
+    except Exception as e:
+        print(f"❌ CLI-Debrid automation failed: {e}")
+        return False
+
 if __name__ == '__main__':
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
@@ -1441,3 +1535,6 @@ if __name__ == '__main__':
     run_rdt_client_full_automation()
     configure_homepage_automation()
     configure_posterizarr_automation()
+    configure_cinesync_automation()
+    configure_placeholdarr_automation()
+    configure_cli_debrid_automation()

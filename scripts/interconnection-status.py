@@ -46,10 +46,12 @@ class SurgeInterconnectionChecker:
             'nzbget': os.environ.get('ENABLE_NZBGET', 'false').lower() == 'true',
             'rdt-client': os.environ.get('ENABLE_RDT_CLIENT', 'false').lower() == 'true',
             'zurg': os.environ.get('ENABLE_ZURG', 'false').lower() == 'true',
+            'cli-debrid': os.environ.get('ENABLE_CLI_DEBRID', 'false').lower() == 'true',
             'kometa': os.environ.get('ENABLE_KOMETA', 'false').lower() == 'true',
             'gaps': os.environ.get('ENABLE_GAPS', 'false').lower() == 'true',
             'posterizarr': os.environ.get('ENABLE_POSTERIZARR', 'false').lower() == 'true',
             'cinesync': os.environ.get('ENABLE_CINESYNC', 'false').lower() == 'true',
+            'placeholdarr': os.environ.get('ENABLE_PLACEHOLDARR', 'false').lower() == 'true',
             'homepage': True  # Homepage is always enabled
         }
         
@@ -293,6 +295,19 @@ class SurgeInterconnectionChecker:
                     passed_checks += 1
                 else:
                     self.log(f"  ❌ {service.title()}: {client_status['reason']}", "ERROR")
+        
+        # CLI-Debrid Status (if enabled)
+        if 'cli-debrid' in self.enabled_services:
+            total_checks += 1
+            try:
+                response = requests.get("http://localhost:5000/api/v1/status", timeout=5)
+                if response.status_code == 200:
+                    self.log("  ✅ CLI-Debrid: Service responding", "SUCCESS")
+                    passed_checks += 1
+                else:
+                    self.log("  ❌ CLI-Debrid: Service not responding", "ERROR")
+            except:
+                self.log("  ❌ CLI-Debrid: Connection failed", "ERROR")
         
         # Media Server Connections
         self.log("\n📺 Media Server Connections:", "INFO")

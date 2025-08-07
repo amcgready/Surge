@@ -275,6 +275,20 @@ main() {
         fi
     fi
     
+    # Configure CLI-Debrid automation (if CLI-Debrid is running)
+    if docker ps --format "table {{.Names}}" | grep -q "cli-debrid"; then
+        log_info "Configuring CLI-Debrid automation..."
+        if [ -f "$SCRIPT_DIR/configure-cli-debrid.py" ]; then
+            if python3 "$SCRIPT_DIR/configure-cli-debrid.py" "$STORAGE_PATH"; then
+                log_info "✅ CLI-Debrid configuration completed successfully"
+            else
+                log_error "❌ CLI-Debrid configuration failed"
+            fi
+        else
+            log_info "⚠️ CLI-Debrid detected but automation script not found"
+        fi
+    fi
+    
     # Run full auto-configuration
     if [ -f "$SCRIPT_DIR/auto-config.sh" ]; then
         log_info "Running full auto-configuration..."
