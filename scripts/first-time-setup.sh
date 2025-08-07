@@ -178,10 +178,18 @@ show_quick_progress() {
 
 # Check if this is first run
 check_first_run() {
+    # Check all arguments for --reconfigure flag
+    for arg in "$@"; do
+        if [ "$arg" = "--reconfigure" ]; then
+            print_info "🔄 Reconfiguring existing Surge installation..."
+            return 0
+        fi
+    done
+    
     if [ -f "$PROJECT_DIR/.surge_initialized" ]; then
         print_info "Surge has already been initialized"
         echo "Run './surge deploy <media-server>' to start services"
-        echo "Run './surge setup' to reconfigure"
+        echo "Run './surge setup --reconfigure' to reconfigure"
         exit 0
     fi
 }
@@ -313,6 +321,9 @@ gather_auto_preferences() {
     ENABLE_NZBGET="true"
     ENABLE_CLI_DEBRID="false"
     ENABLE_DECYPHARR="false"
+    ENABLE_CINESYNC="true"  # Enable CineSync in auto mode
+    ENABLE_PLACEHOLDARR="false"
+    ENABLE_GAPS="true"
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
     DEPLOYMENT_TYPE="full"
@@ -501,8 +512,8 @@ gather_custom_preferences() {
         read -p "Enable Scanly (media scanner)? [Y/n]: " enable_scanly
         ENABLE_SCANLY=$([[ "$enable_scanly" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         
-        read -p "Enable CineSync? [y/N]: " enable_cinesync
-        ENABLE_CINESYNC=$([[ "$enable_cinesync" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        read -p "Enable CineSync (media organization)? [Y/n]: " enable_cinesync
+        ENABLE_CINESYNC=$([[ "$enable_cinesync" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         
         read -p "Enable Placeholdarr? [y/N]: " enable_placeholdarr
         ENABLE_PLACEHOLDARR=$([[ "$enable_placeholdarr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
@@ -1881,18 +1892,37 @@ backup_and_merge_config() {
 main() {
     print_banner
     
-    # Check if already initialized
-    check_first_run
+    # Check if already initialized (unless --reconfigure is specified)
+    check_first_run "$@"
     
     # Check for configuration updates if already exists
     detect_new_variables
 
+    # Parse arguments for reconfigure and installation type
+    RECONFIGURE_MODE=false
+    INSTALL_TYPE=""
+    
+    # Check all arguments for flags
+    for arg in "$@"; do
+        case "$arg" in
+            --reconfigure)
+                RECONFIGURE_MODE=true
+                ;;
+            --auto)
+                INSTALL_TYPE="auto"
+                ;;
+            --custom)
+                INSTALL_TYPE="custom"
+                ;;
+        esac
+    done
+
     # If no config exists or user chose to reconfigure, gather preferences
-    if [ ! -f "$PROJECT_DIR/.env" ] || [ "$1" = "--reconfigure" ]; then
-        # Handle command line installation type selection
-        if [ "$1" = "--auto" ]; then
+    if [ ! -f "$PROJECT_DIR/.env" ] || [ "$RECONFIGURE_MODE" = "true" ]; then
+        # Handle installation type selection
+        if [ "$INSTALL_TYPE" = "auto" ]; then
             INSTALL_TYPE="auto"
-        elif [ "$1" = "--custom" ]; then
+        elif [ "$INSTALL_TYPE" = "custom" ]; then
             INSTALL_TYPE="custom"
         else
             # Choose installation type interactively

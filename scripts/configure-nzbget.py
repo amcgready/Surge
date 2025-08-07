@@ -20,6 +20,10 @@ class NZBGetConfigurator:
         except NameError:
             # Handle case when __file__ is not defined (e.g., when exec'd)
             self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(os.getcwd())))
+        
+        # Load environment variables from .env file first
+        self.load_env()
+        
         self.storage_path = storage_path or os.environ.get('STORAGE_PATH', '/opt/surge')
         self.nzbget_config_path = os.path.join(self.storage_path, 'NZBGet', 'config', 'nzbget.conf')
         
@@ -29,16 +33,7 @@ class NZBGetConfigurator:
         self.nzbget_username = os.environ.get('NZBGET_USER', 'admin')
         self.nzbget_password = os.environ.get('NZBGET_PASS') or self._generate_secure_password()
         if not os.environ.get('NZBGET_PASS'):
-            self.log("⚠️  No NZBGET_PASS set in environment, using generated password", "WARNING")
-
-    def _generate_secure_password(self):
-        """Generate a secure password for NZBGet if none provided"""
-        import secrets, string
-        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
-        self.log(f"⚠️  Generated secure NZBGet password: {password}", "WARNING")
-        self.log("⚠️  Please set NZBGET_PASS in your .env file for persistence", "WARNING")
-        return password
-        self.log("⚠️ Using default NZBGet password. For security, set NZBGET_PASS environment variable", "WARNING")
+            print("[WARNING] ⚠️  No NZBGET_PASS set in environment, using generated password")
         
         # Container names for internal communication
         self.container_names = {
@@ -54,9 +49,31 @@ class NZBGetConfigurator:
             'sonarr': os.environ.get('SONARR_URL', 'http://localhost:8989'),
             'prowlarr': os.environ.get('PROWLARR_URL', 'http://localhost:9696')
         }
+
+    def _generate_secure_password(self):
+        """Generate a secure password for NZBGet if none provided"""
+        import secrets, string
+        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        print(f"[WARNING] ⚠️  Generated secure NZBGet password: {password}")
+        print("[WARNING] ⚠️  Please set NZBGET_PASS in your .env file for persistence")
+        return password
         
     def log(self, message, level="INFO"):
         print(f"[{level}] {message}")
+        
+    def load_env(self):
+        """Load environment variables from .env file."""
+        env_file = os.path.join(self.project_root, '.env')
+        if os.path.exists(env_file):
+            with open(env_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        # Remove quotes if present
+                        if value.startswith('"') and value.endswith('"'):
+                            value = value[1:-1]
+                        os.environ[key] = value
         
     def wait_for_service(self, url, max_retries=12, retry_delay=10, api_key=None):
         """Wait for a service to become available."""

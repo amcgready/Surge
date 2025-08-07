@@ -206,8 +206,6 @@ trakt:
 
 EOF
     fi
-general:
-database:
 
 # Update Posterizarr configuration
 update_posterizarr_config() {

@@ -73,17 +73,40 @@ setup_environment() {
     print_info "Setting up environment..."
     
     if [ ! -f "$PROJECT_DIR/.env" ]; then
-        if [ -f "$PROJECT_DIR/.env.example" ]; then
-            cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
-            print_success "Created .env file from template"
-            print_warning "Please edit .env file to customize your setup"
-        else
-            print_error ".env.example file not found"
-            exit 1
-        fi
-    else
-        print_info ".env file already exists"
+        print_error "No .env configuration file found!"
+        echo ""
+        print_info "It looks like you haven't run the initial setup yet."
+        print_info "Please run the setup first to configure your preferences:"
+        echo ""
+        print_info "  ./surge setup              # Interactive setup"
+        print_info "  ./surge setup --auto       # Quick setup with defaults"
+        print_info "  ./surge setup --custom     # Full customization"
+        echo ""
+        print_info "After setup, you can deploy with:"
+        print_info "  ./surge deploy $1"
+        echo ""
+        exit 1
     fi
+    
+    # Check if this looks like a properly configured setup vs just a copied template
+    INSTALL_TYPE=$(grep "^INSTALL_TYPE=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
+    
+    if [ -z "$INSTALL_TYPE" ] || [ "$INSTALL_TYPE" = "unknown" ]; then
+        print_warning "⚠️  Configuration appears incomplete"
+        echo ""
+        print_info "Your .env file exists but may not be properly configured."
+        echo ""
+        read -p "Would you like to run setup now to ensure proper configuration? [Y/n]: " run_setup
+        
+        if [[ ! "$run_setup" =~ ^[Nn]$ ]]; then
+            print_info "Running setup first..."
+            exec "$SCRIPT_DIR/first-time-setup.sh" "--reconfigure"
+        else
+            print_info "Continuing with existing configuration..."
+        fi
+    fi
+    
+    print_info "✅ Environment configuration ready"
 }
 
 # Create directory structure
