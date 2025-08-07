@@ -704,6 +704,22 @@ def deploy_services():
             env_updates['RD_API_TOKEN'] = data['zurgSettings']['rd_token']
             print(f"✅ Setting Real Debrid token for Zurg")
         
+        # Add external API keys if provided
+        api_key_mappings = {
+            'tmdbApiKey': 'TMDB_API_KEY',
+            'fanartApiKey': 'FANART_API_KEY', 
+            'tvdbApiKey': 'TVDB_API_KEY',
+            'rdApiToken': 'RD_API_TOKEN',
+            'adApiToken': 'AD_API_TOKEN',
+            'premiumizeApiToken': 'PREMIUMIZE_API_TOKEN',
+            'traktApiKey': 'TRAKT_CLIENT_ID'
+        }
+        
+        for frontend_key, env_key in api_key_mappings.items():
+            if frontend_key in data and data[frontend_key]:
+                env_updates[env_key] = data[frontend_key]
+                print(f"✅ Setting {env_key}")
+        
         # Add storage path
         if 'storagePath' in data and data['storagePath']:
             env_updates['STORAGE_PATH'] = data['storagePath']
