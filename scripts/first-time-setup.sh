@@ -949,6 +949,33 @@ configure_services_post_deployment() {
         fi
     fi
 
+    # Configure Decypharr if enabled
+    if [ "$ENABLE_DECYPHARR" = "true" ]; then
+        print_info "⚡ Configuring Decypharr blackhole processing..."
+        show_quick_progress "Setting up debrid service integration..." 12
+        if python3 "$SCRIPT_DIR/configure-decypharr.py" "$STORAGE_PATH"; then
+            print_success "Decypharr configuration completed!"
+            print_info "⚡ Decypharr debrid blackhole processing is now automated"
+            print_info "🌐 Decypharr Web UI available at: http://localhost:${DECYPHARR_PORT:-8282}"
+        else
+            print_warning "Decypharr configuration had some issues, manual setup may be needed"
+        fi
+    fi
+
+    # Configure Zurg if enabled
+    if [ "$ENABLE_ZURG" = "true" ]; then
+        print_info "💾 Configuring Zurg Real-Debrid filesystem..."
+        show_quick_progress "Setting up rclone mount and WebDAV..." 15
+        if python3 "$SCRIPT_DIR/configure-zurg.py" "$STORAGE_PATH"; then
+            print_success "Zurg configuration completed!"
+            print_info "💾 Zurg Real-Debrid filesystem is now automated"
+            print_info "🌐 Zurg WebDAV available at: http://localhost:${ZURG_PORT:-9999}"
+            print_info "📁 Mount point: /mnt/zurg (requires rclone mount)"
+        else
+            print_warning "Zurg configuration had some issues, manual setup may be needed"
+        fi
+    fi
+
     print_success "Service configuration completed!"
 }
 # Generate homepage.yaml widgets for all enabled services

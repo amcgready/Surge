@@ -47,6 +47,7 @@ class SurgeInterconnectionChecker:
             'rdt-client': os.environ.get('ENABLE_RDT_CLIENT', 'false').lower() == 'true',
             'zurg': os.environ.get('ENABLE_ZURG', 'false').lower() == 'true',
             'cli-debrid': os.environ.get('ENABLE_CLI_DEBRID', 'false').lower() == 'true',
+            'decypharr': os.environ.get('ENABLE_DECYPHARR', 'false').lower() == 'true',
             'kometa': os.environ.get('ENABLE_KOMETA', 'false').lower() == 'true',
             'gaps': os.environ.get('ENABLE_GAPS', 'false').lower() == 'true',
             'posterizarr': os.environ.get('ENABLE_POSTERIZARR', 'false').lower() == 'true',
@@ -308,6 +309,47 @@ class SurgeInterconnectionChecker:
                     self.log("  ❌ CLI-Debrid: Service not responding", "ERROR")
             except:
                 self.log("  ❌ CLI-Debrid: Connection failed", "ERROR")
+        
+        # Decypharr Status (if enabled)
+        if 'decypharr' in self.enabled_services:
+            total_checks += 1
+            try:
+                # Check qBittorrent API endpoint (Decypharr provides mock qBittorrent API)
+                response = requests.get("http://localhost:8282/api/v2/app/version", timeout=5)
+                if response.status_code == 200:
+                    version = response.text.strip().replace('"', '')
+                    self.log(f"  ✅ Decypharr: qBittorrent API v{version} responding", "SUCCESS")
+                    passed_checks += 1
+                else:
+                    self.log("  ❌ Decypharr: qBittorrent API not responding", "ERROR")
+            except:
+                self.log("  ❌ Decypharr: Connection failed", "ERROR")
+        
+        # Zurg Status (if enabled)
+        if 'zurg' in self.enabled_services:
+            total_checks += 1
+            try:
+                # Check Zurg WebDAV health endpoint
+                response = requests.get("http://localhost:9999/health", timeout=5)
+                if response.status_code == 200:
+                    self.log("  ✅ Zurg: WebDAV server responding", "SUCCESS")
+                    passed_checks += 1
+                    
+                    # Check if mounted
+                    import subprocess
+                    try:
+                        result = subprocess.run(['mountpoint', '/mnt/zurg'], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            self.log("    ✅ rclone mount active at /mnt/zurg", "SUCCESS")
+                        else:
+                            self.log("    ⚠️  rclone mount not detected", "WARNING")
+                    except:
+                        pass  # Mount check is optional
+                else:
+                    self.log("  ❌ Zurg: WebDAV server not responding", "ERROR")
+            except:
+                self.log("  ❌ Zurg: Connection failed", "ERROR")
         
         # Media Server Connections
         self.log("\n📺 Media Server Connections:", "INFO")
