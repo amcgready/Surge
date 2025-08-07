@@ -45,7 +45,7 @@ libraries:
 
 plex:
   url: http://surge-plex:32400
-  token: YOUR_PLEX_TOKEN_HERE
+  token: ${PLEX_TOKEN}
   timeout: 60
   verify_ssl: false
 
@@ -54,7 +54,7 @@ plex:
 # ===========================================
 
 tmdb:
-  apikey: YOUR_TMDB_API_KEY_HERE
+  apikey: ${TMDB_API_KEY}
   language: en
 
 # ===========================================

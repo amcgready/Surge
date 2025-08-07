@@ -96,3 +96,4 @@ DEMO_SCRIPTS.md
 scripts/test-deploy-quick.sh
 scripts/test-setup-quick.sh
 scripts/test-update-quick.sh
+test-cli-debrid-setup.sh

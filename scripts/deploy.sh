@@ -160,8 +160,11 @@ deploy_services() {
     
     cd "$PROJECT_DIR"
     
-    # Read RD_API_TOKEN from .env file to determine if RDT-Client should be deployed
+    # Read environment variables for service enablement
     RD_API_TOKEN=$(grep "^RD_API_TOKEN=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
+    ENABLE_CLI_DEBRID=$(grep "^ENABLE_CLI_DEBRID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    ENABLE_DECYPHARR=$(grep "^ENABLE_DECYPHARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    ENABLE_ZURG=$(grep "^ENABLE_ZURG=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     
     # Base compose files
     COMPOSE_FILES="-f docker-compose.yml"
@@ -201,6 +204,24 @@ deploy_services() {
         print_warning "⚠️ No Real-Debrid token found - RDT-Client will be skipped"
         print_info "💡 Set RD_API_TOKEN in .env file to enable RDT-Client"
     fi
+
+    # Add cli-debrid profile if enabled
+    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        PROFILES="$PROFILES,cli-debrid"
+        print_info "✅ cli_debrid enabled - will be deployed"
+    fi
+
+    # Add Decypharr profile if enabled
+    if [ "$ENABLE_DECYPHARR" = "true" ]; then
+        PROFILES="$PROFILES,decypharr"
+        print_info "✅ Decypharr enabled - will be deployed"
+    fi
+
+    # Add Zurg profile if enabled
+    if [ "$ENABLE_ZURG" = "true" ]; then
+        PROFILES="$PROFILES,zurg"
+        print_info "✅ Zurg enabled - will be deployed"
+    fi
     
     export COMPOSE_PROFILES="$PROFILES"
     
@@ -235,7 +256,7 @@ deploy_services() {
             ;;
     esac
     
-    # Show RDT-Client status message
+    # Show optional service status messages
     if [ -n "$RD_API_TOKEN" ]; then
         echo "  - RDT-Client (Real-Debrid): http://localhost:6500"
     else
@@ -244,6 +265,23 @@ deploy_services() {
         print_info "   To enable RDT-Client:"
         print_info "   1. Add RD_API_TOKEN=your_token to .env file"
         print_info "   2. Run: ./surge deploy $media_server"
+    fi
+
+    # Show cli_debrid status
+    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        CLI_DEBRID_PORT=$(grep "^CLI_DEBRID_PORT=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "5000")
+        echo "  - cli_debrid Web UI: http://localhost:${CLI_DEBRID_PORT}"
+        echo "  - cli_debrid CLI: Available via ./surge exec cli-debrid"
+    fi
+
+    # Show Decypharr status
+    if [ "$ENABLE_DECYPHARR" = "true" ]; then
+        echo "  - Decypharr: http://localhost:8282"
+    fi
+
+    # Show Zurg status  
+    if [ "$ENABLE_ZURG" = "true" ]; then
+        echo "  - Zurg: http://localhost:9999"
     fi
 }
 

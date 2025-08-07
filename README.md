@@ -27,7 +27,7 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** - Real-Debrid torrent client
 - **[GAPS](https://github.com/JasonHHouse/gaps)** - Finds missing movies in Plex libraries and integrates with Radarr
 - **[Zurg](https://github.com/debridmediamanager/zurg-testing)** - Real-Debrid integration testing tool
-- **[cli_debrid](https://github.com/godver3/cli_debrid)** - Command-line interface for debrid services management
+- **[cli_debrid](https://github.com/godver3/cli_debrid)** - Web interface and CLI for debrid services management
 - **[Decypharr](https://github.com/sirrobot01/decypharr)** - QBittorrent API implementation with multiple debrid service support
 
 ### Content Enhancement
@@ -74,6 +74,7 @@ After deployment with RDT-Client enabled:
 - **Integrated Workflow**: Radarr/Sonarr → Torrentio → RDT-Client → Real-Debrid
 - **Quality Control**: Automatic quality filtering and provider selection
 - **Secure Configuration**: No exposed credentials or hardcoded paths
+- **Security Auditing**: Built-in security audit with `./surge security-audit`
 
 #### Manual Setup (Legacy - Not Required)
 *For reference only - this is now fully automated:*
@@ -504,8 +505,9 @@ All services can be configured through:
 | Decypharr | 8282 | QBittorrent API with debrid support |
 | Tautulli | 8182 | Media server stats |
 | Posterizarr | 5060 | Custom poster management |
+| cli_debrid | 5000 | Debrid services web interface |
 
-**Note**: ImageMaid, Kometa, Watchtower, and cli_debrid run as CLI/scheduled services without web interfaces.
+**Note**: ImageMaid, Kometa, and Watchtower run as CLI/scheduled services without web interfaces.
 
 ## 🔄 Updates & Automation
 
@@ -515,6 +517,38 @@ Surge includes powerful automation features:
 - **Watchtower** automatically updates all containers to the latest versions
 - Updates check every 24 hours by default
 - Configurable update intervals and notifications
+
+## 🔒 Security
+
+Surge prioritizes security with multiple layers of protection:
+
+### Security Features
+- **Environment Variables**: All sensitive data stored in `.env` files
+- **No Hardcoded Credentials**: All API keys and passwords use variable substitution
+- **Secure Defaults**: Services run with non-root users when possible
+- **Network Isolation**: Internal Docker networking with minimal port exposure
+- **Git Security**: Comprehensive `.gitignore` prevents credential leaks
+
+### Security Tools
+```bash
+# Run comprehensive security audit
+./surge security-audit
+
+# Check for exposed secrets
+./surge troubleshoot
+
+# Review service configurations
+./surge status
+```
+
+### Security Best Practices
+1. **Change default passwords** in your `.env` file
+2. **Use strong, unique API keys** for all services
+3. **Regularly update** containers with `./surge update`
+4. **Monitor access logs** for suspicious activity
+5. **Keep host system updated** and secured
+
+> 📖 See `SECURITY.md` for detailed security guidelines and incident response procedures.
 
 ### Sequential Asset Processing
 Surge automatically runs asset processing in the correct order:
@@ -558,6 +592,10 @@ Surge provides easy access to command-line tools:
 ```
 
 ### **cli_debrid (Debrid Management)**
+
+**Web Interface**: Available at http://localhost:5000 (when enabled)
+
+**CLI Commands**:
 ```bash
 ./surge exec cli-debrid --help     # Show available commands
 ./surge exec cli-debrid status     # Check debrid service status

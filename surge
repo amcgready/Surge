@@ -51,6 +51,7 @@ show_help() {
     echo "  inject-keys             - Generate and inject API keys into configs"
     echo "  fix-ownership [path]    - Fix directory ownership for Docker containers"
     echo "  configure-overseerr     - Configure Overseerr with service API keys"
+    echo "  security-audit          - Run security audit to check for vulnerabilities"
     echo ""
     echo "Management Commands:"
     echo "  --update                - Update all containers to latest versions"
@@ -139,6 +140,9 @@ case ${1:-} in
         ;;
     configure-overseerr)
         exec python3 "$SCRIPT_DIR/scripts/configure-overseerr.py" "${@:2}"
+        ;;
+    security-audit)
+        exec "$SCRIPT_DIR/scripts/security-audit.sh" "${@:2}"
         ;;
     exec)
         if [ -z "$2" ]; then

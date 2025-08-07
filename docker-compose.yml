@@ -134,6 +134,8 @@ services:
   cli-debrid:
     image: godver3/cli_debrid:latest
     container_name: surge-cli-debrid
+    ports:
+      - "${CLI_DEBRID_PORT:-5000}:5000"
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -147,6 +149,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - cli-debrid
 
   decypharr:
     image: cy01/blackhole:latest
@@ -165,6 +169,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - decypharr
 
   posterizarr:
     image: ghcr.io/fscorrupt/posterizarr:latest
