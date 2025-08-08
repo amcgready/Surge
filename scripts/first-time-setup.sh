@@ -1,3 +1,67 @@
+
+# Utility function definitions (must be before any usage)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+DARK_BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+print_step() {
+    echo -e "${PURPLE}[STEP]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+# Main setup logic for both initial setup and --reconfigure
+main_setup_logic() {
+    # Admin credentials setup for integrated services
+    print_step "Set up your admin username and password (for NZBGet, Radarr, Sonarr, Prowlarr, Overseerr)"
+    while true; do
+        read -p "Enter admin username: " ADMIN_USERNAME
+        if [[ -z "$ADMIN_USERNAME" ]]; then
+            print_error "Username cannot be empty. Please try again."
+            continue
+        fi
+        break
+    done
+    while true; do
+        read -p "Enter admin password: " ADMIN_PASSWORD
+        if [[ -z "$ADMIN_PASSWORD" ]]; then
+            print_error "Password cannot be empty. Please try again."
+            continue
+        fi
+        read -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
+        if [[ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]]; then
+            print_error "Passwords do not match. Please try again."
+            continue
+        fi
+        break
+    done
+    print_success "Admin credentials set for integrated services."
+
+    # ...existing code for install type, media server, deployment type, etc...
+
+    # After deployment type and service selection, but BEFORE Plex setup, prompt for CineSync folders if enabled
+    # (Assume DEPLOYMENT_TYPE and ENABLE_CINESYNC are set by gather_auto_preferences/gather_custom_preferences)
+    if [ "$ENABLE_CINESYNC" = "true" ]; then
+        configure_cinesync_organization
+    fi
+
+    # Now proceed to Plex setup, using CineSync folder variables for library creation
+}
+
+# Call main setup logic at the start of the script
+main_setup_logic
+
 #!/bin/bash
 
 
@@ -300,8 +364,6 @@ gather_auto_preferences() {
         PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
         print_success "Plex server name set to: $PLEX_SERVER_NAME"
         echo ""
-        # Run CineSync setup portion here if needed (insert call if not already present)
-        # ...existing code for CineSync setup...
         print_info "Opening web browser for Plex claim token..."
         if command -v xdg-open >/dev/null 2>&1; then
             xdg-open "https://plex.tv/claim" >/dev/null 2>&1 &
@@ -409,10 +471,6 @@ gather_custom_preferences() {
         PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
         print_success "Plex server name set to: $PLEX_SERVER_NAME"
         echo ""
-        print_info "To automate Plex setup, you need a Plex claim token."
-        echo "Generate your Plex claim token here: ${YELLOW}https://plex.tv/claim${NC} (login required)"
-        read -p "Paste your Plex claim token (or leave blank to claim manually later): " plex_claim_token
-        PLEX_CLAIM=${plex_claim_token}
     fi
     
     # Deployment type
@@ -675,13 +733,14 @@ gather_custom_preferences() {
         DISCORD_NOTIFY_SYSTEM="false"
     fi
     
-    echo "TMDB API Key (for metadata) (optional)"
-    echo "  Get your TMDB API key here: ${YELLOW}https://www.themoviedb.org/settings/api${NC} (login required)"
+
+    echo "\nTMDB API Key (for metadata, optional)"
+    echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
     read -p "TMDB API Key: " tmdb_key
     TMDB_API_KEY=${tmdb_key:-}
 
-    echo "Trakt Client ID (optional)"
-    echo "  Get your Trakt API credentials here: ${YELLOW}https://trakt.tv/oauth/applications${NC} (login required)"
+    echo "\nTrakt Client ID (optional)"
+    echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
     read -p "Trakt Client ID: " trakt_id
     TRAKT_CLIENT_ID=${trakt_id:-}
 
@@ -746,12 +805,12 @@ gather_custom_preferences() {
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
         echo "Fanart.tv API Key (optional)"
-        echo "  Get your Fanart.tv API key here: ${YELLOW}https://fanart.tv/users/apikey${NC} (login required)"
+        echo "  Get your Fanart.tv API key here: https://fanart.tv/users/apikey (login required)"
         read -p "Fanart.tv API Key: " fanart_key
         FANART_API_KEY=${fanart_key:-}
 
         echo "TVDB API Key (optional)"
-        echo "  Get your TVDB API key here: ${YELLOW}https://thetvdb.com/api-information${NC} (login required)"
+        echo "  Get your TVDB API key here: https://thetvdb.com/api-information (login required)"
         read -p "TVDB API Key: " tvdb_key
         TVDB_API_KEY=${tvdb_key:-}
     fi
@@ -1429,10 +1488,10 @@ TZ=$TIMEZONE
 PUID=$PUID
 PGID=$PGID
 
-# STORAGE PATHS
 DATA_ROOT=$STORAGE_PATH
-MOVIES_DIR=\${DATA_ROOT}/media/movies
-TV_SHOWS_DIR=\${DATA_ROOT}/media/tv
+# Use CineSync folder variables for Plex library paths
+MOVIES_DIR=\${DATA_ROOT}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}
+TV_SHOWS_DIR=\${DATA_ROOT}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}
 CONFIG_DIR=\${DATA_ROOT}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
@@ -1466,7 +1525,7 @@ CINESYNC_ANIME_SEPARATION=${CINESYNC_ANIME_SEPARATION:-true}
 CINESYNC_4K_SEPARATION=${CINESYNC_4K_SEPARATION:-false}
 CINESYNC_KIDS_SEPARATION=${CINESYNC_KIDS_SEPARATION:-false}
 CINESYNC_CUSTOM_SHOW_FOLDER="${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
-CINESYNC_CUSTOM_MOVIE_FOLDER=${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}
+CINESYNC_CUSTOM_MOVIE_FOLDER="${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
 CINESYNC_CUSTOM_ANIME_SHOW_FOLDER="${CINESYNC_CUSTOM_ANIME_SHOW_FOLDER:-Anime Series}"
 CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER="${CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER:-Anime Movies}"
 CINESYNC_CUSTOM_4KSHOW_FOLDER="${CINESYNC_CUSTOM_4KSHOW_FOLDER:-4K Series}"
