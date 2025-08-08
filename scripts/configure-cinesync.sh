@@ -7,11 +7,16 @@
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_FILE="$PROJECT_DIR/configs/cinesync-env.template"
 
-# Read STORAGE_PATH from .env file
+
+# Read STORAGE_PATH from .env file (required)
 if [ -f "$PROJECT_DIR/.env" ]; then
     STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r')
 fi
-STORAGE_PATH=${STORAGE_PATH:-/opt/surge}
+if [ -z "$STORAGE_PATH" ]; then
+    print_error "STORAGE_PATH is not set in $PROJECT_DIR/.env. Please set STORAGE_PATH before running this script."
+    exit 1
+fi
+
 
 OUTPUT_DIR="$STORAGE_PATH/Cinesync/config"
 OUTPUT_FILE="$OUTPUT_DIR/.env"

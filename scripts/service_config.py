@@ -28,21 +28,21 @@ SERVICE_URLS = {
 }
 
 def find_storage_path():
-    """Find the correct storage path for configurations."""
-    possible_paths = [
-        os.environ.get('STORAGE_PATH'),  # STORAGE_PATH environment variable
-        os.environ.get('DATA_ROOT'),     # DATA_ROOT environment variable
-        "/opt/surge",                    # Default installation path
-        "data"                          # Local data directory
-    ]
-    
-    for path in possible_paths:
-        # Check if any service config directory exists
-        service_dirs = ["Prowlarr", "Radarr", "Sonarr"]
-        if any(os.path.exists(os.path.join(path, service)) for service in service_dirs):
-            return path
-    
-    return "data"  # fallback to local data directory
+    """Find the correct storage path for configurations. STORAGE_PATH is required."""
+    storage_path = os.environ.get('STORAGE_PATH')
+    if not storage_path:
+        # Try to read from .env in project root
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env_path = os.path.join(project_root, '.env')
+        if os.path.exists(env_path):
+            with open(env_path) as f:
+                for line in f:
+                    if line.startswith('STORAGE_PATH='):
+                        storage_path = line.strip().split('=', 1)[1]
+                        break
+    if not storage_path:
+        raise RuntimeError("STORAGE_PATH is required but not set. Please set STORAGE_PATH in your environment or .env file.")
+    return storage_path
 
 def get_api_key_from_xml(config_path):
     """Extract API key from XML config file."""
@@ -1439,7 +1439,7 @@ def configure_cinesync_automation():
         print("🎬 Running CineSync automation configuration...")
         
         # Get storage path
-        storage_path = os.environ.get('STORAGE_PATH', '/opt/surge')
+        storage_path = find_storage_path()
         
         # Run CineSync configuration script
         script_path = os.path.join(os.path.dirname(__file__), 'configure-cinesync.py')
@@ -1467,7 +1467,7 @@ def configure_placeholdarr_automation():
         print("📄 Running Placeholdarr automation configuration...")
         
         # Get storage path
-        storage_path = os.environ.get('STORAGE_PATH', '/opt/surge')
+        storage_path = find_storage_path()
         
         # Run Placeholdarr configuration script
         script_path = os.path.join(os.path.dirname(__file__), 'configure-placeholdarr.py')

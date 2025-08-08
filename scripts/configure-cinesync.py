@@ -22,39 +22,41 @@ from typing import List, Optional
 class SurgeCineSyncConfigurator:
     def __init__(self, storage_path: Optional[str] = None):
         """Initialize CineSync configurator."""
-        self.storage_path = storage_path or self.find_storage_path()
         self.project_root = Path(__file__).parent.parent
-        
+        self.storage_path = storage_path or os.environ.get('STORAGE_PATH') or self._read_storage_path_from_env()
+        if not self.storage_path:
+            raise RuntimeError("STORAGE_PATH is required but not set. Please set STORAGE_PATH in your environment or .env file.")
+
         # Load environment variables
         self.load_env()
-        
+
         # Configuration paths
         self.config_dir = Path(self.storage_path) / "CineSync" / "config"
         self.env_file = self.config_dir / ".env"
         self.template_file = self.project_root / "configs" / "cinesync-env.template"
-        
+
         # Service detection
         self.enabled_services = self.detect_enabled_services()
-        
+
         # Configuration settings
         self.config = {}
         self.api_keys = {}
-        
+
         self.log("CineSync Configurator initialized", "INFO")
         self.log(f"Storage path: {self.storage_path}", "INFO")
         self.log(f"Config directory: {self.config_dir}", "INFO")
 
-    def find_storage_path(self) -> str:
-        """Find the storage path from environment or use default."""
-        storage_path = os.environ.get('STORAGE_PATH')
-        if not storage_path:
-            # Try common locations
-            for path in ['/opt/surge', './data', '/data']:
-                if os.path.exists(path):
-                    return path
-            # Default fallback
-            return '/opt/surge'
-        return storage_path
+    def _read_storage_path_from_env(self) -> Optional[str]:
+        env_path = self.project_root / ".env"
+        if env_path.exists():
+            with open(env_path) as f:
+                for line in f:
+                    if line.startswith("STORAGE_PATH="):
+                        return line.strip().split("=", 1)[1]
+        return None
+
+    # def find_storage_path(self) -> str:
+    #     Deprecated: No fallback to /opt/surge. STORAGE_PATH is required.
 
     def load_env(self):
         """Load environment variables from .env file."""
