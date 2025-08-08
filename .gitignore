@@ -88,6 +88,24 @@ venv/
 package-lock.json
 yarn.lock
 
+# Service data directories (should be in STORAGE_PATH, not project directory)
+Bazarr/
+Plex/
+Radarr/
+Sonarr/
+Prowlarr/
+RDT-Client/
+Overseerr/
+Tautulli/
+Homepage/
+GAPS/
+Posterizarr/
+Placeholdarr/
+NZBGet/
+Cinesync/
+media/
+downloads/
+
 # Surge specific
 .surge_initialized
 scripts/test-rdt-integration.py

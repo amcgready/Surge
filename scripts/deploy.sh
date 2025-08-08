@@ -68,6 +68,21 @@ check_prerequisites() {
     print_success "Prerequisites check passed!"
 }
 
+# Validate storage path configuration
+validate_storage_path() {
+    print_info "Validating storage path configuration..."
+    
+    if [ -f "$SCRIPT_DIR/validate-storage-path.sh" ]; then
+        if ! "$SCRIPT_DIR/validate-storage-path.sh"; then
+            print_error "Storage path validation failed!"
+            print_info "Please fix the storage path configuration before deploying."
+            exit 1
+        fi
+    else
+        print_warning "Storage path validation script not found, skipping..."
+    fi
+}
+
 # Create environment file
 setup_environment() {
     print_info "Setting up environment..."
@@ -508,6 +523,7 @@ main() {
             ;;
         --update)
             check_prerequisites
+            validate_storage_path
             update_containers
             exit 0
             ;;
@@ -548,6 +564,7 @@ main() {
     
     # Run deployment
     check_prerequisites
+    validate_storage_path
     setup_environment
     create_directories
     deploy_services "$MEDIA_SERVER" "$DEPLOYMENT_TYPE"

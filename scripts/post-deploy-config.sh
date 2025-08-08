@@ -12,7 +12,9 @@ source "$SCRIPT_DIR/api-key-utils.sh"
 
 # Load environment variables
 if [ -f "$PROJECT_ROOT/.env" ]; then
-    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+    set -a  # automatically export all variables
+    source "$PROJECT_ROOT/.env"
+    set +a  # turn off auto-export
 fi
 
 log_info() {
@@ -97,7 +99,7 @@ except:
     "configContract": "RadarrSettings",
     "fields": [
         {"name": "apiKey", "value": "$radarr_api"},
-        {"name": "baseUrl", "value": "http://radarr:7878"}
+        {"name": "baseUrl", "value": "http://surge-radarr:7878"}
     ],
     "syncLevel": "fullSync",
     "enableRss": true,
@@ -137,7 +139,7 @@ EOF
     "configContract": "SonarrSettings",
     "fields": [
         {"name": "apiKey", "value": "$sonarr_api"},
-        {"name": "baseUrl", "value": "http://sonarr:8989"}
+        {"name": "baseUrl", "value": "http://surge-sonarr:8989"}
     ],
     "syncLevel": "fullSync",
     "enableRss": true,
@@ -185,19 +187,23 @@ configure_plex_libraries() {
     log_info "Creating sample media structure to initialize Plex libraries..."
     local media_base="${STORAGE_PATH:-/opt/surge}/media"
     
-    # Create basic directory structure
-    mkdir -p "$media_base"/{movies,tv,music}
-    
-    # Create placeholder files so Plex libraries can be created (they need at least one item to detect)
-    touch "$media_base/movies/.placeholder"
-    touch "$media_base/tv/.placeholder" 
-    touch "$media_base/music/.placeholder"
-    
-    # Set proper ownership for media files
+    # Create basic directory structure with proper permissions
     if [ "$(id -u)" -eq 0 ]; then
+        # Running as root
+        mkdir -p "$media_base"/{movies,tv,music}
+        touch "$media_base/movies/.placeholder"
+        touch "$media_base/tv/.placeholder" 
+        touch "$media_base/music/.placeholder"
         chown -R 1000:1000 "$media_base"
+        chmod -R 755 "$media_base"
     else
+        # Not running as root, use sudo
+        sudo mkdir -p "$media_base"/{movies,tv,music} 2>/dev/null || mkdir -p "$media_base"/{movies,tv,music}
+        sudo touch "$media_base/movies/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/movies/.placeholder" > /dev/null
+        sudo touch "$media_base/tv/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/tv/.placeholder" > /dev/null
+        sudo touch "$media_base/music/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/music/.placeholder" > /dev/null
         sudo chown -R 1000:1000 "$media_base" 2>/dev/null || true
+        sudo chmod -R 755 "$media_base" 2>/dev/null || true
     fi
     
     # Check if the Plex library configuration script exists

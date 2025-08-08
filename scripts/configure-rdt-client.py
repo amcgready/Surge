@@ -7,7 +7,14 @@ sets it up as a download client in Radarr, Sonarr, and Prowlarr.
 
 Features:
 - Secure credential management (no hardcoded tokens)
-- Automatic RDT-Client configuration
+- Automatic RDT-C            # Check RDT-Client health
+            health_url = f"{self.service_urls['rdt-client']}/api/torrents"
+            try:
+                with urllib.request.urlopen(health_url, timeout=10) as response:
+                    if response.status == 200:
+                        self.log("✅ RDT-Client is healthy and running")
+                    else:
+                        self.log(f"⚠️ RDT-Client health check returned {response.status}", "WARNING")nfiguration
 - Integration with Radarr, Sonarr, and Prowlarr
 - Robust error handling and retry logic
 - Comprehensive logging
@@ -134,7 +141,7 @@ class RDTClientConfigurator:
         self.log("🔧 Configuring RDT-Client with Real-Debrid credentials...")
         
         # Wait for RDT-Client to be ready
-        if not self.wait_for_service(f"{self.service_urls['rdt-client']}/health"):
+        if not self.wait_for_service(f"{self.service_urls['rdt-client']}/api/torrents"):
             self.log("❌ RDT-Client service not ready", "ERROR")
             return False
         

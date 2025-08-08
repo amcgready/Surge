@@ -189,17 +189,96 @@ class PlexLibraryManager:
         
         return cinesync_folders
     
-    def create_library(self, name, library_type, path, agent=None, language='en'):
+    def create_basic_library_via_api(self, lib_name, lib_type, lib_path):
+        """Create library without requiring token - using direct API calls."""
+        try:
+            # For initial setup, we'll attempt to use the unclaimed server approach
+            print(f"🔧 Attempting to create library '{lib_name}' at {lib_path}")
+            
+            # Try multiple approaches for library creation
+            urls_to_try = [
+                f"{self.plex_url}/library/sections",
+                f"{self.plex_url}/library/sections?includeDetails=1"
+            ]
+            
+            for url in urls_to_try:
+                try:
+                    # Prepare library creation data
+                    create_data = {
+                        'name': lib_name,
+                        'type': lib_type,
+                        'agent': 'tv.plex.agents.movie' if lib_type == 'movie' else 'tv.plex.agents.series',
+                        'scanner': 'Plex Movie' if lib_type == 'movie' else 'Plex TV Series',
+                        'language': 'en-US',
+                        'location': lib_path
+                    }
+                    
+                    # Convert to URL encoded data
+                    encoded_data = urllib.parse.urlencode(create_data).encode('utf-8')
+                    
+                    # Make the request
+                    req = urllib.request.Request(url, data=encoded_data, method='POST')
+                    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+                    req.add_header('User-Agent', 'Surge-PlexConfig/1.0')
+                    
+                    response = urllib.request.urlopen(req, timeout=30)
+                    
+                    if response.status in [200, 201]:
+                        print(f"✅ Library '{lib_name}' created successfully")
+                        return True
+                    else:
+                        print(f"⚠️ Library creation returned status: {response.status}")
+                        
+                except Exception as e:
+                    print(f"⚠️ Library creation attempt failed: {e}")
+                    continue
+            
+            # If direct creation fails, create a simple preferences file to help with setup
+            self.create_basic_plex_setup()
+            return False
+            
+        except Exception as e:
+            print(f"❌ Failed to create library '{lib_name}': {e}")
+            return False
+    
+    def create_basic_plex_setup(self):
+        """Create basic Plex setup files to help with initial configuration."""
+        try:
+            plex_config_dir = os.path.join(self.storage_path, "Plex", "config", "Library", "Application Support", "Plex Media Server")
+            os.makedirs(plex_config_dir, exist_ok=True)
+            
+            # Create a basic preferences file
+            prefs_file = os.path.join(plex_config_dir, "Preferences.xml")
+            if not os.path.exists(prefs_file):
+                prefs_content = '''<?xml version="1.0" encoding="utf-8"?>
+<Preferences FriendlyName="Surge Plex Server" 
+             AcceptedEULA="1" 
+             PublishServerOnPlexOnlineKey="1"
+             PlexOnlineHome="1"
+             PlexOnlineUsername=""
+             PlexOnlineToken="">
+</Preferences>'''
+                with open(prefs_file, 'w') as f:
+                    f.write(prefs_content)
+                print("✅ Created basic Plex preferences file")
+            
+        except Exception as e:
+            print(f"⚠️ Could not create basic Plex setup: {e}")
+    
+    def create_library(self, lib_name, lib_type, lib_path, agent=None, language='en'):
         """Create a new Plex library."""
         token = self.get_plex_token()
+        
+        # If no token available, try the basic API approach
         if not token:
-            return False
+            print(f"⚠️ No token available, trying basic library creation for '{lib_name}'")
+            return self.create_basic_library_via_api(lib_name, lib_type, lib_path)
             
         # Set default agents based on type
         if not agent:
-            if library_type == 'movie':
+            if lib_type == 'movie':
                 agent = 'com.plexapp.agents.themoviedb'
-            elif library_type == 'show':
+            elif lib_type == 'show':
                 agent = 'com.plexapp.agents.thetvdb'
             else:
                 agent = 'com.plexapp.agents.none'
@@ -207,11 +286,11 @@ class PlexLibraryManager:
         try:
             # Create the library
             params = {
-                'name': name,
-                'type': library_type,
+                'name': lib_name,
+                'type': lib_type,
                 'agent': agent,
                 'language': language,
-                'location': path,
+                'location': lib_path,
                 'X-Plex-Token': token
             }
             
@@ -225,14 +304,14 @@ class PlexLibraryManager:
             response = urllib.request.urlopen(req, timeout=30)
             
             if response.status in [200, 201]:
-                print(f"✅ Created library '{name}' at {path}")
+                print(f"✅ Created library '{lib_name}' at {lib_path}")
                 return True
             else:
-                print(f"❌ Failed to create library '{name}': HTTP {response.status}")
+                print(f"❌ Failed to create library '{lib_name}': HTTP {response.status}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error creating library '{name}': {e}")
+            print(f"❌ Error creating library '{lib_name}': {e}")
             return False
     
     def update_server_name(self, new_name):
