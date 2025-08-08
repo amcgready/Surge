@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 import configparser
 import requests
 import urllib.request
+import yaml
 from datetime import datetime
 from pathlib import Path
 
@@ -161,12 +162,12 @@ class SurgeInterconnectionManager:
         
         # Service config paths
         config_paths = {
-            'radarr': f"{self.storage_path}/config/radarr/config.xml",
-            'sonarr': f"{self.storage_path}/config/sonarr/config.xml", 
-            'prowlarr': f"{self.storage_path}/config/prowlarr/config.xml",
-            'bazarr': f"{self.storage_path}/config/bazarr/config/config.ini",
-            'overseerr': f"{self.storage_path}/config/overseerr/settings.json",
-            'tautulli': f"{self.storage_path}/config/tautulli/config.ini"
+            'radarr': f"{self.storage_path}/Radarr/config/config.xml",
+            'sonarr': f"{self.storage_path}/Sonarr/config/config.xml", 
+            'prowlarr': f"{self.storage_path}/Prowlarr/config/config.xml",
+            'bazarr': f"{self.storage_path}/Bazarr/config/config/config.yaml",
+            'overseerr': f"{self.storage_path}/Overseerr/config/settings.json",
+            'tautulli': f"{self.storage_path}/Tautulli/config/config.ini"
         }
         
         # Get XML-based API keys
@@ -188,16 +189,17 @@ class SurgeInterconnectionManager:
             self.api_keys['tautulli'] = self.get_tautulli_api_key()
     
     def get_bazarr_api_key(self):
-        """Get Bazarr API key from config.ini."""
-        config_path = f"{self.storage_path}/config/bazarr/config/config.ini"
+        """Get Bazarr API key from config.yaml."""
+        config_path = f"{self.storage_path}/Bazarr/config/config/config.yaml"
         
         try:
             if os.path.exists(config_path):
-                config = configparser.ConfigParser()
-                config.read(config_path)
+                with open(config_path, 'r') as f:
+                    config = yaml.safe_load(f)
                 
-                if config.has_section('auth') and config.has_option('auth', 'apikey'):
-                    api_key = config.get('auth', 'apikey')
+                # Bazarr API key is typically under 'auth' -> 'apikey'
+                if config and 'auth' in config and 'apikey' in config['auth']:
+                    api_key = config['auth']['apikey']
                     if api_key:
                         self.log(f"Found Bazarr API key: {api_key[:8]}...", "SUCCESS")
                         return api_key
@@ -208,7 +210,7 @@ class SurgeInterconnectionManager:
     
     def get_tautulli_api_key(self):
         """Get Tautulli API key from config.ini."""
-        config_path = f"{self.storage_path}/config/tautulli/config.ini"
+        config_path = f"{self.storage_path}/Tautulli/config/config.ini"
         
         try:
             if os.path.exists(config_path):

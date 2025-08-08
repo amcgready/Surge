@@ -10,6 +10,16 @@ get_arr_api_key() {
     local port=$2
     local config_path="${STORAGE_PATH:-/opt/surge}/${service^}/config/config.xml"
     
+    # Set default ports if not provided
+    if [ -z "$port" ]; then
+        case "$service" in
+            "radarr") port=7878 ;;
+            "sonarr") port=8989 ;;
+            "prowlarr") port=9696 ;;
+            *) port="" ;;
+        esac
+    fi
+    
     # First try to extract from config file
     if [ -f "$config_path" ]; then
         local api_key=$(grep -oP '(?<=<ApiKey>)[^<]+' "$config_path" 2>/dev/null || echo "")
@@ -19,8 +29,8 @@ get_arr_api_key() {
         fi
     fi
     
-    # If config file doesn't exist or has no API key, try API call
-    if command -v curl >/dev/null 2>&1; then
+    # If config file doesn't exist or has no API key, try API call (only if port is set)
+    if [ -n "$port" ] && command -v curl >/dev/null 2>&1; then
         local response=$(curl -s "http://localhost:$port/api/v3/config/host" 2>/dev/null || echo "")
         if [ -n "$response" ]; then
             local api_key=$(echo "$response" | grep -oP '"apiKey":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "")
