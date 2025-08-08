@@ -99,7 +99,8 @@ except:
     "configContract": "RadarrSettings",
     "fields": [
         {"name": "apiKey", "value": "$radarr_api"},
-        {"name": "baseUrl", "value": "http://surge-radarr:7878"}
+        {"name": "baseUrl", "value": "http://surge-radarr:7878"},
+        {"name": "prowlarrUrl", "value": "http://surge-prowlarr:9696"}
     ],
     "syncLevel": "fullSync",
     "enableRss": true,
@@ -139,7 +140,8 @@ EOF
     "configContract": "SonarrSettings",
     "fields": [
         {"name": "apiKey", "value": "$sonarr_api"},
-        {"name": "baseUrl", "value": "http://surge-sonarr:8989"}
+        {"name": "baseUrl", "value": "http://surge-sonarr:8989"},
+        {"name": "prowlarrUrl", "value": "http://surge-prowlarr:9696"}
     ],
     "syncLevel": "fullSync",
     "enableRss": true,

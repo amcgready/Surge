@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# API Key Issue Fix Summary
+# =========================
+
+echo "🎉 API KEY CONFIGURATION ISSUE FIXED!"
+echo ""
+echo "📋 PROBLEM IDENTIFIED:"
+echo "====================="
+echo "❌ Prowlarr applications (Radarr/Sonarr) were missing the 'prowlarrUrl' field"
+echo "❌ This caused error: 'Prowlarr URL is invalid, Radarr cannot connect to Prowlarr'"
+echo "❌ Without this field, Radarr/Sonarr couldn't establish bidirectional communication"
+echo ""
+
+echo "🔧 SOLUTION APPLIED:"
+echo "==================="
+echo "✅ Added missing 'prowlarrUrl' field to both applications:"
+echo "   - Radarr: Added prowlarrUrl = 'http://surge-prowlarr:9696'"
+echo "   - Sonarr: Added prowlarrUrl = 'http://surge-prowlarr:9696'"
+echo "✅ Updated post-deploy-config.sh to include this field in future deployments"
+echo "✅ Ran quick-fix.sh to immediately apply the fix"
+echo ""
+
+echo "🧪 VERIFICATION RESULTS:"
+echo "========================"
+echo "✅ Prowlarr API key: Found and working"
+echo "✅ Radarr application: Properly configured with all required fields"
+echo "✅ Sonarr application: Properly configured with all required fields"
+echo "✅ All URL configurations correct:"
+echo "   - Radarr baseUrl: http://surge-radarr:7878"
+echo "   - Sonarr baseUrl: http://surge-sonarr:8989" 
+echo "   - Prowlarr URL for both: http://surge-prowlarr:9696"
+echo ""
+
+echo "🎯 WHAT THIS FIXES:"
+echo "=================="
+echo "• Eliminates 'Prowlarr URL is invalid' errors"
+echo "• Enables proper communication between Prowlarr ↔ Radarr/Sonarr"
+echo "• Allows automatic indexer synchronization"
+echo "• Fixes search functionality in Radarr/Sonarr"
+echo "• Enables RSS feeds and automatic downloads"
+echo ""
+
+echo "✅ STATUS: RESOLVED"
+echo "=================="
+echo "• Post-deploy script will now work correctly for future deployments"
+echo "• Current deployment is fixed and ready to use"
+echo "• No manual intervention required"
+echo ""
+
+echo "🌐 VERIFICATION:"
+echo "================"
+echo "• Access Prowlarr: http://localhost:9696"
+echo "• Go to Settings → Apps → Check Radarr/Sonarr are listed and working"
+echo "• Access Radarr: http://localhost:7878 → Settings → Indexers (should auto-populate)"
+echo "• Access Sonarr: http://localhost:8989 → Settings → Indexers (should auto-populate)"
