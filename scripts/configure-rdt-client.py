@@ -35,7 +35,9 @@ class RDTClientConfigurator:
         """Initialize the configurator with storage path."""
         self.storage_path = storage_path or self.find_storage_path()
         self.rd_api_token = os.environ.get('RD_API_TOKEN', '')
-        self.rd_username = os.environ.get('RD_USERNAME', '')
+        # Use admin credentials for RDT-Client auth if present
+        self.rdt_username = os.environ.get('ADMIN_USERNAME', '')
+        self.rdt_password = os.environ.get('ADMIN_PASSWORD', '')
         
         # Service URLs for internal Docker communication
         self.service_urls = {
@@ -212,9 +214,9 @@ class RDTClientConfigurator:
                 {"name": "category", "value": category},
                 {"name": "useSsl", "value": False},
                 {"name": "urlBase", "value": "/"},
-                # RDT-Client specific settings
-                {"name": "username", "value": ""},  # RDT-Client doesn't use auth by default
-                {"name": "password", "value": ""}
+                # Use admin credentials for RDT-Client auth if present
+                {"name": "username", "value": self.rdt_username},
+                {"name": "password", "value": self.rdt_password}
             ],
             "implementationName": "rTorrent",
             "implementation": implementation,
