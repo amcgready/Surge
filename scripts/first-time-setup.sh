@@ -300,9 +300,23 @@ gather_auto_preferences() {
         PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
         print_success "Plex server name set to: $PLEX_SERVER_NAME"
         echo ""
-        print_info "To automate Plex setup, you need a Plex claim token."
+        # Run CineSync setup portion here if needed (insert call if not already present)
+        # ...existing code for CineSync setup...
+        print_info "Opening web browser for Plex claim token..."
+        if command -v xdg-open >/dev/null 2>&1; then
+            xdg-open "https://plex.tv/claim" >/dev/null 2>&1 &
+        else
+            echo "Please open https://plex.tv/claim in your browser to get your Plex claim token."
+        fi
         echo "Generate your Plex claim token here: ${YELLOW}https://plex.tv/claim${NC} (login required)"
-        read -p "Paste your Plex claim token (or leave blank to claim manually later): " plex_claim_token
+        while true; do
+            read -p "Paste your Plex claim token: " plex_claim_token
+            if [ -n "$plex_claim_token" ]; then
+                break
+            else
+                print_error "Plex claim token is required to continue. Please paste your token."
+            fi
+        done
         PLEX_CLAIM=${plex_claim_token}
     fi
     
