@@ -105,6 +105,7 @@ NZBGet/
 Cinesync/
 media/
 downloads/
+data/
 
 # Surge specific
 .surge_initialized
