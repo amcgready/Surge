@@ -10,6 +10,11 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/shared-config.sh"
 source "$SCRIPT_DIR/api-key-utils.sh"
 
+# Load environment variables
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+fi
+
 log_info() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $1"
 }
@@ -57,6 +62,29 @@ configure_prowlarr_apps() {
     fi
     
     log_info "Found Prowlarr API key: ${prowlarr_api:0:8}..."
+    
+    # Clean up existing applications first to avoid "Should be unique" errors
+    log_info "Cleaning up existing applications to avoid duplicates..."
+    local existing_apps=$(curl -s -H "X-Api-Key: $prowlarr_api" "http://localhost:9696/api/v1/applications")
+    if [ $? -eq 0 ] && [ -n "$existing_apps" ]; then
+        echo "$existing_apps" | python3 -c "
+import sys, json
+try:
+    apps = json.loads(sys.stdin.read())
+    for app in apps:
+        if app.get('name') in ['Radarr', 'Sonarr']:
+            import urllib.request
+            req = urllib.request.Request('http://localhost:9696/api/v1/applications/' + str(app['id']), method='DELETE')
+            req.add_header('X-Api-Key', '$prowlarr_api')
+            try:
+                urllib.request.urlopen(req)
+                print(f'Removed existing {app[\"name\"]} application')
+            except:
+                pass
+except:
+    pass
+"
+    fi
     
     # Configure Radarr application
     if [ -n "$radarr_api" ]; then
@@ -153,6 +181,25 @@ configure_plex_libraries() {
     log_info "Waiting additional 60 seconds for Plex to fully initialize..."
     sleep 60
     
+    # Create sample media structure to ensure Plex can find content
+    log_info "Creating sample media structure to initialize Plex libraries..."
+    local media_base="${STORAGE_PATH:-/opt/surge}/media"
+    
+    # Create basic directory structure
+    mkdir -p "$media_base"/{movies,tv,music}
+    
+    # Create placeholder files so Plex libraries can be created (they need at least one item to detect)
+    touch "$media_base/movies/.placeholder"
+    touch "$media_base/tv/.placeholder" 
+    touch "$media_base/music/.placeholder"
+    
+    # Set proper ownership for media files
+    if [ "$(id -u)" -eq 0 ]; then
+        chown -R 1000:1000 "$media_base"
+    else
+        sudo chown -R 1000:1000 "$media_base" 2>/dev/null || true
+    fi
+    
     # Check if the Plex library configuration script exists
     if [ ! -f "$SCRIPT_DIR/configure-plex-libraries.py" ]; then
         log_error "Plex library configuration script not found"
@@ -161,7 +208,7 @@ configure_plex_libraries() {
     
     # Set environment variables for the script to read CineSync config
     # Read all CineSync-related environment variables from .env and docker-compose
-    export STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_ROOT/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r')
+    export STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_ROOT/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
     
     # CineSync layout and separation settings
     export CINESYNC_LAYOUT=$(grep "^CINESYNC_LAYOUT=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '\n\r' 2>/dev/null || echo "true")
@@ -183,6 +230,17 @@ configure_plex_libraries() {
     log_info "Running Plex library configuration script..."
     if python3 "$SCRIPT_DIR/configure-plex-libraries.py" --plex-url "http://localhost:32400" --storage-path "$STORAGE_PATH"; then
         log_info "✅ Plex libraries configured successfully"
+        
+        # Now that libraries are created, we can get the Plex token
+        log_info "Attempting to retrieve Plex token for other integrations..."
+        local plex_token_file="${STORAGE_PATH}/Plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+        if [ -f "$plex_token_file" ]; then
+            local plex_token=$(grep -oP 'PlexOnlineToken="[^"]*"' "$plex_token_file" | cut -d'"' -f2 2>/dev/null || echo "")
+            if [ -n "$plex_token" ]; then
+                log_info "✅ Plex token retrieved successfully for other service integrations"
+                export PLEX_TOKEN="$plex_token"
+            fi
+        fi
     else
         log_error "❌ Failed to configure Plex libraries"
         return 1
@@ -257,7 +315,12 @@ main() {
     # Configure RDT-Client automation (if RDT-Client is running)
     if docker ps --format "table {{.Names}}" | grep -q "rdt-client"; then
         log_info "Configuring RDT-Client automation..."
-        if [ -f "$SCRIPT_DIR/configure-rdt-client.py" ] && [ -n "$RD_API_TOKEN" ]; then
+        if [ -n "$RD_API_TOKEN" ]; then
+            log_info "Using Real-Debrid API token from environment: ${RD_API_TOKEN:0:8}..."
+            export RD_API_TOKEN="$RD_API_TOKEN"
+        fi
+        
+        if [ -f "$SCRIPT_DIR/configure-rdt-client.py" ]; then
             if python3 "$SCRIPT_DIR/configure-rdt-client.py" "$STORAGE_PATH"; then
                 log_info "✅ RDT-Client configuration completed successfully"
             else
@@ -292,7 +355,7 @@ main() {
     # Run full auto-configuration
     if [ -f "$SCRIPT_DIR/auto-config.sh" ]; then
         log_info "Running full auto-configuration..."
-        "$SCRIPT_DIR/auto-config.sh" --quiet
+        "$SCRIPT_DIR/auto-config.sh" --storage-path "$STORAGE_PATH"
     fi
     
     log_info "Post-deployment configuration completed!"

@@ -123,24 +123,33 @@ create_directories() {
     
     # Fix ownership for all directories (1000:1000 matches PUID:PGID used in containers)
     print_info "Setting proper ownership for storage directories..."
+    
+    # First create all necessary subdirectories with proper structure
+    mkdir -p "$DATA_ROOT"/{Radarr,Sonarr,Prowlarr,Bazarr,Overseerr,Tautulli,NZBGet,Plex,Homepage,GAPS,RDT-Client,Posterizarr,Placeholdarr,Cinesync}/config
+    mkdir -p "$DATA_ROOT"/{Radarr,Sonarr}/downloads
+    mkdir -p "$DATA_ROOT"/{media/{movies,tv,music},downloads,config,logs}
+    
     if [ "$(id -u)" -eq 0 ]; then
         # Running as root, set ownership directly
         chown -R 1000:1000 "$DATA_ROOT"
-        print_success "Directory ownership set to 1000:1000"
+        chmod -R 755 "$DATA_ROOT"
+        print_success "Directory ownership and permissions set to 1000:1000"
     else
         # Not running as root, use sudo
         if sudo -n true 2>/dev/null; then
             # Sudo available without password prompt
             sudo chown -R 1000:1000 "$DATA_ROOT"
-            print_success "Directory ownership set to 1000:1000 (with sudo)"
+            sudo chmod -R 755 "$DATA_ROOT"
+            print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
         else
             # Prompt for sudo
             print_warning "Setting directory ownership requires sudo privileges..."
-            if sudo chown -R 1000:1000 "$DATA_ROOT"; then
-                print_success "Directory ownership set to 1000:1000 (with sudo)"
+            if sudo chown -R 1000:1000 "$DATA_ROOT" && sudo chmod -R 755 "$DATA_ROOT"; then
+                print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
             else
-                print_warning "Failed to set directory ownership. You may need to run manually:"
+                print_warning "Failed to set directory ownership/permissions. You may need to run manually:"
                 print_warning "  sudo chown -R 1000:1000 $DATA_ROOT"
+                print_warning "  sudo chmod -R 755 $DATA_ROOT"
             fi
         fi
     fi
@@ -188,6 +197,9 @@ deploy_services() {
     ENABLE_CLI_DEBRID=$(grep "^ENABLE_CLI_DEBRID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     ENABLE_DECYPHARR=$(grep "^ENABLE_DECYPHARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     ENABLE_ZURG=$(grep "^ENABLE_ZURG=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    
+    # Export for use in post-deploy scripts
+    export RD_API_TOKEN ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_ZURG
     
     # Base compose files
     COMPOSE_FILES="-f docker-compose.yml"
@@ -260,6 +272,10 @@ deploy_services() {
     # Run post-deployment configuration (in background to not block)
     print_info "Starting post-deployment configuration in background..."
     if [ -f "$SCRIPT_DIR/post-deploy-config.sh" ]; then
+        # Export STORAGE_PATH for post-deploy script
+        STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+        export STORAGE_PATH
+        
         nohup bash "$SCRIPT_DIR/post-deploy-config.sh" > "$PROJECT_DIR/logs/post-deploy.log" 2>&1 &
         print_info "Post-deployment configuration running in background. Check logs/post-deploy.log for progress."
     fi

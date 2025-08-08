@@ -64,21 +64,32 @@ class PlexLibraryManager:
     
     def test_plex_connection(self):
         """Test connection to Plex server."""
-        token = self.get_plex_token()
-        if not token:
-            return False
-            
         try:
-            url = f"{self.plex_url}/?X-Plex-Token={token}"
+            # First try without token to see if server is running
+            url = f"{self.plex_url}"
             req = urllib.request.Request(url, headers={'User-Agent': 'Surge-PlexConfig/1.0'})
             response = urllib.request.urlopen(req, timeout=10)
             
             if response.status == 200:
-                # Parse XML to get server info
-                data = response.read().decode('utf-8')
-                root = ET.fromstring(data)
-                self.server_name = root.get('friendlyName', 'Plex Media Server')
-                print(f"✅ Connected to Plex server: {self.server_name}")
+                print("✅ Plex server is running")
+                
+                # Try to get token if available
+                token = self.get_plex_token()
+                if token:
+                    # Test with token
+                    url_with_token = f"{self.plex_url}/?X-Plex-Token={token}"
+                    req_with_token = urllib.request.Request(url_with_token, headers={'User-Agent': 'Surge-PlexConfig/1.0'})
+                    response_with_token = urllib.request.urlopen(req_with_token, timeout=10)
+                    
+                    if response_with_token.status == 200:
+                        data = response_with_token.read().decode('utf-8')
+                        root = ET.fromstring(data)
+                        self.server_name = root.get('friendlyName', 'Plex Media Server')
+                        print(f"✅ Connected to Plex server with token: {self.server_name}")
+                        return True
+                
+                # If no token or token doesn't work, proceed without it for initial setup
+                print("⚠️ No Plex token available, but server is accessible. Proceeding with initial setup...")
                 return True
             else:
                 print(f"❌ Plex connection failed: HTTP {response.status}")
@@ -267,16 +278,27 @@ class PlexLibraryManager:
             print("❌ Cannot connect to Plex server")
             return False
         
-        # Update server name if provided
+        # Update server name if provided and we have a token
         if server_name and server_name != self.server_name:
-            if not self.update_server_name(server_name):
-                print("⚠️ Failed to update server name, continuing with library creation...")
+            token = self.get_plex_token()
+            if token:
+                if not self.update_server_name(server_name):
+                    print("⚠️ Failed to update server name, continuing with library creation...")
+            else:
+                print("⚠️ No token available for server name update, continuing with library creation...")
         
-        # Get existing libraries
-        existing_libs = self.get_existing_libraries()
+        # Get existing libraries (if token is available)
+        existing_libs = []
+        token = self.get_plex_token()
+        if token:
+            existing_libs = self.get_existing_libraries()
+        
         existing_names = [lib['title'] for lib in existing_libs]
         
-        print(f"📚 Found {len(existing_libs)} existing libraries: {', '.join(existing_names) if existing_names else 'None'}")
+        if existing_names:
+            print(f"📚 Found {len(existing_libs)} existing libraries: {', '.join(existing_names)}")
+        else:
+            print("📚 No existing libraries found or no token available to check")
         
         # Get CineSync folder structure
         cinesync_folders = self.get_cinesync_folders()
