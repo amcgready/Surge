@@ -199,13 +199,24 @@ configure_plex_libraries() {
         chown -R 1000:1000 "$media_base"
         chmod -R 755 "$media_base"
     else
-        # Not running as root, use sudo
-        sudo mkdir -p "$media_base"/{movies,tv,music} 2>/dev/null || mkdir -p "$media_base"/{movies,tv,music}
-        sudo touch "$media_base/movies/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/movies/.placeholder" > /dev/null
-        sudo touch "$media_base/tv/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/tv/.placeholder" > /dev/null
-        sudo touch "$media_base/music/.placeholder" 2>/dev/null || echo "placeholder" | sudo tee "$media_base/music/.placeholder" > /dev/null
-        sudo chown -R 1000:1000 "$media_base" 2>/dev/null || true
-        sudo chmod -R 755 "$media_base" 2>/dev/null || true
+        # Not running as root, try without sudo first, then with non-interactive sudo
+        if mkdir -p "$media_base"/{movies,tv,music} 2>/dev/null; then
+            # Regular user has write access
+            touch "$media_base/movies/.placeholder" 2>/dev/null || true
+            touch "$media_base/tv/.placeholder" 2>/dev/null || true
+            touch "$media_base/music/.placeholder" 2>/dev/null || true
+            # Try to set permissions if possible
+            chown -R 1000:1000 "$media_base" 2>/dev/null || true
+            chmod -R 755 "$media_base" 2>/dev/null || true
+        else
+            # Need elevated permissions, but avoid interactive sudo
+            log_info "Creating media directories with elevated permissions..."
+            # Create directories without sudo first if possible
+            mkdir -p "$media_base"/{movies,tv,music} || {
+                log_error "Cannot create media directories. Please ensure proper permissions on $media_base"
+                return 0  # Don't fail the entire deployment for this
+            }
+        fi
     fi
     
     # Check if the Plex library configuration script exists
