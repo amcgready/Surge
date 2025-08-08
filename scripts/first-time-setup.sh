@@ -434,7 +434,12 @@ gather_auto_preferences() {
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
     DEPLOYMENT_TYPE="full"
-    
+
+    # Prompt for CineSync folder options if enabled (always in auto mode)
+    if [ "$ENABLE_CINESYNC" = "true" ]; then
+        configure_cinesync_organization
+    fi
+
     print_success "Auto configuration complete! Deploying full stack with all features."
 }
 
@@ -480,14 +485,36 @@ gather_custom_preferences() {
     echo "2) Minimal - Core services only (media server + automation)"
     echo "3) Custom - Choose specific services"
     read -p "Enter choice (1-3): " deploy_choice
-    
+
     case $deploy_choice in
-        1) DEPLOYMENT_TYPE="full" ;;
-        2) DEPLOYMENT_TYPE="minimal" ;;
-        3) DEPLOYMENT_TYPE="custom" ;;
+        1)
+            DEPLOYMENT_TYPE="full"
+            ENABLE_CINESYNC="true"
+            ;;
+        2)
+            DEPLOYMENT_TYPE="minimal"
+            ENABLE_CINESYNC="false"
+            ;;
+        3)
+            DEPLOYMENT_TYPE="custom"
+            # Will prompt for CineSync below
+            ;;
         *) print_error "Invalid choice"; exit 1 ;;
     esac
-    
+
+    # Prompt for CineSync folder options immediately after deployment type selection
+    if [ "$DEPLOYMENT_TYPE" = "full" ]; then
+        if [ "$ENABLE_CINESYNC" = "true" ]; then
+            configure_cinesync_organization
+        fi
+    elif [ "$DEPLOYMENT_TYPE" = "custom" ]; then
+        read -p "Enable CineSync (media organization)? [Y/n]: " enable_cinesync
+        ENABLE_CINESYNC=$([[ "$enable_cinesync" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+        if [ "$ENABLE_CINESYNC" = "true" ]; then
+            configure_cinesync_organization
+        fi
+    fi
+
     # Storage location
     echo ""
     print_info "Storage Configuration"
@@ -551,19 +578,14 @@ gather_custom_preferences() {
         echo ""
         print_info "Service Selection"
         echo "Choose which services to enable:"
-        
         read -p "Enable Bazarr (subtitles)? [Y/n]: " enable_bazarr
         ENABLE_BAZARR=$([[ "$enable_bazarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Prowlarr (indexer manager)? [Y/n]: " enable_prowlarr
         ENABLE_PROWLARR=$([[ "$enable_prowlarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable NZBGet (Usenet downloader)? [Y/n]: " enable_nzbget
         ENABLE_NZBGET=$([[ "$enable_nzbget" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
         # Prompt for RD_API_TOKEN if RDT-Client is enabled but no token is set
         if [ "$ENABLE_RDT_CLIENT" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
             echo ""
@@ -571,17 +593,13 @@ gather_custom_preferences() {
             print_info "Without a token, RDT-Client will not be deployed"
             read -p "Real-Debrid API Token (required for RDT-Client): " rdt_rd_token
             RD_API_TOKEN=${rdt_rd_token}
-            
-            # If still no token provided, disable RDT-Client
             if [ -z "$RD_API_TOKEN" ]; then
                 print_warning "No Real-Debrid token provided - disabling RDT-Client"
                 ENABLE_RDT_CLIENT="false"
             fi
         fi
-        
         read -p "Enable Zurg (Real-Debrid filesystem)? [y/N]: " enable_zurg
         ENABLE_ZURG=$([[ "$enable_zurg" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
         # Prompt for RD_API_TOKEN if Zurg is enabled
         if [ "$ENABLE_ZURG" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
             echo ""
@@ -589,7 +607,6 @@ gather_custom_preferences() {
             read -p "Real-Debrid API Token (required for Zurg): " zurg_rd_token
             RD_API_TOKEN=${zurg_rd_token}
         fi
-        
         # Prompt for custom Zurg downloads path if Zurg is enabled
         if [ "$ENABLE_ZURG" = "true" ]; then
             echo ""
@@ -598,34 +615,24 @@ gather_custom_preferences() {
             read -p "Custom Zurg downloads path (optional): " zurg_downloads_path
             ZURG_DOWNLOADS_PATH=${zurg_downloads_path:-}
         fi
-        
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
         ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
         read -p "Enable Decypharr (automated decryption)? [y/N]: " enable_decypharr
         ENABLE_DECYPHARR=$([[ "$enable_decypharr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
         read -p "Enable Kometa (metadata manager)? [Y/n]: " enable_kometa
         ENABLE_KOMETA=$([[ "$enable_kometa" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Posterizarr (poster management)? [Y/n]: " enable_posterizarr
         ENABLE_POSTERIZARR=$([[ "$enable_posterizarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Overseerr (request management)? [Y/n]: " enable_overseerr
         ENABLE_OVERSEERR=$([[ "$enable_overseerr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Tautulli (monitoring)? [Y/n]: " enable_tautulli
         ENABLE_TAUTULLI=$([[ "$enable_tautulli" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Scanly (media scanner)? [Y/n]: " enable_scanly
         ENABLE_SCANLY=$([[ "$enable_scanly" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable CineSync (media organization)? [Y/n]: " enable_cinesync
         ENABLE_CINESYNC=$([[ "$enable_cinesync" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
         read -p "Enable Placeholdarr? [y/N]: " enable_placeholdarr
         ENABLE_PLACEHOLDARR=$([[ "$enable_placeholdarr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
     elif [ "$DEPLOYMENT_TYPE" = "minimal" ]; then
         # Minimal deployment
         ENABLE_BAZARR="false"
@@ -654,36 +661,28 @@ gather_custom_preferences() {
         ENABLE_OVERSEERR="true"
         ENABLE_TAUTULLI="true"
         ENABLE_SCANLY="true"
-        ENABLE_CINESYNC="false"
+        ENABLE_CINESYNC="true"
         ENABLE_PLACEHOLDARR="false"
     fi
-    
+
+
     # Automation Configuration
     echo ""
     print_info "Automation Configuration"
-    
     read -p "Enable automatic updates (Watchtower)? [Y/n]: " enable_watchtower
     ENABLE_WATCHTOWER=$([[ "$enable_watchtower" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-    
     if [ "$ENABLE_WATCHTOWER" = "true" ]; then
         read -p "Update check interval in seconds [86400 (24h)]: " watchtower_interval
         WATCHTOWER_INTERVAL=${watchtower_interval:-86400}
     fi
-    
     read -p "Enable scheduled asset processing? [Y/n]: " enable_scheduler
     ENABLE_SCHEDULER=$([[ "$enable_scheduler" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-    
     if [ "$ENABLE_SCHEDULER" = "true" ]; then
         echo "Asset processing schedule (cron format):"
         echo "  0 2 * * * = Daily at 2 AM"
         echo "  0 */6 * * * = Every 6 hours"
         read -p "Schedule [0 2 * * *]: " asset_schedule
         ASSET_PROCESSING_SCHEDULE=${asset_schedule:-"0 2 * * *"}
-    fi
-    
-    # CineSync Media Organization Configuration
-    if [ "$ENABLE_CINESYNC" = "true" ]; then
-        configure_cinesync_organization
     fi
     
     # API Keys and External Services
@@ -1478,6 +1477,7 @@ create_config() {
     show_quick_progress "Generating .env configuration..." 5
     
 
+
     cat > "$PROJECT_DIR/.env" << EOF
 # ===========================================
 # SURGE CONFIGURATION - Generated $(date)
@@ -1490,8 +1490,8 @@ PGID=$PGID
 
 DATA_ROOT=$STORAGE_PATH
 # Use CineSync folder variables for Plex library paths
-MOVIES_DIR=\${DATA_ROOT}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}
-TV_SHOWS_DIR=\${DATA_ROOT}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}
+MOVIES_DIR="\${DATA_ROOT}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
+TV_SHOWS_DIR="\${DATA_ROOT}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
 CONFIG_DIR=\${DATA_ROOT}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
