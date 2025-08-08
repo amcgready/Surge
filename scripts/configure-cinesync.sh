@@ -8,18 +8,6 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_FILE="$PROJECT_DIR/configs/cinesync-env.template"
 
 
-# Read STORAGE_PATH from .env file (required)
-if [ -f "$PROJECT_DIR/.env" ]; then
-    STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" | head -1 | cut -d'=' -f2 | tr -d '\n\r')
-fi
-if [ -z "$STORAGE_PATH" ]; then
-    print_error "STORAGE_PATH is not set in $PROJECT_DIR/.env. Please set STORAGE_PATH before running this script."
-    exit 1
-fi
-
-
-OUTPUT_DIR="$STORAGE_PATH/Cinesync/config"
-OUTPUT_FILE="$OUTPUT_DIR/.env"
 
 print_info() {
     echo -e "\033[1;34m[INFO]\033[0m $1"
@@ -56,6 +44,15 @@ set -a
 source "$PROJECT_DIR/.env"
 set +a
 
+# Require STORAGE_PATH from environment (after sourcing .env)
+if [ -z "$STORAGE_PATH" ]; then
+    print_error "STORAGE_PATH environment variable is not set. Please run './surge setup' or export STORAGE_PATH before running this script."
+    exit 1
+fi
+
+OUTPUT_DIR="$STORAGE_PATH/Cinesync/config"
+OUTPUT_FILE="$OUTPUT_DIR/.env"
+
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
@@ -71,8 +68,8 @@ else
     cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
     
     # Replace common variables manually
-    sed -i "s|\${CINESYNC_SOURCE_DIR}|${CINESYNC_SOURCE_DIR:-${DATA_ROOT}/downloads}|g" "$OUTPUT_FILE"
-    sed -i "s|\${CINESYNC_DESTINATION_DIR}|${CINESYNC_DESTINATION_DIR:-${DATA_ROOT}/media}|g" "$OUTPUT_FILE"
+    sed -i "s|\${CINESYNC_SOURCE_DIR}|${CINESYNC_SOURCE_DIR:-${STORAGE_PATH}/downloads}|g" "$OUTPUT_FILE"
+    sed -i "s|\${CINESYNC_DESTINATION_DIR}|${CINESYNC_DESTINATION_DIR:-${STORAGE_PATH}/media}|g" "$OUTPUT_FILE"
     sed -i "s|\${CINESYNC_USE_SOURCE_STRUCTURE}|${CINESYNC_USE_SOURCE_STRUCTURE:-false}|g" "$OUTPUT_FILE"
     sed -i "s|\${CINESYNC_LAYOUT}|${CINESYNC_LAYOUT:-true}|g" "$OUTPUT_FILE"
     sed -i "s|\${CINESYNC_ANIME_SEPARATION}|${CINESYNC_ANIME_SEPARATION:-true}|g" "$OUTPUT_FILE"

@@ -17,15 +17,15 @@ import sys
 import time
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 class SurgeCineSyncConfigurator:
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self):
         """Initialize CineSync configurator."""
         self.project_root = Path(__file__).parent.parent
-        self.storage_path = storage_path or os.environ.get('STORAGE_PATH') or self._read_storage_path_from_env()
+        self.storage_path = os.environ.get('STORAGE_PATH')
         if not self.storage_path:
-            raise RuntimeError("STORAGE_PATH is required but not set. Please set STORAGE_PATH in your environment or .env file.")
+            raise RuntimeError("STORAGE_PATH environment variable is required but not set. Please run './surge setup' or export STORAGE_PATH before running this script.")
 
         # Load environment variables
         self.load_env()
@@ -46,14 +46,7 @@ class SurgeCineSyncConfigurator:
         self.log(f"Storage path: {self.storage_path}", "INFO")
         self.log(f"Config directory: {self.config_dir}", "INFO")
 
-    def _read_storage_path_from_env(self) -> Optional[str]:
-        env_path = self.project_root / ".env"
-        if env_path.exists():
-            with open(env_path) as f:
-                for line in f:
-                    if line.startswith("STORAGE_PATH="):
-                        return line.strip().split("=", 1)[1]
-        return None
+    # _read_storage_path_from_env removed: STORAGE_PATH must be set in environment
 
     # def find_storage_path(self) -> str:
     #     Deprecated: No fallback to /opt/surge. STORAGE_PATH is required.

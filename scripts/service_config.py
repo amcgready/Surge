@@ -28,20 +28,10 @@ SERVICE_URLS = {
 }
 
 def find_storage_path():
-    """Find the correct storage path for configurations. STORAGE_PATH is required."""
+    """Find the correct storage path for configurations. STORAGE_PATH is required in environment."""
     storage_path = os.environ.get('STORAGE_PATH')
     if not storage_path:
-        # Try to read from .env in project root
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        env_path = os.path.join(project_root, '.env')
-        if os.path.exists(env_path):
-            with open(env_path) as f:
-                for line in f:
-                    if line.startswith('STORAGE_PATH='):
-                        storage_path = line.strip().split('=', 1)[1]
-                        break
-    if not storage_path:
-        raise RuntimeError("STORAGE_PATH is required but not set. Please set STORAGE_PATH in your environment or .env file.")
+        raise RuntimeError("STORAGE_PATH environment variable is required but not set. Please run './surge setup' or export STORAGE_PATH before running this script.")
     return storage_path
 
 def get_api_key_from_xml(config_path):
