@@ -273,6 +273,11 @@ gather_auto_preferences() {
         read -p "Plex server name [MyPlexServer]: " plex_server_name
         PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
         print_success "Plex server name set to: $PLEX_SERVER_NAME"
+        echo ""
+        print_info "To automate Plex setup, you need a Plex claim token."
+        echo "Generate your Plex claim token here: ${YELLOW}https://plex.tv/claim${NC} (login required)"
+        read -p "Paste your Plex claim token (or leave blank to claim manually later): " plex_claim_token
+        PLEX_CLAIM=${plex_claim_token}
     fi
     
     # Storage location (simplified)
@@ -363,6 +368,11 @@ gather_custom_preferences() {
         read -p "Plex server name [MyPlexServer]: " plex_server_name
         PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
         print_success "Plex server name set to: $PLEX_SERVER_NAME"
+        echo ""
+        print_info "To automate Plex setup, you need a Plex claim token."
+        echo "Generate your Plex claim token here: ${YELLOW}https://plex.tv/claim${NC} (login required)"
+        read -p "Paste your Plex claim token (or leave blank to claim manually later): " plex_claim_token
+        PLEX_CLAIM=${plex_claim_token}
     fi
     
     # Deployment type
@@ -625,14 +635,18 @@ gather_custom_preferences() {
         DISCORD_NOTIFY_SYSTEM="false"
     fi
     
-    read -p "TMDB API Key (for metadata) (optional): " tmdb_key
+    echo "TMDB API Key (for metadata) (optional)"
+    echo "  Get your TMDB API key here: ${YELLOW}https://www.themoviedb.org/settings/api${NC} (login required)"
+    read -p "TMDB API Key: " tmdb_key
     TMDB_API_KEY=${tmdb_key:-}
 
-    read -p "Trakt Client ID (optional): " trakt_id
+    echo "Trakt Client ID (optional)"
+    echo "  Get your Trakt API credentials here: ${YELLOW}https://trakt.tv/oauth/applications${NC} (login required)"
+    read -p "Trakt Client ID: " trakt_id
     TRAKT_CLIENT_ID=${trakt_id:-}
 
     if [ -n "$TRAKT_CLIENT_ID" ]; then
-        read -p "Trakt Client Secret (optional): " trakt_secret
+        read -p "Trakt Client Secret: " trakt_secret
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
     
@@ -698,10 +712,14 @@ gather_custom_preferences() {
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
-        read -p "Fanart.tv API Key (optional): " fanart_key
+        echo "Fanart.tv API Key (optional)"
+        echo "  Get your Fanart.tv API key here: ${YELLOW}https://fanart.tv/users/apikey${NC} (login required)"
+        read -p "Fanart.tv API Key: " fanart_key
         FANART_API_KEY=${fanart_key:-}
 
-        read -p "TVDB API Key (optional): " tvdb_key
+        echo "TVDB API Key (optional)"
+        echo "  Get your TVDB API key here: ${YELLOW}https://thetvdb.com/api-information${NC} (login required)"
+        read -p "TVDB API Key: " tvdb_key
         TVDB_API_KEY=${tvdb_key:-}
     fi
 }
