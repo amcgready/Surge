@@ -248,6 +248,32 @@ gather_auto_preferences() {
     print_info "This will deploy the full Surge stack with optimal defaults."
     echo "We'll only ask for the essentials!"
     echo ""
+
+    # Admin credentials setup for integrated services
+    print_step "Set up your admin username and password (for NZBGet, Radarr, Sonarr, Prowlarr, Overseerr)"
+    while true; do
+        read -p "Enter admin username: " ADMIN_USERNAME
+        if [[ -z "$ADMIN_USERNAME" ]]; then
+            print_error "Username cannot be empty. Please try again."
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        read -p "Enter admin password: " ADMIN_PASSWORD
+        if [[ -z "$ADMIN_PASSWORD" ]]; then
+            print_error "Password cannot be empty. Please try again."
+            continue
+        fi
+        read -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
+        if [[ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]]; then
+            print_error "Passwords do not match. Please try again."
+            continue
+        fi
+        break
+    done
+    print_success "Admin credentials set for integrated services."
     
     # Media server choice
     echo "Choose your media server:"
@@ -654,17 +680,10 @@ gather_custom_preferences() {
     if [ "$ENABLE_NZBGET" = "true" ]; then
         echo ""
         print_info "NZBGet Configuration"
-        read -p "NZBGet username [admin]: " nzbget_user
-        NZBGET_USER=${nzbget_user:-admin}
-        
-        read -p "NZBGet password [auto-generate]: " nzbget_pass
-        if [ -z "$nzbget_pass" ]; then
-            # Generate secure password
-            NZBGET_PASS=$(python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16)))")
-            echo "Generated secure NZBGet password: $NZBGET_PASS"
-        else
-            NZBGET_PASS=$nzbget_pass
-        fi
+        # Use admin credentials from setup wizard
+        NZBGET_USER="$ADMIN_USERNAME"
+        NZBGET_PASS="$ADMIN_PASSWORD"
+        print_info "Using admin credentials for NZBGet."
     fi
     
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
@@ -1226,6 +1245,14 @@ configure_arr_download_clients() {
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
         print_info "🌐 Running RDT-Client comprehensive automation..."
         show_quick_progress "Configuring RDT-Client and Torrentio settings..." 12
+        # Ensure RD_API_TOKEN is set from setup wizard
+        if [ -z "$RD_API_TOKEN" ]; then
+            print_warning "Real-Debrid API token not found in environment."
+            read -p "Please enter your Real-Debrid API Token for Torrentio setup: " rd_token_fallback
+            export RD_API_TOKEN="$rd_token_fallback"
+        else
+            export RD_API_TOKEN
+        fi
         if [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
             python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"
             if [ $? -eq 0 ]; then
@@ -1249,10 +1276,11 @@ configure_nzbget_in_arr() {
     local service=$1
     local port=$2
     local api_key=$(get_arr_api_key "$service" "$port")
-    
+    # Use admin credentials for NZBGet
+    local username="$ADMIN_USERNAME"
+    local password="$ADMIN_PASSWORD"
     if [ -n "$api_key" ]; then
         print_info "Adding NZBGet to $service..."
-        
         local download_client_data='{
             "enable": true,
             "protocol": "usenet",
@@ -1263,8 +1291,8 @@ configure_nzbget_in_arr() {
             "fields": [
                 {"name": "host", "value": "surge-nzbget"},
                 {"name": "port", "value": 6789},
-                {"name": "username", "value": "'$NZBGET_USER'"},
-                {"name": "password", "value": "'$NZBGET_PASS'"},
+                {"name": "username", "value": "'$username'"},
+                {"name": "password", "value": "'$password'"},
                 {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
                 {"name": "useSsl", "value": false}
             ],
@@ -1273,7 +1301,6 @@ configure_nzbget_in_arr() {
             "configContract": "NzbgetSettings",
             "tags": []
         }'
-        
         curl -s -X POST "http://localhost:$port/api/v3/downloadclient" \
             -H "Content-Type: application/json" \
             -H "X-Api-Key: $api_key" \
