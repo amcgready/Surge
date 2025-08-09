@@ -48,6 +48,16 @@ main_setup_logic() {
     done
     print_success "Admin credentials set for integrated services."
 
+    # Ensure admin credentials are exported for all relevant services
+    export NZBGET_USER="$ADMIN_USERNAME"
+    export NZBGET_PASS="$ADMIN_PASSWORD"
+    export RADARR_USER="$ADMIN_USERNAME"
+    export RADARR_PASS="$ADMIN_PASSWORD"
+    export SONARR_USER="$ADMIN_USERNAME"
+    export SONARR_PASS="$ADMIN_PASSWORD"
+    export PROWLARR_USER="$ADMIN_USERNAME"
+    export PROWLARR_PASS="$ADMIN_PASSWORD"
+
     # ...existing code for install type, media server, deployment type, etc...
 
     # After deployment type and service selection, but BEFORE Plex setup, prompt for CineSync folders if enabled
