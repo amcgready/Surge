@@ -569,26 +569,61 @@ gather_custom_preferences() {
         ENABLE_NZBGET=$([[ "$enable_nzbget" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        # Prompt for RD_API_TOKEN if RDT-Client is enabled but no token is set
-        if [ "$ENABLE_RDT_CLIENT" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
-            echo ""
-            print_warning "RDT-Client requires a Real-Debrid API token to function"
-            print_info "Without a token, RDT-Client will not be deployed"
-            read -p "Real-Debrid API Token (required for RDT-Client): " rdt_rd_token
-            RD_API_TOKEN=${rdt_rd_token}
-            if [ -z "$RD_API_TOKEN" ]; then
-                print_warning "No Real-Debrid token provided - disabling RDT-Client"
-                ENABLE_RDT_CLIENT="false"
-            fi
-        fi
         read -p "Enable Zurg (Real-Debrid filesystem)? [y/N]: " enable_zurg
         ENABLE_ZURG=$([[ "$enable_zurg" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        # Prompt for RD_API_TOKEN if Zurg is enabled
-        if [ "$ENABLE_ZURG" = "true" ] && [ -z "$RD_API_TOKEN" ]; then
+        read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
+        ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        # =============================
+        # Debrid Service Configuration
+        # =============================
+        if [ "$ENABLE_RDT_CLIENT" = "true" ] || [ "$ENABLE_ZURG" = "true" ] || [ "$ENABLE_CLI_DEBRID" = "true" ]; then
             echo ""
-            print_info "Zurg requires a Real-Debrid API token to function"
-            read -p "Real-Debrid API Token (required for Zurg): " zurg_rd_token
-            RD_API_TOKEN=${zurg_rd_token}
+            print_info "Debrid Service Configuration"
+            echo "Provide at least one debrid API token to enable Torrentio, Zurg, and cli-debrid."
+            echo "If none are provided, these features will be disabled."
+            echo ""
+            read -p "Real-Debrid API Token (recommended): " RD_API_TOKEN
+            read -p "AllDebrid API Token (optional): " AD_API_TOKEN
+            read -p "Premiumize API Token (optional): " PREMIUMIZE_API_TOKEN
+
+            # Determine which token to use for all debrid features
+            if [ -n "$RD_API_TOKEN" ]; then
+                DEBRID_PROVIDER="realdebrid"
+                DEBRID_TOKEN="$RD_API_TOKEN"
+            elif [ -n "$AD_API_TOKEN" ]; then
+                DEBRID_PROVIDER="alldebrid"
+                DEBRID_TOKEN="$AD_API_TOKEN"
+            elif [ -n "$PREMIUMIZE_API_TOKEN" ]; then
+                DEBRID_PROVIDER="premiumize"
+                DEBRID_TOKEN="$PREMIUMIZE_API_TOKEN"
+            else
+                DEBRID_PROVIDER="none"
+                DEBRID_TOKEN=""
+            fi
+
+            # Apply token to all relevant services, or disable if none provided
+            if [ "$DEBRID_PROVIDER" = "none" ]; then
+                print_warning "No debrid token provided. Torrentio, Zurg, and cli-debrid will be disabled."
+                ENABLE_TORRENTIO="false"
+                ENABLE_ZURG="false"
+                ENABLE_CLI_DEBRID="false"
+                ENABLE_RDT_CLIENT="false"
+            else
+                print_success "Using $DEBRID_PROVIDER token for all debrid features."
+                ENABLE_TORRENTIO="true"
+                ENABLE_ZURG="true"
+                ENABLE_CLI_DEBRID="true"
+                ENABLE_RDT_CLIENT="true"
+            fi
+
+            # Export for downstream scripts
+            export RD_API_TOKEN
+            export AD_API_TOKEN
+            export PREMIUMIZE_API_TOKEN
+            export ENABLE_TORRENTIO
+            export ENABLE_ZURG
+            export ENABLE_CLI_DEBRID
+            export ENABLE_RDT_CLIENT
         fi
         # Prompt for custom Zurg downloads path if Zurg is enabled
         if [ "$ENABLE_ZURG" = "true" ]; then
@@ -598,8 +633,6 @@ gather_custom_preferences() {
             read -p "Custom Zurg downloads path (optional): " zurg_downloads_path
             ZURG_DOWNLOADS_PATH=${zurg_downloads_path:-}
         fi
-        read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
-        ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         read -p "Enable Decypharr (automated decryption)? [y/N]: " enable_decypharr
         ENABLE_DECYPHARR=$([[ "$enable_decypharr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         read -p "Enable Kometa (metadata manager)? [Y/n]: " enable_kometa
