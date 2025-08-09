@@ -279,7 +279,7 @@ choose_install_type() {
     echo "   ✅ Choose specific services to deploy"
     echo "   ✅ Configure all environment variables"
     # Auto-detect imagemaid variables
-    PLEX_CONFIG_DIR="${DATA_ROOT}/config/plex"
+    PLEX_CONFIG_DIR="${STORAGE_PATH}/config/plex"
     IMAGEMAID_MODE="remove"
     # Try to auto-detect Plex token from Kometa config if available
     if [ -f "$PROJECT_DIR/initial-configs/kometa-config.yml" ]; then
@@ -314,7 +314,8 @@ gather_auto_preferences() {
     print_step "🚀 Auto Installation Setup"
     echo ""
     print_info "This will deploy the full Surge stack with optimal defaults."
-    echo "We'll only ask for the essentials!"
+    echo "Press Enter to accept defaults for any prompt."
+    echo "We'll only ask for the essentials and API keys!"
     echo ""
 
     print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
@@ -327,14 +328,12 @@ gather_auto_preferences() {
     echo "3) Emby (Feature-rich)"
     echo ""
     read -p "Enter choice (1-3): " media_choice
-    
     case $media_choice in
         1) MEDIA_SERVER="plex" ;;
         2) MEDIA_SERVER="jellyfin" ;;
         3) MEDIA_SERVER="emby" ;;
         *) print_error "Invalid choice"; exit 1 ;;
     esac
-    
     # Plex server name configuration (required for proper library setup)
     if [ "$MEDIA_SERVER" = "plex" ]; then
         echo ""
@@ -367,7 +366,7 @@ gather_auto_preferences() {
     echo ""
     print_info "Storage Configuration"
     echo "Where should Surge store your media and configurations?"
-    echo "Default: /opt/surge (recommended for most users)"
+    echo "Press Enter for default: /opt/surge (recommended for most users)"
     read -p "Storage path [/opt/surge]: " storage_path
     STORAGE_PATH=${storage_path:-/opt/surge}
     
@@ -383,19 +382,19 @@ gather_auto_preferences() {
     # Optional Discord webhook for notifications
     echo ""
     print_info "🔔 Discord Notifications (Optional)"
-    echo "Want to receive notifications about updates and processing?"
+    echo "If left blank, Discord notifications will be OFF."
+    echo "If a webhook URL is provided, ALL notification types will be ON."
     read -p "Discord webhook URL (optional): " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
     NOTIFICATION_TITLE_PREFIX="Surge"
-    
     if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-        # Auto mode enables most notifications by default
         DISCORD_NOTIFY_UPDATES="true"
         DISCORD_NOTIFY_PROCESSING="true"
         DISCORD_NOTIFY_ERRORS="true"
-        DISCORD_NOTIFY_MEDIA="false"  # Keep media events off by default
-        DISCORD_NOTIFY_SYSTEM="false"
+        DISCORD_NOTIFY_MEDIA="true"
+        DISCORD_NOTIFY_SYSTEM="true"
     else
+        print_info "No Discord webhook provided. All Discord notifications are OFF."
         DISCORD_NOTIFY_UPDATES="false"
         DISCORD_NOTIFY_PROCESSING="false"
         DISCORD_NOTIFY_ERRORS="false"
@@ -421,6 +420,90 @@ gather_auto_preferences() {
     # Prompt for CineSync folder options if enabled (always in auto mode)
     if [ "$ENABLE_CINESYNC" = "true" ]; then
         configure_cinesync_organization
+    fi
+
+    # Set Zurg downloads path and CineSync origin path
+    ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/Zurg"
+    CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
+
+    # API Keys and External Services (same as custom install)
+    echo ""
+    print_info "External Services & Notifications"
+
+    echo "\nTMDB API Key (for metadata, optional)"
+    echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
+    read -p "TMDB API Key: " tmdb_key
+    TMDB_API_KEY=${tmdb_key:-}
+
+    echo "\nTrakt Client ID (optional)"
+    echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
+    read -p "Trakt Client ID: " trakt_id
+    TRAKT_CLIENT_ID=${trakt_id:-}
+    if [ -n "$TRAKT_CLIENT_ID" ]; then
+        read -p "Trakt Client Secret: " trakt_secret
+        TRAKT_CLIENT_SECRET=${trakt_secret:-}
+    fi
+
+    if [ "$ENABLE_NZBGET" = "true" ]; then
+        echo ""
+        print_info "NZBGet Configuration"
+        export NZBGET_USER="admin"
+        export NZBGET_PASS="password"
+        export OVERSEERR_USER="admin"
+        export OVERSEERR_PASS="password"
+        export TAUTULLI_USER="admin"
+        export TAUTULLI_PASS="password"
+        print_info "Using admin credentials for NZBGet."
+    fi
+
+    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+        echo ""
+        print_info "Real-Debrid Configuration"
+        read -p "Real-Debrid API Token: " rd_token
+        RD_API_TOKEN=${rd_token:-}
+    fi
+
+    echo ""
+    print_info "Additional API Keys (Enhanced Integration)"
+    echo "These API keys enable full automation and advanced features:"
+
+    if [ "$ENABLE_PROWLARR" = "true" ]; then
+        echo ""
+        echo "📡 Prowlarr will be auto-configured with:"
+        echo "• Torrentio indexer (requires Real-Debrid API key)"
+        echo "• Auto-connection to Radarr and Sonarr"
+        if [ -z "$RD_API_TOKEN" ]; then
+            read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
+            RD_API_TOKEN=${prowlarr_rd_token:-}
+        else
+            print_info "✅ Using Real-Debrid token already provided for RDT-Client/Zurg"
+        fi
+        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+            echo ""
+            echo "🔧 cli_debrid Configuration:"
+            if [ -z "$RD_API_TOKEN" ]; then
+                read -p "Real-Debrid API Token (optional): " rd_token_cli
+                RD_API_TOKEN=${rd_token_cli:-}
+            fi
+            read -p "AllDebrid API Token (optional): " ad_token
+            AD_API_TOKEN=${ad_token:-}
+            read -p "Premiumize API Token (optional): " pm_token
+            PREMIUMIZE_API_TOKEN=${pm_token:-}
+        fi
+    fi
+
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+        echo ""
+        echo "🎨 Posterizarr Enhanced Configuration:"
+        echo "Fanart.tv API Key (optional)"
+        echo "  Get your Fanart.tv API key here: https://fanart.tv/users/apikey (login required)"
+        read -p "Fanart.tv API Key: " fanart_key
+        FANART_API_KEY=${fanart_key:-}
+
+        echo "TVDB API Key (optional)"
+        echo "  Get your TVDB API key here: https://thetvdb.com/api-information (login required)"
+        read -p "TVDB API Key: " tvdb_key
+        TVDB_API_KEY=${tvdb_key:-}
     fi
 
     print_success "Auto configuration complete! Deploying full stack with all features."
@@ -497,6 +580,9 @@ gather_custom_preferences() {
             configure_cinesync_organization
         fi
     fi
+    # Set Zurg downloads path and CineSync origin path (always, no prompt)
+    ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/Zurg"
+    CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
 
     # Storage location
     echo ""
@@ -701,53 +787,30 @@ gather_custom_preferences() {
         ASSET_PROCESSING_SCHEDULE=${asset_schedule:-"0 2 * * *"}
     fi
     
-    # API Keys and External Services
+    # API Keys and External Services (wording unified with auto install)
     echo ""
     print_info "External Services & Notifications"
-    
-    # Discord Webhook
     echo ""
-    echo "🔔 Discord Notifications (Recommended)"
-    echo "Configure a Discord webhook to receive notifications from all services:"
-    echo "• Container updates available"
-    echo "• Processing completion (Kometa, Scanly, etc.)"
-    echo "• Error alerts"
-    echo "• System status updates"
-    echo ""
+    print_info "🔔 Discord Notifications (Optional)"
+    echo "If left blank, Discord notifications will be OFF."
+    echo "If a webhook URL is provided, ALL notification types will be ON."
     read -p "Discord webhook URL (optional): " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
-    
+    NOTIFICATION_TITLE_PREFIX="Surge"
     if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-        read -p "Notification title prefix [Surge]: " title_prefix
-        NOTIFICATION_TITLE_PREFIX=${title_prefix:-Surge}
-        
-        echo ""
-        print_info "📋 Notification Preferences"
-        echo "Choose which types of notifications to receive:"
-        
-        read -p "Enable container update notifications? [Y/n]: " enable_updates
-        DISCORD_NOTIFY_UPDATES=$([[ "$enable_updates" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
-        read -p "Enable asset processing notifications? [Y/n]: " enable_processing
-        DISCORD_NOTIFY_PROCESSING=$([[ "$enable_processing" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
-        read -p "Enable error alert notifications? [Y/n]: " enable_errors
-        DISCORD_NOTIFY_ERRORS=$([[ "$enable_errors" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        
-        read -p "Enable media event notifications (via Tautulli)? [y/N]: " enable_media
-        DISCORD_NOTIFY_MEDIA=$([[ "$enable_media" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        
-        read -p "Enable system status notifications? [y/N]: " enable_system
-        DISCORD_NOTIFY_SYSTEM=$([[ "$enable_system" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        DISCORD_NOTIFY_UPDATES="true"
+        DISCORD_NOTIFY_PROCESSING="true"
+        DISCORD_NOTIFY_ERRORS="true"
+        DISCORD_NOTIFY_MEDIA="true"
+        DISCORD_NOTIFY_SYSTEM="true"
     else
-        # Set defaults when no Discord webhook
+        print_info "No Discord webhook provided. All Discord notifications are OFF."
         DISCORD_NOTIFY_UPDATES="false"
         DISCORD_NOTIFY_PROCESSING="false"
         DISCORD_NOTIFY_ERRORS="false"
         DISCORD_NOTIFY_MEDIA="false"
         DISCORD_NOTIFY_SYSTEM="false"
     fi
-    
 
     echo "\nTMDB API Key (for metadata, optional)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
@@ -758,55 +821,45 @@ gather_custom_preferences() {
     echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
     read -p "Trakt Client ID: " trakt_id
     TRAKT_CLIENT_ID=${trakt_id:-}
-
     if [ -n "$TRAKT_CLIENT_ID" ]; then
         read -p "Trakt Client Secret: " trakt_secret
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
-    
-    # Download Client Configuration
+
     if [ "$ENABLE_NZBGET" = "true" ]; then
         echo ""
         print_info "NZBGet Configuration"
-        # Use admin credentials from setup wizard
-    # Set default NZBGet and non-Arr credentials
-    export NZBGET_USER="admin"
-    export NZBGET_PASS="password"
-    export OVERSEERR_USER="admin"
-    export OVERSEERR_PASS="password"
-    export TAUTULLI_USER="admin"
-    export TAUTULLI_PASS="password"
-    # Posterizarr, Placeholdarr, and Kometa do not require credentials
+        export NZBGET_USER="admin"
+        export NZBGET_PASS="password"
+        export OVERSEERR_USER="admin"
+        export OVERSEERR_PASS="password"
+        export TAUTULLI_USER="admin"
+        export TAUTULLI_PASS="password"
         print_info "Using admin credentials for NZBGet."
     fi
-    
+
     if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
         echo ""
         print_info "Real-Debrid Configuration"
         read -p "Real-Debrid API Token: " rd_token
         RD_API_TOKEN=${rd_token:-}
-        
-        # Real-Debrid username is now set automatically or via .env
     fi
-    
-    # Enhanced API Keys for comprehensive setup
+
     echo ""
     print_info "Additional API Keys (Enhanced Integration)"
     echo "These API keys enable full automation and advanced features:"
-    
+
     if [ "$ENABLE_PROWLARR" = "true" ]; then
         echo ""
         echo "📡 Prowlarr will be auto-configured with:"
         echo "• Torrentio indexer (requires Real-Debrid API key)"
         echo "• Auto-connection to Radarr and Sonarr"
-        
         if [ -z "$RD_API_TOKEN" ]; then
             read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
             RD_API_TOKEN=${prowlarr_rd_token:-}
         else
             print_info "✅ Using Real-Debrid token already provided for RDT-Client/Zurg"
         fi
-        
         if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
             echo ""
             echo "🔧 cli_debrid Configuration:"
@@ -820,7 +873,7 @@ gather_custom_preferences() {
             PREMIUMIZE_API_TOKEN=${pm_token:-}
         fi
     fi
-    
+
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
@@ -1026,8 +1079,14 @@ configure_services_post_deployment() {
     # Configure homepage widgets for all enabled services
     configure_homepage_widgets
 
+
     # Prompt for sudo password and fix ownership of storage path (removes locks)
     echo "\nTo ensure you have access to all files, your sudo password may be required to fix permissions and remove any locks."
+    echo "DEBUG: STORAGE_PATH='$STORAGE_PATH' PUID='$PUID' PGID='$PGID'"
+    if [ -z "$STORAGE_PATH" ] || [ -z "$PUID" ] || [ -z "$PGID" ]; then
+        print_error "STORAGE_PATH, PUID, or PGID is not set. Cannot set ownership."
+        exit 1
+    fi
     sudo -v
     sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
     print_success "All files and folders in $STORAGE_PATH are now owned by $PUID:$PGID. (Locks removed)"
@@ -1509,11 +1568,11 @@ TZ=$TIMEZONE
 PUID=$PUID
 PGID=$PGID
 
-DATA_ROOT=$STORAGE_PATH
+STORAGE_PATH=$STORAGE_PATH
 # Use CineSync folder variables for Plex library paths
-MOVIES_DIR="\${DATA_ROOT}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
-TV_SHOWS_DIR="\${DATA_ROOT}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
-CONFIG_DIR=\${DATA_ROOT}/config
+MOVIES_DIR="\${STORAGE_PATH}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
+TV_SHOWS_DIR="\${STORAGE_PATH}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
+CONFIG_DIR=\${STORAGE_PATH}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
 
@@ -1745,7 +1804,7 @@ show_next_steps() {
     print_info "Configuration saved to .env file"
     print_info "Service configurations created in config directories"
     echo ""
-    print_warning "Default credentials for NZBGet and all non-*Arr services are set to:"
+    print_warning "Default credentials for all services is set to:"
     echo "    Username: admin"
     echo "    Password: password"
     print_warning "It is strongly advised to change these credentials after setup for security."
