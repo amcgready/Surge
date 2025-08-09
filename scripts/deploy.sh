@@ -128,48 +128,48 @@ setup_environment() {
 create_directories() {
     print_info "Creating directory structure..."
     
-    # Read DATA_ROOT from .env or use default
-    DATA_ROOT=$(grep "^DATA_ROOT=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 || echo "/opt/surge")
-    
-    mkdir -p "$DATA_ROOT"/{media/{movies,tv,music},downloads,config,logs}
-    
+    # Read STORAGE_PATH from .env or use default
+    STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+
+    mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
+
     # Ensure logs directory exists for post-deployment logging
     mkdir -p "$PROJECT_DIR/logs"
-    
+
     # Fix ownership for all directories (1000:1000 matches PUID:PGID used in containers)
     print_info "Setting proper ownership for storage directories..."
-    
+
     # First create all necessary subdirectories with proper structure
-    mkdir -p "$DATA_ROOT"/{Radarr,Sonarr,Prowlarr,Bazarr,Overseerr,Tautulli,NZBGet,Plex,Homepage,GAPS,RDT-Client,Posterizarr,Placeholdarr,Cinesync}/config
-    mkdir -p "$DATA_ROOT"/{Radarr,Sonarr}/downloads
-    mkdir -p "$DATA_ROOT"/{media/{movies,tv,music},downloads,config,logs}
-    
+    mkdir -p "$STORAGE_PATH"/{Radarr,Sonarr,Prowlarr,Bazarr,Overseerr,Tautulli,NZBGet,Plex,Homepage,GAPS,RDT-Client,Posterizarr,Placeholdarr,Cinesync}/config
+    mkdir -p "$STORAGE_PATH"/{Radarr,Sonarr}/downloads
+    mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
+
     if [ "$(id -u)" -eq 0 ]; then
         # Running as root, set ownership directly
-        chown -R 1000:1000 "$DATA_ROOT"
-        chmod -R 755 "$DATA_ROOT"
+        chown -R 1000:1000 "$STORAGE_PATH"
+        chmod -R 755 "$STORAGE_PATH"
         print_success "Directory ownership and permissions set to 1000:1000"
     else
         # Not running as root, use sudo
         if sudo -n true 2>/dev/null; then
             # Sudo available without password prompt
-            sudo chown -R 1000:1000 "$DATA_ROOT"
-            sudo chmod -R 755 "$DATA_ROOT"
+            sudo chown -R 1000:1000 "$STORAGE_PATH"
+            sudo chmod -R 755 "$STORAGE_PATH"
             print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
         else
             # Prompt for sudo
             print_warning "Setting directory ownership requires sudo privileges..."
-            if sudo chown -R 1000:1000 "$DATA_ROOT" && sudo chmod -R 755 "$DATA_ROOT"; then
+            if sudo chown -R 1000:1000 "$STORAGE_PATH" && sudo chmod -R 755 "$STORAGE_PATH"; then
                 print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
             else
                 print_warning "Failed to set directory ownership/permissions. You may need to run manually:"
-                print_warning "  sudo chown -R 1000:1000 $DATA_ROOT"
-                print_warning "  sudo chmod -R 755 $DATA_ROOT"
+                print_warning "  sudo chown -R 1000:1000 $STORAGE_PATH"
+                print_warning "  sudo chmod -R 755 $STORAGE_PATH"
             fi
         fi
     fi
-    
-    print_success "Directory structure created at $DATA_ROOT"
+
+    print_success "Directory structure created at $STORAGE_PATH"
 }
 
 # Show usage

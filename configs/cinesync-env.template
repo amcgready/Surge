@@ -22,7 +22,8 @@ USE_SOURCE_STRUCTURE=${CINESYNC_USE_SOURCE_STRUCTURE}
 # ========================================
 # Enable CineSync layout organization
 # When true, files will be organized using the CineSync folder structure
-CINESYNC_LAYOUT=${CINESYNC_LAYOUT}
+# Must always be 'true' if deploying CineSync
+CINESYNC_LAYOUT=${CINESYNC_LAYOUT:-true}
 
 # Content Separation Settings
 # Control how different types of content are organized into separate folders
