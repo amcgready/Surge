@@ -24,39 +24,33 @@ print_success() {
 # Main setup logic for both initial setup and --reconfigure
 main_setup_logic() {
     # Admin credentials setup for integrated services
-    print_step "Set up your admin username and password (for NZBGet, Radarr, Sonarr, Prowlarr, Overseerr)"
-    while true; do
-        read -p "Enter admin username: " ADMIN_USERNAME
-        if [[ -z "$ADMIN_USERNAME" ]]; then
-            print_error "Username cannot be empty. Please try again."
-            continue
-        fi
-        break
-    done
-    while true; do
-        read -p "Enter admin password: " ADMIN_PASSWORD
-        if [[ -z "$ADMIN_PASSWORD" ]]; then
-            print_error "Password cannot be empty. Please try again."
-            continue
-        fi
-        read -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
-        if [[ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]]; then
-            print_error "Passwords do not match. Please try again."
-            continue
-        fi
-        break
-    done
-    print_success "Admin credentials set for integrated services."
+    print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
+    DEFAULT_ARR_USER="admin"
+    DEFAULT_ARR_HASH="HnxsPdd7O+41SaNwktBU4ax7QuR41BA3ibq/UITYg5o="
+    DEFAULT_ARR_SALT="IKT1ieqFHoJ/hTfSp+Um7Q=="
+    DEFAULT_ARR_ITER=10000
+    print_success "Default admin credentials set for Prowlarr, Sonarr, and Radarr."
 
-    # Ensure admin credentials are exported for all relevant services
-    export NZBGET_USER="$ADMIN_USERNAME"
-    export NZBGET_PASS="$ADMIN_PASSWORD"
-    export RADARR_USER="$ADMIN_USERNAME"
-    export RADARR_PASS="$ADMIN_PASSWORD"
-    export SONARR_USER="$ADMIN_USERNAME"
-    export SONARR_PASS="$ADMIN_PASSWORD"
-    export PROWLARR_USER="$ADMIN_USERNAME"
-    export PROWLARR_PASS="$ADMIN_PASSWORD"
+    # Patch Users table for all *arr services after deployment
+    patch_arr_users() {
+        local db_path="$1"
+        if [ -f "$db_path" ]; then
+            sqlite3 "$db_path" "UPDATE Users SET username='${DEFAULT_ARR_USER}', password_hash='${DEFAULT_ARR_HASH}', password_salt='${DEFAULT_ARR_SALT}', iterations=${DEFAULT_ARR_ITER} WHERE id=1;"
+            echo "Patched Users table in $db_path"
+        else
+            echo "Database not found: $db_path"
+        fi
+    }
+
+    # After deployment, patch all *arr DBs
+    ARR_DB_PATHS=(
+        "$STORAGE_PATH/Prowlarr/config/prowlarr.db"
+        "$STORAGE_PATH/Sonarr/config/sonarr.db"
+        "$STORAGE_PATH/Radarr/config/radarr.db"
+    )
+    for db in "${ARR_DB_PATHS[@]}"; do
+        patch_arr_users "$db"
+    done
 
     # ...existing code for install type, media server, deployment type, etc...
 
@@ -323,31 +317,8 @@ gather_auto_preferences() {
     echo "We'll only ask for the essentials!"
     echo ""
 
-    # Admin credentials setup for integrated services
-    print_step "Set up your admin username and password (for NZBGet, Radarr, Sonarr, Prowlarr, Overseerr)"
-    while true; do
-        read -p "Enter admin username: " ADMIN_USERNAME
-        if [[ -z "$ADMIN_USERNAME" ]]; then
-            print_error "Username cannot be empty. Please try again."
-            continue
-        fi
-        break
-    done
-
-    while true; do
-        read -p "Enter admin password: " ADMIN_PASSWORD
-        if [[ -z "$ADMIN_PASSWORD" ]]; then
-            print_error "Password cannot be empty. Please try again."
-            continue
-        fi
-        read -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
-        if [[ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]]; then
-            print_error "Passwords do not match. Please try again."
-            continue
-        fi
-        break
-    done
-    print_success "Admin credentials set for integrated services."
+    print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
+    # ...existing code...
     
     # Media server choice
     echo "Choose your media server:"
@@ -436,13 +407,15 @@ gather_auto_preferences() {
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
-    ENABLE_CLI_DEBRID="false"
-    ENABLE_DECYPHARR="false"
-    ENABLE_CINESYNC="true"  # Enable CineSync in auto mode
-    ENABLE_PLACEHOLDARR="false"
+    ENABLE_CLI_DEBRID="true"
+    ENABLE_DECYPHARR="true"
+    ENABLE_CINESYNC="true"
+    ENABLE_PLACEHOLDARR="true"
     ENABLE_GAPS="true"
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
+    ENABLE_RDT_CLIENT="true"
+    ENABLE_ZURG="true"
     DEPLOYMENT_TYPE="full"
 
     # Prompt for CineSync folder options if enabled (always in auto mode)
@@ -763,8 +736,14 @@ gather_custom_preferences() {
         echo ""
         print_info "NZBGet Configuration"
         # Use admin credentials from setup wizard
-        NZBGET_USER="$ADMIN_USERNAME"
-        NZBGET_PASS="$ADMIN_PASSWORD"
+    # Set default NZBGet and non-Arr credentials
+    export NZBGET_USER="admin"
+    export NZBGET_PASS="password"
+    export OVERSEERR_USER="admin"
+    export OVERSEERR_PASS="password"
+    export TAUTULLI_USER="admin"
+    export TAUTULLI_PASS="password"
+    # Posterizarr, Placeholdarr, and Kometa do not require credentials
         print_info "Using admin credentials for NZBGet."
     fi
     
@@ -774,8 +753,7 @@ gather_custom_preferences() {
         read -p "Real-Debrid API Token: " rd_token
         RD_API_TOKEN=${rd_token:-}
         
-        read -p "Real-Debrid Username: " rd_username
-        RD_USERNAME=${rd_username:-}
+        # Real-Debrid username is now set automatically or via .env
     fi
     
     # Enhanced API Keys for comprehensive setup
@@ -1359,8 +1337,8 @@ configure_nzbget_in_arr() {
     local port=$2
     local api_key=$(get_arr_api_key "$service" "$port")
     # Use admin credentials for NZBGet
-    local username="$ADMIN_USERNAME"
-    local password="$ADMIN_PASSWORD"
+    local username="admin"
+    local password="changeme"
     if [ -n "$api_key" ]; then
         print_info "Adding NZBGet to $service..."
         local download_client_data='{
@@ -1373,8 +1351,8 @@ configure_nzbget_in_arr() {
             "fields": [
                 {"name": "host", "value": "surge-nzbget"},
                 {"name": "port", "value": 6789},
-                {"name": "username", "value": "'$username'"},
-                {"name": "password", "value": "'$password'"},
+                {"name": "username", "value": "admin"},
+                {"name": "password", "value": "changeme"},
                 {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
                 {"name": "useSsl", "value": false}
             ],
@@ -1733,6 +1711,11 @@ show_next_steps() {
     echo ""
     print_info "Configuration saved to .env file"
     print_info "Service configurations created in config directories"
+    echo ""
+    print_warning "Default credentials for NZBGet and all non-*Arr services are set to:"
+    echo "    Username: admin"
+    echo "    Password: password"
+    print_warning "It is strongly advised to change these credentials after setup for security."
     echo ""
     
     print_info "Would you like to deploy Surge now? (y/n)"
