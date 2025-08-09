@@ -426,10 +426,59 @@ gather_auto_preferences() {
     ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/Zurg"
     CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
 
-    # API Keys and External Services (same as custom install)
+    # API Keys and External Services (wording and logic unified with custom install)
     echo ""
     print_info "External Services & Notifications"
 
+    # Debrid Services Section
+    echo ""
+    print_info "Debrid Services (Real-Debrid, AllDebrid, Premiumize)"
+    echo "Provide at least one debrid API token to enable Torrentio, Zurg, and cli-debrid."
+    echo "If none are provided, these features will be disabled."
+    echo ""
+    read -p "Real-Debrid API Token (recommended): " RD_API_TOKEN
+    read -p "AllDebrid API Token (optional): " AD_API_TOKEN
+    read -p "Premiumize API Token (optional): " PREMIUMIZE_API_TOKEN
+
+    # Determine which token to use for all debrid features
+    if [ -n "$RD_API_TOKEN" ]; then
+        DEBRID_PROVIDER="realdebrid"
+        DEBRID_TOKEN="$RD_API_TOKEN"
+    elif [ -n "$AD_API_TOKEN" ]; then
+        DEBRID_PROVIDER="alldebrid"
+        DEBRID_TOKEN="$AD_API_TOKEN"
+    elif [ -n "$PREMIUMIZE_API_TOKEN" ]; then
+        DEBRID_PROVIDER="premiumize"
+        DEBRID_TOKEN="$PREMIUMIZE_API_TOKEN"
+    else
+        DEBRID_PROVIDER="none"
+        DEBRID_TOKEN=""
+    fi
+
+    # Apply token to all relevant services, or disable if none provided
+    if [ "$DEBRID_PROVIDER" = "none" ]; then
+        print_warning "No debrid token provided. Torrentio, Zurg, and cli-debrid will be disabled."
+        ENABLE_TORRENTIO="false"
+        ENABLE_ZURG="false"
+        ENABLE_CLI_DEBRID="false"
+        ENABLE_RDT_CLIENT="false"
+    else
+        print_success "Using $DEBRID_PROVIDER token for all debrid features."
+        ENABLE_TORRENTIO="true"
+        ENABLE_ZURG="true"
+        ENABLE_CLI_DEBRID="true"
+        ENABLE_RDT_CLIENT="true"
+    fi
+
+    export RD_API_TOKEN
+    export AD_API_TOKEN
+    export PREMIUMIZE_API_TOKEN
+    export ENABLE_TORRENTIO
+    export ENABLE_ZURG
+    export ENABLE_CLI_DEBRID
+    export ENABLE_RDT_CLIENT
+
+    # TMDB and Trakt
     echo "\nTMDB API Key (for metadata, optional)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
     read -p "TMDB API Key: " tmdb_key
@@ -454,42 +503,6 @@ gather_auto_preferences() {
         export TAUTULLI_USER="admin"
         export TAUTULLI_PASS="password"
         print_info "Using admin credentials for NZBGet."
-    fi
-
-    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-        echo ""
-        print_info "Real-Debrid Configuration"
-        read -p "Real-Debrid API Token: " rd_token
-        RD_API_TOKEN=${rd_token:-}
-    fi
-
-    echo ""
-    print_info "Additional API Keys (Enhanced Integration)"
-    echo "These API keys enable full automation and advanced features:"
-
-    if [ "$ENABLE_PROWLARR" = "true" ]; then
-        echo ""
-        echo "📡 Prowlarr will be auto-configured with:"
-        echo "• Torrentio indexer (requires Real-Debrid API key)"
-        echo "• Auto-connection to Radarr and Sonarr"
-        if [ -z "$RD_API_TOKEN" ]; then
-            read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
-            RD_API_TOKEN=${prowlarr_rd_token:-}
-        else
-            print_info "✅ Using Real-Debrid token already provided for RDT-Client/Zurg"
-        fi
-        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-            echo ""
-            echo "🔧 cli_debrid Configuration:"
-            if [ -z "$RD_API_TOKEN" ]; then
-                read -p "Real-Debrid API Token (optional): " rd_token_cli
-                RD_API_TOKEN=${rd_token_cli:-}
-            fi
-            read -p "AllDebrid API Token (optional): " ad_token
-            AD_API_TOKEN=${ad_token:-}
-            read -p "Premiumize API Token (optional): " pm_token
-            PREMIUMIZE_API_TOKEN=${pm_token:-}
-        fi
     fi
 
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
@@ -899,15 +912,15 @@ create_download_directories() {
     mkdir -p "$STORAGE_PATH/downloads/completed/"{movies,tv}
     mkdir -p "$STORAGE_PATH/downloads/incomplete/"{movies,tv}
     
-    # Set proper permissions
-    chmod 755 "$STORAGE_PATH/downloads"
-    chmod 755 "$STORAGE_PATH/downloads"/*
-    
-    # Change ownership if running as root
-    if [ "$EUID" -eq 0 ]; then
-        chown -R "$PUID:$PGID" "$STORAGE_PATH/downloads"
+    # Set proper permissions on the main Surge directory only
+    if [ -d "$STORAGE_PATH/Surge" ]; then
+        chmod 755 "$STORAGE_PATH/Surge" 2>/dev/null || print_warning "Could not chmod $STORAGE_PATH/Surge (may be a network share)"
+        if [ "$EUID" -eq 0 ]; then
+            chown -R "$PUID:$PGID" "$STORAGE_PATH/Surge" 2>/dev/null || print_warning "Could not chown $STORAGE_PATH/Surge (may be a network share)"
+        fi
+    else
+        print_warning "$STORAGE_PATH/Surge does not exist, skipping permission changes."
     fi
-    
     print_success "Download directories created and configured"
 }
 
