@@ -116,270 +116,88 @@ class ZurgConfigurator:
     def test_real_debrid_connection(self):
         """Test Real-Debrid API connectivity"""
         print("🧪 Testing Real-Debrid connection...")
-        
         if not self.rd_api_token:
             print("  ⚠️  No Real-Debrid API token found!")
             print("  💡 Please set RD_API_TOKEN environment variable")
             return False
-            
         try:
             headers = {'Authorization': f'Bearer {self.rd_api_token}'}
-            response = requests.get('https://api.real-debrid.com/rest/1.0/user', 
-                                  headers=headers, timeout=10)
-            
+            response = requests.get('https://api.real-debrid.com/rest/1.0/user', headers=headers, timeout=10)
             if response.status_code == 200:
                 user_data = response.json()
-                premium_until = user_data.get('premium', 0)
-                if premium_until > 0:
-                    from datetime import datetime
-                    premium_date = datetime.fromtimestamp(premium_until)
-                    print(f"  ✅ Real-Debrid: Connected as {user_data.get('username', 'Unknown')}")
-                    print(f"  📅 Premium expires: {premium_date.strftime('%Y-%m-%d %H:%M')}")
-                    
-                    # Test backup tokens if available
-                    if self.rd_backup_tokens:
-                        print(f"  🔄 Testing {len(self.rd_backup_tokens)} backup token(s)...")
-                        valid_backups = 0
-                        for i, token in enumerate(self.rd_backup_tokens):
-                            try:
-                                backup_headers = {'Authorization': f'Bearer {token}'}
-                                backup_response = requests.get('https://api.real-debrid.com/rest/1.0/user', 
-                                                             headers=backup_headers, timeout=5)
-                                if backup_response.status_code == 200:
-                                    valid_backups += 1
-                                    print(f"    ✅ Backup token {i+1}: Valid")
-                                else:
-                                    print(f"    ❌ Backup token {i+1}: Invalid")
-                            except Exception:
-                                print(f"    ❌ Backup token {i+1}: Connection failed")
-                        print(f"  📊 Backup tokens: {valid_backups}/{len(self.rd_backup_tokens)} valid")
-                    
-                    return True
-                else:
-                    print(f"  ⚠️  Real-Debrid: Account not premium")
-                    return False
+                print(f"  ✅ Connected to Real-Debrid as {user_data.get('username', 'unknown')}")
+                return True
             else:
-                print(f"  ❌ Real-Debrid: Authentication failed ({response.status_code})")
+                print(f"  ❌ Real-Debrid connection failed: {response.status_code}")
                 return False
-                
-        except requests.exceptions.RequestException as e:
-            print(f"  ❌ Real-Debrid: Connection failed - {type(e).__name__}")
+        except Exception as e:
+            print(f"  ⚠️  Error connecting to Real-Debrid: {e}")
             return False
-            
-    def get_media_server_config(self):
-        """Get media server configuration details"""
-        media_config = {}
-        
-        if self.media_server == 'plex':
-            # Try to get Plex token from environment or config
-            plex_token = os.environ.get('PLEX_TOKEN', '')
-            if not plex_token:
-                # Try to read from Plex preferences
-                try:
-                    plex_prefs_path = Path(self.storage_path) / "Plex" / "config" / "Library" / "Application Support" / "Plex Media Server" / "Preferences.xml"
-                    if plex_prefs_path.exists():
-                        with open(plex_prefs_path, 'r', encoding='utf-8') as f:
-                            content = f.read()
-                            if 'PlexOnlineToken=' in content:
-                                start = content.find('PlexOnlineToken="') + 17
-                                end = content.find('"', start)
-                                plex_token = content[start:end]
-                                print(f"  ✓ Found Plex token from config")
-                except Exception:
-                    pass
-                    
-            media_config = {
-                'server_url': self.plex_url,
-                'token': plex_token,
-                'type': 'plex',
-                'mount_path': '/data/media'  # Path inside Plex container
-            }
-            
-        elif self.media_server == 'emby':
-            emby_token = os.environ.get('EMBY_TOKEN', '')
-            media_config = {
-                'server_url': self.emby_url,
-                'token': emby_token,
-                'type': 'emby',
-                'mount_path': '/data/media'
-            }
-            
-        elif self.media_server == 'jellyfin':
-            jellyfin_token = os.environ.get('JELLYFIN_TOKEN', '')
-            media_config = {
-                'server_url': self.jellyfin_url,
-                'token': jellyfin_token,
-                'type': 'jellyfin',
-                'mount_path': '/data/media'
-            }
-            
-        return media_config
-        
     def create_zurg_config(self):
-        """Generate comprehensive Zurg configuration file"""
-        print("📝 Generating Zurg configuration...")
-        
-        # Get media server configuration
-        media_config = self.get_media_server_config()
-        
-        # Base configuration with performance optimizations
-        config = {
-            # Core settings
-            'zurg': 'v1',
-            'token': self.rd_api_token,
-            
-            # Network and server configuration
-            'host': '[::]',
-            'port': 9999,
-            'api_rate_limit_per_minute': 250,
-            'torrents_rate_limit_per_minute': 75,
-            'api_timeout_secs': 60,
-            'download_timeout_secs': 15,
-            'retries_until_failed': 3,
-            'fetch_torrents_page_size': 250,
-            
-            # Performance optimization for large libraries
-            'check_for_changes_every_secs': int(os.environ.get('ZURG_CHECK_INTERVAL', '15')),
-            'repair_every_mins': 60,
-            'downloads_every_mins': 720,
-            'dump_torrents_every_mins': 1440,
-            
-            # File management
-            'enable_repair': True,
-            'rar_action': os.environ.get('ZURG_RAR_ACTION', 'extract'),
-            'auto_analyze_new_torrents': True,
-            'cache_network_test_results': True,
-            'delete_error_torrents': False,
-            'hide_broken_torrents': True,
-            'retain_rd_torrent_name': False,
-            'retain_folder_name_extension': True,
-            'ignore_renames': False,
-            'force_select_playable_files': True,
-            
-            # Additional playable extensions
-            'addl_playable_extensions': [
-                'm3u', 'jpg', 'png', 'nfo', 'srt', 'sub', 'idx'
-            ],
-            
-            # Delete problematic file types
-            'delete_torrent_if_extensions_found': [
-                'zipx', 'exe', 'msi', 'dmg'
-            ],
-            
-            # Advanced features
-            'log_requests': bool(os.environ.get('ZURG_LOG_REQUESTS', '').lower() == 'true'),
-            'disable_stream_proxy': False,
-            'serve_strm_files': False,
-            'save_strm_files': False,
-            'load_dumped_torrents': False,
-            'load_trashed_torrents': False,
-            
-            # Directory structure for organized content
-            'directories': {
-                'anime': {
-                    'group_order': 10,
-                    'group': 'media',
-                    'filters': [
-                        {'regex': r'/\b[a-fA-F0-9]{8}\b/'},
-                        {'any_file_inside_regex': r'/\b[a-fA-F0-9]{8}\b/'}
-                    ]
-                },
-                'shows': {
-                    'group_order': 20,
-                    'group': 'media',
-                    'filters': [
-                        {'has_episodes': True}
-                    ]
-                },
-                'movies': {
-                    'group_order': 30,
-                    'group': 'media',
-                    'only_show_the_biggest_file': True,
-                    'filters': [
-                        {'regex': r'/.*/'}
-                    ]
-                }
-            }
-        }
-        
-        # Add backup tokens if available
-        if self.rd_backup_tokens:
-            config['download_tokens'] = self.rd_backup_tokens
-            print(f"  ✓ Added {len(self.rd_backup_tokens)} backup token(s)")
-            
-        # Add media server configuration
-        if media_config['token']:
-            if media_config['type'] == 'plex':
-                config['plex_server_url'] = media_config['server_url']
-                config['plex_token'] = media_config['token']
-            elif media_config['type'] == 'emby':
-                config['emby_server_url'] = media_config['server_url']
-                config['emby_token'] = media_config['token']
-            elif media_config['type'] == 'jellyfin':
-                config['jellyfin_server_url'] = media_config['server_url']
-                config['jellyfin_token'] = media_config['token']
-                
-            config['mount_path'] = media_config['mount_path']
-            print(f"  ✓ {media_config['type'].title()} integration configured")
-        else:
-            print(f"  ⚠️  {media_config['type'].title()} token not found, manual configuration needed")
-            
-        # Add library update script
-        plex_update_script = self.zurg_config_dir / "plex_update.sh"
-        config['on_library_update'] = f"sh {plex_update_script} \"$@\""
-        
-        # Save main configuration
+        """Write Zurg config.yml matching the official template, inserting only the token and on_library_update."""
+        print("📝 Generating Zurg configuration (official template)...")
         config_file = self.zurg_config_dir / "config.yml"
-        
-        # Convert config to YAML format manually (to avoid external dependencies)
-        yaml_content = self._dict_to_yaml(config, 0)
-        
+        token = self.rd_api_token or "yourtoken"
+        config_template = f'''zurg: v1
+token: {token}
+# host: "[::]"
+# port: 9999
+# username:
+# password:
+#
+proxy:
+# concurrent_workers: 20
+check_for_changes_every_secs: 10
+#
+repair_every_mins: 60
+# ignore_renames: false
+# retain_rd_torrent_name: false
+#
+retain_folder_name_extension: false
+enable_repair: true
+auto_delete_rar_torrents: true
+#
+api_timeout_secs: 15
+# download_timeout_secs: 10
+# enable_download_mount: false
+#
+rate_limit_sleep_secs: 6
+# retries_until_failed: 2
+# network_buffer_size: 4194304
+# 4MB
+# serve_from_rclone: false
+# verify_download_link: false
+# force_ipv6:
+false
+on_library_update: sh plex_update.sh "$@"
+#for windows comment the line above
+#and uncomment the line below:
+#on_library_update: '& powershell -ExecutionPolicy Bypass -File .\\plex_update.ps1 --% "$args"'
+
+directories:
+  anime:
+    group_order: 10
+    group: media
+    filters:
+      - regex: /\b[a-fA-F0-9]{{8}}\b/
+      - any_file_inside_regex: /\b[a-fA-F0-9]{{8}}\b/
+  shows:
+    group_order: 20
+    group: media
+    filters:
+      - has_episodes: true
+  movies:
+    group_order: 30
+    group: media
+    only_show_the_biggest_file: true
+    filters:
+      - regex: /.*/
+'''
         with open(config_file, 'w', encoding='utf-8') as f:
-            f.write(yaml_content)
-            
+            f.write(config_template)
         print(f"  ✓ Configuration saved to: {config_file}")
         return True
         
-    def _dict_to_yaml(self, data, indent_level=0):
-        """Convert dictionary to YAML format"""
-        yaml_lines = []
-        indent = "  " * indent_level
-        
-        for key, value in data.items():
-            if isinstance(value, dict):
-                yaml_lines.append(f"{indent}{key}:")
-                yaml_lines.append(self._dict_to_yaml(value, indent_level + 1))
-            elif isinstance(value, list):
-                if not value:  # Empty list
-                    yaml_lines.append(f"{indent}{key}: []")
-                elif isinstance(value[0], dict):
-                    yaml_lines.append(f"{indent}{key}:")
-                    for item in value:
-                        yaml_lines.append(f"{indent}  -")
-                        for sub_key, sub_value in item.items():
-                            if isinstance(sub_value, str):
-                                yaml_lines.append(f"{indent}    {sub_key}: '{sub_value}'")
-                            else:
-                                yaml_lines.append(f"{indent}    {sub_key}: {sub_value}")
-                else:
-                    yaml_lines.append(f"{indent}{key}:")
-                    for item in value:
-                        if isinstance(item, str):
-                            yaml_lines.append(f"{indent}  - {item}")
-                        else:
-                            yaml_lines.append(f"{indent}  - {item}")
-            elif isinstance(value, bool):
-                yaml_lines.append(f"{indent}{key}: {str(value).lower()}")
-            elif isinstance(value, str):
-                # Handle special characters and spaces
-                if value and (' ' in value or '"' in value or "'" in value):
-                    yaml_lines.append(f"{indent}{key}: '{value}'")
-                else:
-                    yaml_lines.append(f"{indent}{key}: {value}")
-            else:
-                yaml_lines.append(f"{indent}{key}: {value}")
-                
-        return "\n".join(yaml_lines)
         
     def create_plex_update_script(self):
         """Create Plex library update script"""
