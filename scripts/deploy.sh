@@ -239,6 +239,16 @@ deploy_services() {
     # Add automation if enabled
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.automation.yml"
     
+    # Fix permissions on STORAGE_PATH before config generation and deployment
+    if [ -n "$STORAGE_PATH" ]; then
+        print_info "Ensuring correct permissions on $STORAGE_PATH (sudo chown -R 1000:1000)"
+        if sudo chown -R 1000:1000 "$STORAGE_PATH"; then
+            print_success "Permissions fixed on $STORAGE_PATH"
+        else
+            print_warning "Failed to set permissions on $STORAGE_PATH. You may need to fix manually."
+        fi
+    fi
+
     # Build profiles dynamically based on deployment type and available tokens
     if [ "$deployment_type" = "minimal" ]; then
         PROFILES="$media_server,homepage"
@@ -271,6 +281,43 @@ deploy_services() {
     if [ "$ENABLE_ZURG" = "true" ]; then
         PROFILES="$PROFILES,zurg"
         print_info "✅ Zurg enabled - will be deployed"
+
+        # --- Zurg token fix: ensure config contains real token ---
+        ZURG_CONFIG="$STORAGE_PATH/Zurg/config/config.yml"
+        # If config does not exist, generate it
+        if [ ! -f "$ZURG_CONFIG" ]; then
+            print_info "Zurg config not found, generating with configure-zurg.py..."
+            # Source .env and export all variables for the Python script
+            set -a
+            [ -f "$PROJECT_DIR/.env" ] && . "$PROJECT_DIR/.env"
+            set +a
+            if ! python3 "$SCRIPT_DIR/configure-zurg.py" "$STORAGE_PATH"; then
+                print_error "Failed to generate Zurg config. Aborting deployment."
+                exit 1
+            fi
+        fi
+        if [ -f "$ZURG_CONFIG" ]; then
+            # Forcefully replace any 'token:' line with the real token
+            if [ -z "$RD_API_TOKEN" ]; then
+                print_error "Zurg is enabled but RD_API_TOKEN is missing in .env. Cannot continue."
+                exit 1
+            fi
+            sed -i -E "s|^token:.*$|token: $RD_API_TOKEN|g" "$ZURG_CONFIG"
+            print_info "Zurg config token replaced with real token."
+            # Safety check: fail if still not a real token
+            TOKEN_LINE=$(grep '^token:' "$ZURG_CONFIG" | head -1)
+            if echo "$TOKEN_LINE" | grep -q '\${'; then
+                print_error "Zurg config token is still a variable reference. Aborting deployment."
+                exit 1
+            fi
+            if [ -z "$RD_API_TOKEN" ] || [ "$TOKEN_LINE" = "token:" ] || [ "$TOKEN_LINE" = "token: " ]; then
+                print_error "Zurg config token is empty. Aborting deployment."
+                exit 1
+            fi
+        else
+            print_warning "Zurg config file not found at $ZURG_CONFIG. Skipping token fix."
+        fi
+        # --- End Zurg token fix ---
     fi
     
     export COMPOSE_PROFILES="$PROFILES"
