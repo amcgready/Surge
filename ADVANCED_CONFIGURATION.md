@@ -38,7 +38,6 @@ The following services have advanced configuration options:
 - **tautulli** - Analytics and monitoring
 - **nzbget** - Usenet download client
 - **rdt-client** - Real-Debrid integration
-- **zurg** - Real-Debrid mounting service
 - **decypharr** - Decryption and processing
 - **kometa** - Metadata management
 - **posterizarr** - Poster and artwork management
@@ -82,12 +81,10 @@ Options include:
 - Coming soon features and countdown timers
 - Monitoring intervals and cleanup settings
 
-### Zurg Advanced Configuration
 
 Configure Real-Debrid mounting with advanced caching and performance options:
 
 ```bash
-./surge advanced config zurg
 ```
 
 Options include:
@@ -196,7 +193,7 @@ Configure services in this order for optimal integration:
 
 1. **Core Services**: prowlarr, radarr, sonarr
 2. **Enhancement Services**: bazarr, overseerr, tautulli  
-3. **Download Clients**: nzbget, rdt-client, zurg
+3. **Download Clients**: nzbget, rdt-client
 4. **Processing Tools**: placeholdarr, kometa, posterizarr
 5. **Utilities**: scanly, cinesync, imagemaid
 

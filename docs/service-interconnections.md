@@ -79,11 +79,6 @@ This document outlines all the automatic service interconnections configured by 
 
 ### **✅ Real-Debrid Ecosystem**
 
-#### **Zurg ↔ Real-Debrid** (if enabled)
-- **Real-Debrid API integration** with automatic token setup
-- **Mount configuration** for streaming access
-- **Performance optimization** with caching and prefetch
-- **Script**: Advanced configuration in `advanced-config.sh`
 
 #### **CLI-Debrid ↔ Multiple Services** (if enabled)  
 - **Multi-debrid service support** (Real-Debrid, AllDebrid, Premiumize)

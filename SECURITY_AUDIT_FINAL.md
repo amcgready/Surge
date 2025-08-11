@@ -82,7 +82,7 @@ After comprehensive manual review of automated security scanner findings, **ALL 
 
 **4. "HTTP Instead of HTTPS" (Internal Communications)**
 - **Reality**: HTTP used only for internal Docker network
-- **Examples**: `http://radarr:7878`, `http://zurg:9999`
+- **Examples**: `http://radarr:7878`
 - **Verdict**: ✅ SAFE - Internal container communication
 
 ---
@@ -159,7 +159,7 @@ After comprehensive manual review of automated security scanner findings, **ALL 
 
 ## 🎯 CONCLUSION
 
-The **Decypharr and Zurg automation implementations are SECURE and ready for production deployment**. The automated security scanner generated numerous false positives, but manual security review confirms:
+The **Decypharr automation implementation is SECURE and ready for production deployment**. The automated security scanner generated numerous false positives, but manual security review confirms:
 
 - ✅ **No actual security vulnerabilities**
 - ✅ **Proper implementation of security best practices**  

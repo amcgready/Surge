@@ -53,7 +53,6 @@
    - **Automation Complexity**: Medium (file path management + processing config)
 
 ### **Priority 2: Development/Testing**
-20. **Zurg** - Real-Debrid filesystem mounting - **NO AUTOMATION**
    - **Service Type**: Development and testing tool
    - **Configuration Needed**: Real-Debrid API key, mount configuration
    - **Integration Points**: RDT-Client, CLI-Debrid, storage paths
@@ -66,7 +65,6 @@
    - **Automation Complexity**: Medium (directory setup + service integration)
 
 ### **Priority 3: Testing Framework**
-20. **Zurg** - Real-Debrid testing/mounting framework - **NO AUTOMATION**
    - **Service Type**: Real-Debrid mount testing and validation
    - **Configuration Needed**: Real-Debrid API key, mount configuration
    - **Integration Points**: RDT-Client, CLI-Debrid, storage paths
@@ -109,7 +107,6 @@
 - **Decypharr**: Niche use case for blackhole processing, specialized functionality
 
 ### **Low Priority**
-- **Zurg**: Testing/development tool, mainly for troubleshooting Real-Debrid mounts
 
 ---
 
@@ -135,6 +132,5 @@
 **Remaining services for automation** (in priority order):
 
 1. **Decypharr** - Specialized blackhole processing and decryption
-2. **Zurg** - Real-Debrid filesystem mounting and testing
 
 **Current State**: Surge is production-ready with excellent automation coverage for all major use cases. The remaining services represent specialized functionality that would complete the full automation suite but are not essential for core operations.

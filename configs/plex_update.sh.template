@@ -5,7 +5,7 @@ PLEX_URL="${PLEX_URL:-http://surge-plex:32400}"
 PLEX_TOKEN="${PLEX_TOKEN:-}"
 
 # Log the update request
-echo "$(date): Zurg library update triggered: $*" >> /app/config/plex_updates.log
+echo "$(date): Library update triggered: $*" >> /app/config/plex_updates.log
 
 # If Plex token is available, trigger a library scan
 if [ -n "$PLEX_TOKEN" ]; then
