@@ -1,6 +1,4 @@
 #!/bin/bash
-# Plex Library Update Script for Zurg
-# This script is called by Zurg when library changes are detected
 
 # Get Plex server details from environment or use defaults
 PLEX_URL="${PLEX_URL:-http://surge-plex:32400}"

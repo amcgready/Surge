@@ -95,11 +95,7 @@ Download Clients:
       server: surge-rdt-client
       container: surge-rdt-client
 
-  - Zurg:
-      icon: zurg.png
-      description: Real-Debrid integration
-      server: surge-zurg
-      container: surge-zurg
+  
 
 Monitoring:
   - Tautulli:

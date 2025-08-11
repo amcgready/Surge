@@ -1,4 +1,3 @@
-zurg: v1
 token: ${RD_API_TOKEN}
 # host: "[::]"
 # port: 9999

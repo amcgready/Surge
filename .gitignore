@@ -118,3 +118,4 @@ scripts/test-update-quick.sh
 test-cli-debrid-setup.sh
 data/id_ed25519*
 scripts/patch-admin-credentials.sh
+configs/zurg/zurg-config.yml

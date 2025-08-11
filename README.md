@@ -26,7 +26,7 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 - **[NZBGet](https://github.com/nzbgetcom/nzbget)** - Efficient Usenet downloader
 - **[RDT-Client](https://github.com/rogerfar/rdt-client)** - Real-Debrid torrent client
 - **[GAPS](https://github.com/JasonHHouse/gaps)** - Finds missing movies in Plex libraries and integrates with Radarr
-- **[Zurg](https://github.com/debridmediamanager/zurg-testing)** - Real-Debrid integration testing tool
+- **[pd_zurg](https://github.com/I-am-PUID-0/pd_zurg)** - Real-Debrid filesystem mounting and integration tool
 - **[cli_debrid](https://github.com/godver3/cli_debrid)** - Web interface and CLI for debrid services management
 - **[Decypharr](https://github.com/sirrobot01/decypharr)** - QBittorrent API implementation with multiple debrid service support
 
@@ -636,34 +636,72 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🚀 Feature Roadmap
 
-This project stands on the shoulders of giants. Special thanks to all the amazing developers of the included projects:
+### 📅 Planned
+- 🎬 Jellyseerr
+- 📩 Requestrr
+- 🤖 Doplarr
+- 🧩 Riven
+- 📊 Streammystats
+- 📈 Jellystat
+- 🧭 Jackett
+- 📁 blackhole
+- ⏳ zilean
+- ☄️ comet
+- 💡 recommendarr
+- 📜 watchlistarr
+- 🌐 traefik
+- 🌀 unmaniac
+- 💾 qdebrid
+- 📂 debriddav
+- 📂 nzbdav
+- 🖥️ portainer
+- 📚 mkdocs
+- 🖥️ portainer
+- 🎞️ handbrake
+- 🦄 UnicornTranscoder
+- 📡 Clusterplex
+- ♻️ Tdarr
+- 🔒 gluetun
+- ♻️ recyclarr
+- 🌿 Parsely
+- 🌱 Scanly
+- ➕ Ability to add multiple Sonarr and Radarr instances
+- 🛠️ Ability to choose type of server deployment (video server, audio server, book server, comics server)
+- 🐳 Installation for Docker if needed
+- 🍏 macOS setup/deployment wizard
+- 🪟 Windows setup/deployment wizard
 
-### Core Services
-- **[Plex](https://github.com/plexinc/pms-docker)**, **[Emby](https://github.com/MediaBrowser/Emby)**, and **[Jellyfin](https://github.com/jellyfin/jellyfin)** teams
-- **[Radarr](https://github.com/Radarr/Radarr)**, **[Sonarr](https://github.com/Sonarr/Sonarr)**, **[Prowlarr](https://github.com/Prowlarr/Prowlarr)**, and **[Bazarr](https://github.com/morpheus65535/bazarr)** developers
-- **[Overseerr](https://github.com/sct/overseerr)** and **[Tautulli](https://github.com/Tautulli/Tautulli)** teams
-- **[Homepage](https://github.com/gethomepage/homepage)** dashboard developers
+### 🛠️ In Development
+- 🌐 WebUI
+- 🎥 Emby Integration
+- 📺 Jellyfin Integration
+- 🗂️ Kometa
+- 🏠 Homepage
 
-### Download & Enhancement Tools
-- **[NZBGet](https://github.com/nzbgetcom/nzbget)** team
-- **[RDT-Client](https://github.com/rogerfar/rdt-client)** by Roger Far
-- **[GAPS](https://github.com/JasonHHouse/gaps)** by JasonHHouse
-- **[Zurg](https://github.com/debridmediamanager/zurg-testing)** by DebridMediaManager
-- **[cli_debrid](https://github.com/godver3/cli_debrid)** by godver3
-- **[Decypharr](https://github.com/sirrobot01/decypharr)** by sirrobot01
-- **[Kometa](https://github.com/Kometa-Team/Kometa)** team (formerly Plex Meta Manager)
-- **[CineSync](https://github.com/sureshfizzy/CineSync)** by sureshfizzy
-- **[Placeholdarr](https://github.com/TheIndieArmy/placeholdarr)** by TheIndieArmy
-- **[Posterizarr](https://github.com/fscorrupt/posterizarr)** by fscorrupt
-- **[ImageMaid](https://github.com/Kometa-Team/ImageMaid)** by Kometa Team
+### 🧪 Testing
+- 📦 pd-zurg
+- 🔄 Autoupdater
+- 📝 Placeholdarr
+- 📡 RDT-Client
+- 🗄️ cli_debrid
+- 🔍 Decypharr
+- 🗂️ Kometa
+- 🖼️ ImageMaid
+- 🎨 Posterizarr
 
-### Custom Integrations
-- **[Torrentio Indexer](https://github.com/dreulavelle/Prowlarr-Indexers)** by dreulavelle
-- **[Watchtower](https://github.com/containrrr/watchtower)** team for automated updates
+### ✅ Released
+- 🎬 Radarr
+- 🎬 Sonarr
+- 🌐 Prowlarr with Torrentio indexer
+- 🗣️ Bazarr
+- 🎥 CineSync
+- 📥 NZBGet
+- 🔍 GAPS
+- 🎯 Overseerr
+- 📊 Tautulli
 
-All project maintainers and contributors who make these incredible tools possible!
 
 ---
 
