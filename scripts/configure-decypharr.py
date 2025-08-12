@@ -180,13 +180,24 @@ class DecypharrConfigurator:
             print("  ⚠️  No debrid services could be verified")
             return False
             
+    def _replace_storage_path(self, obj):
+        """Recursively replace ${STORAGE_PATH} with self.storage_path in all strings in obj"""
+        if isinstance(obj, dict):
+            return {k: self._replace_storage_path(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._replace_storage_path(v) for v in obj]
+        elif isinstance(obj, str):
+            return obj.replace("${STORAGE_PATH}", self.storage_path)
+        else:
+            return obj
+
     def create_decypharr_config(self):
         """Generate Decypharr configuration file"""
         print("📝 Generating Decypharr configuration...")
-        
+
         # Determine which debrid services are available
         debrid_configs = []
-        
+
         if self.rd_api_key:
             debrid_configs.append({
                 "name": "realdebrid",
@@ -197,10 +208,10 @@ class DecypharrConfigurator:
                 "enabled": True
             })
             print("  ✓ Real-Debrid configuration added")
-            
+
         if self.ad_api_key:
             debrid_configs.append({
-                "name": "alldebrid", 
+                "name": "alldebrid",
                 "api_key": self.ad_api_key,
                 "folder": "${STORAGE_PATH}/downloads/Decypharr/alldebrid/__all__/",
                 "use_webdav": True,
@@ -208,7 +219,7 @@ class DecypharrConfigurator:
                 "enabled": True
             })
             print("  ✓ AllDebrid configuration added")
-            
+
         if self.dl_api_key:
             debrid_configs.append({
                 "name": "debridlink",
@@ -218,7 +229,7 @@ class DecypharrConfigurator:
                 "enabled": True
             })
             print("  ✓ Debrid-Link configuration added")
-            
+
         if self.tb_api_key:
             debrid_configs.append({
                 "name": "torbox",
@@ -228,12 +239,12 @@ class DecypharrConfigurator:
                 "enabled": True
             })
             print("  ✓ Torbox configuration added")
-            
+
         if not debrid_configs:
             print("  ⚠️  No debrid API keys found in environment!")
             print("  💡 Please set RD_API_TOKEN, AD_API_TOKEN, DEBRID_LINK_API_TOKEN, or TORBOX_API_TOKEN")
             print("  📝 Creating basic configuration without debrid services...")
-            
+
         # Always include arr section with placeholders for API keys/URLs
         config = {
             "version": "1.0",
@@ -301,12 +312,15 @@ class DecypharrConfigurator:
                 }
             }
         }
-        
+
+        # Recursively replace ${STORAGE_PATH} with the actual storage path
+        config = self._replace_storage_path(config)
+
         # Save configuration
         config_file = self.decypharr_config_dir / "config.json"
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
-            
+
         print(f"  ✓ Configuration saved to: {config_file}")
         print(f"  ✓ Configured {len(debrid_configs)} debrid service(s)")
         return True
