@@ -15,6 +15,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - radarr
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -32,6 +34,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - sonarr
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -67,6 +71,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - prowlarr
 
   nzbget:
     image: lscr.io/linuxserver/nzbget:latest
@@ -346,6 +352,8 @@ services:
     security_opt:
       - apparmor:unconfined    
       - no-new-privileges
+    profiles:
+      - pd_zurg
 
 networks:
   surge-network:
