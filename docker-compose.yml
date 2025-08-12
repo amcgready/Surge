@@ -403,6 +403,26 @@ services:
     profiles:
       - scheduler
 
+  pd_zurg:
+    image: iampuid0/pd_zurg:2.5.0
+    container_name: surge-pd_zurg
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=${TZ:-UTC}
+      - ZURG_ENABLED=true
+      - RD_API_KEY=${RD_API_TOKEN}
+      - RCLONE_MOUNT_NAME=pd_zurg
+    volumes:
+      - ${STORAGE_PATH}/pd_zurg/config:/config
+      - ${STORAGE_PATH}/pd_zurg/log:/log
+      - ${STORAGE_PATH}/pd_zurg/cache:/cache
+      - ${STORAGE_PATH}/pd_zurg/RD:/zurg/RD
+      - ${STORAGE_PATH}/downloads/pd_zurg:/data:shared
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - surge-network
+
 networks:
   surge-network:
     name: surge-network
