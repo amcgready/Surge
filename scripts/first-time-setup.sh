@@ -403,6 +403,7 @@ gather_auto_preferences() {
     fi
     
     # Auto settings for full stack
+    # FULL STACK: Master list of all services to enable
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
@@ -415,6 +416,17 @@ gather_auto_preferences() {
     ENABLE_SCHEDULER="true"
     ENABLE_RDT_CLIENT="true"
     ENABLE_PD_ZURG="false"
+    ENABLE_KOMETA="true"
+    ENABLE_POSTERIZARR="true"
+    ENABLE_OVERSEERR="true"
+    ENABLE_TAUTULLI="true"
+    ENABLE_SCANLY="true"
+    ENABLE_HOMEPAGE="true"
+    ENABLE_RADARR="true"
+    ENABLE_SONARR="true"
+    ENABLE_PLEX="true"
+    ENABLE_EMBY="true"
+    ENABLE_JELLYFIN="true"
     DEPLOYMENT_TYPE="full"
 
     # Prompt for CineSync folder options if enabled (always in auto mode)

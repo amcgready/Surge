@@ -247,47 +247,32 @@ deploy_services() {
         fi
     fi
 
-    # Build profiles dynamically based on deployment type and available tokens
-    if [ "$deployment_type" = "minimal" ]; then
-        PROFILES="$media_server,homepage"
-    else
-        PROFILES="$media_server,bazarr,imagemaid,nzbget,kometa,posterizarr,tautulli,homepage,scanly,gaps,cinesync"
-    fi
-    
-    # Add RDT-Client profile only if RD_API_TOKEN is available
-    if [ -n "$RD_API_TOKEN" ]; then
-        PROFILES="$PROFILES,rdt-client"
-        print_info "✅ Real-Debrid token detected - RDT-Client will be deployed"
-    else
-        print_warning "⚠️ No Real-Debrid token found - RDT-Client will be skipped"
-        print_info "💡 Set RD_API_TOKEN in .env file to enable RDT-Client"
-    fi
-
-    # Add cli-debrid profile if enabled
-    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-        PROFILES="$PROFILES,cli-debrid"
-        print_info "✅ cli_debrid enabled - will be deployed"
-    fi
-
-    # Add Decypharr profile if enabled
-    if [ "$ENABLE_DECYPHARR" = "true" ]; then
-        PROFILES="$PROFILES,decypharr"
-        print_info "✅ Decypharr enabled - will be deployed"
-    fi
-
-    # Add pd_zurg profile if enabled
-    if [ "$ENABLE_PD_ZURG" = "true" ]; then
-        PROFILES="$PROFILES,pd_zurg"
-        print_info "✅ pd_zurg enabled - will be deployed"
-        # Add pd_zurg config generation here if needed
-    fi
-
-    export COMPOSE_PROFILES="$PROFILES"
-    
-    # Deploy
+    # Dynamically build PROFILES list from ENABLE_* variables in .env
+    PROFILES="$media_server"
+    [ "$(grep '^ENABLE_BAZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" bazarr"
+    [ "$(grep '^ENABLE_PROWLARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" prowlarr"
+    [ "$(grep '^ENABLE_NZBGET=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" nzbget"
+    [ "$(grep '^ENABLE_RDT_CLIENT=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" rdt-client"
+    [ "$(grep '^ENABLE_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" zurg"
+    [ "$(grep '^ENABLE_CLI_DEBRID=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" cli-debrid"
+    [ "$(grep '^ENABLE_DECYPHARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" decypharr"
+    [ "$(grep '^ENABLE_KOMETA=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" kometa"
+    [ "$(grep '^ENABLE_POSTERIZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" posterizarr"
+    [ "$(grep '^ENABLE_OVERSEERR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" overseerr"
+    [ "$(grep '^ENABLE_TAUTULLI=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" tautulli"
+    [ "$(grep '^ENABLE_SCANLY=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scanly"
+    [ "$(grep '^ENABLE_CINESYNC=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" cinesync"
+    [ "$(grep '^ENABLE_PLACEHOLDARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" placeholdarr"
+    [ "$(grep '^ENABLE_GAPS=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" gaps"
+    [ "$(grep '^ENABLE_HOMEPAGE=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" homepage"
+    [ "$(grep '^ENABLE_WATCHTOWER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" watchtower"
+    [ "$(grep '^ENABLE_SCHEDULER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scheduler"
+    [ "$(grep '^ENABLE_PD_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" pd_zurg"
+    # Remove leading/trailing/multiple spaces and convert to comma-separated
+    COMPOSE_PROFILES=$(echo $PROFILES | xargs | tr ' ' ',')
+    export COMPOSE_PROFILES
     print_info "Starting deployment with profiles: $COMPOSE_PROFILES"
-    docker compose $COMPOSE_FILES up -d
-    
+    docker compose $COMPOSE_FILES --profile $COMPOSE_PROFILES up -d
     print_success "Surge deployed successfully!"
     
     # Configure services automatically
