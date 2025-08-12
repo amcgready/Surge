@@ -108,8 +108,9 @@ class SurgeCineSyncConfigurator:
                 self.log(f".env exists as a directory at {self.env_file}. Please remove it and re-run.", "ERROR")
                 return False
 
-            # Create media directories based on user configuration
-            media_base = Path(self.storage_path) / "media"
+            # Create CineSync media directories under downloads/CineSync
+            media_base = Path(self.storage_path) / "downloads" / "CineSync"
+
 
             # Always create standard directories
             standard_dirs = [
@@ -137,6 +138,9 @@ class SurgeCineSyncConfigurator:
                     self.config.get('CUSTOM_KIDS_MOVIE_FOLDER', 'Kids Movies'),
                     self.config.get('CUSTOM_KIDS_SHOW_FOLDER', 'Kids Series')
                 ])
+
+            # Debug: print all folder names to be created
+            self.log(f"Folders to be created under {media_base}: {standard_dirs}", "INFO")
 
             # Create each directory (skip .env)
             for dir_name in standard_dirs:

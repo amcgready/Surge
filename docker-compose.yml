@@ -204,8 +204,7 @@ services:
       - "${CINESYNC_PORT:-8082}:8082"
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
-      - ${STORAGE_PATH}/Cinesync/config:/config
-      - ${STORAGE_PATH}/Cinesync/config/.env:/app/.env:ro
+      - ${STORAGE_PATH}/Cinesync/config/:/app/.env:ro
       - ${STORAGE_PATH}/downloads:/downloads
       - ${STORAGE_PATH}/media:/media
     restart: ${RESTART_POLICY:-unless-stopped}
