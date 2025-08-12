@@ -49,8 +49,7 @@ run_sequential_processing() {
         -v surge_imagemaid-config:/config \
         -v surge_shared-assets:/assets \
         -v surge_shared-logs:/logs \
-        -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-        -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+        # Removed media volume mounts
         -e PUID="${PUID:-1000}" \
         -e PGID="${PGID:-1000}" \
         -e TZ="${TZ:-UTC}" \
@@ -67,8 +66,7 @@ run_sequential_processing() {
         -v surge_kometa-config:/config \
         -v surge_shared-assets:/assets \
         -v surge_shared-logs:/config/logs \
-        -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-        -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+        # Removed media volume mounts
         -e PUID="${PUID:-1000}" \
         -e PGID="${PGID:-1000}" \
         -e TZ="${TZ:-UTC}" \
@@ -101,8 +99,7 @@ run_individual_service() {
                 -v surge_imagemaid-config:/config \
                 -v surge_shared-assets:/assets \
                 -v surge_shared-logs:/logs \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+                # Removed media volume mounts
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
                 -e TZ="${TZ:-UTC}" \
@@ -114,8 +111,7 @@ run_individual_service() {
                 -v surge_posterizarr-config:/config \
                 -v surge_shared-assets:/assets \
                 -v surge_shared-logs:/logs \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+                # Removed media volume mounts
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
                 -e TZ="${TZ:-UTC}" \
@@ -127,8 +123,7 @@ run_individual_service() {
                 -v surge_kometa-config:/config \
                 -v surge_shared-assets:/assets \
                 -v surge_shared-logs:/config/logs \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+                # Removed media volume mounts
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
                 -e TZ="${TZ:-UTC}" \

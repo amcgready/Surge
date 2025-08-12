@@ -14,9 +14,6 @@ services:
       - GIDLIST=${PGID:-1000}
     volumes:
       - ${STORAGE_PATH}/Emby/config:/config
-      - ${STORAGE_PATH}/Emby/media/movies:/mnt/movies
-      - ${STORAGE_PATH}/Emby/media/tv:/mnt/tv
-      - ${STORAGE_PATH}/Emby/media/music:/mnt/music
     ports:
       - "${EMBY_PORT:-8096}:8096"
       - "8920:8920" # HTTPS

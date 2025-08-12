@@ -111,7 +111,7 @@ class SurgePlaceholdarrConfigurator:
             
             # Create placeholder directories
             placeholder_dirs = [
-                Path(self.storage_path) / "media" / "placeholders",
+                # Removed media folder reference
                 Path(self.storage_path) / "downloads" / "placeholders"
             ]
             
@@ -215,8 +215,7 @@ class SurgePlaceholdarrConfigurator:
                 },
                 'placeholders': {
                     'strategy': os.environ.get('PLACEHOLDARR_PLACEHOLDER_STRATEGY', 'hardlink'),
-                    'file_path': os.environ.get('PLACEHOLDARR_DUMMY_FILE_PATH', f'{self.storage_path}/media/placeholders/dummy.mp4'),
-                    'coming_soon_file_path': os.environ.get('PLACEHOLDARR_COMING_SOON_FILE_PATH', f'{self.storage_path}/media/placeholders/coming_soon.mkv'),
+                    # Removed media folder reference
                     'min_file_size': int(os.environ.get('PLACEHOLDARR_MIN_FILE_SIZE', '1048576')),  # 1MB
                 },
                 'webhooks': {
@@ -244,7 +243,7 @@ class SurgePlaceholdarrConfigurator:
                     'url': os.environ.get('PLACEHOLDARR_RADARR_URL', 'http://surge-radarr:7878'),
                     'api_key': self.api_keys['radarr'],
                     'monitor_queue': True,
-                    'root_folders': [f'{self.storage_path}/media/Movies'],
+                    # Removed media folder reference
                 }
             
             if 'sonarr' in self.enabled_services and 'sonarr' in self.api_keys:
@@ -253,7 +252,7 @@ class SurgePlaceholdarrConfigurator:
                     'url': os.environ.get('PLACEHOLDARR_SONARR_URL', 'http://surge-sonarr:8989'),
                     'api_key': self.api_keys['sonarr'],
                     'monitor_queue': True,
-                    'root_folders': [f'{self.storage_path}/media/TV Series'],
+                    # Removed media folder reference
                 }
             
             self.log("Configuration settings loaded successfully", "SUCCESS")

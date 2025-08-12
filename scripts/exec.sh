@@ -42,8 +42,7 @@ print_error() {
                 --network surge-network \
                 -v surge_kometa-config:/config \
                 -v surge_shared-assets:/assets \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+                # Removed media volume mounts
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \
                 -e TZ="${TZ:-UTC}" \
@@ -88,8 +87,7 @@ shell_access() {
                 --name surge-scanly-shell \
                 --network surge-network \
                 -v scanly-config:/config \
-                -v "${MOVIES_DIR:-./data/media/movies}":/movies \
-                -v "${TV_SHOWS_DIR:-./data/media/tv}":/tv \
+                # Removed media volume mounts
                 -v surge_shared-assets:/assets \
                 -e PUID="${PUID:-1000}" \
                 -e PGID="${PGID:-1000}" \

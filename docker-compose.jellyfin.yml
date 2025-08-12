@@ -15,9 +15,6 @@ services:
     volumes:
       - ${STORAGE_PATH}/Jellyfin/config:/config
       - ${STORAGE_PATH}/Jellyfin/cache:/cache
-      - ${STORAGE_PATH}/Jellyfin/media/movies:/media/movies
-      - ${STORAGE_PATH}/Jellyfin/media/tv:/media/tv
-      - ${STORAGE_PATH}/Jellyfin/media/music:/media/music
     ports:
       - "${JELLYFIN_PORT:-8096}:8096"
       - "8920:8920" # HTTPS

@@ -458,15 +458,13 @@ configure_placeholdarr_advanced() {
     
     echo ""
     echo "2. Library Paths"
-    read -p "   Movie library folder [/data/media/Movies]: " movie_folder
-    read -p "   TV library folder [/data/media/TV]: " tv_folder
-    read -p "   Dummy file path [/data/media/placeholder.mkv]: " dummy_file
+    # Removed media folder prompts
     
     echo ""
     echo "3. Placeholder Strategy"
     echo "   Available strategies: hardlink, copy, symlink"
     read -p "   Placeholder strategy [hardlink]: " placeholder_strategy
-    read -p "   Coming soon dummy file [/data/media/comingsoon.mkv]: " coming_soon_file
+    # Removed media folder prompts
     
     echo ""
     echo "4. Monitoring and Timing"
@@ -519,10 +517,7 @@ sonarr:
 
 # Library Configuration
 libraries:
-  movies: ${movie_folder:-/data/media/Movies}
-  tv: ${tv_folder:-/data/media/TV}
-  dummy_file: ${dummy_file:-/data/media/placeholder.mkv}
-  coming_soon_file: ${coming_soon_file:-/data/media/comingsoon.mkv}
+  # Removed media folder config
 
 # Placeholder Settings
 placeholder:
@@ -1341,9 +1336,9 @@ server:
     enabled: true
     libraries:
       - name: "Movies"
-        path: "/data/media/Movies"
+        # Removed media folder path
       - name: "TV Shows"  
-        path: "/data/media/TV"
+        # Removed media folder path
 EOF
 
     print_success "Zurg advanced configuration saved to $config_file"
@@ -1820,7 +1815,7 @@ configure_cinesync_advanced() {
     
     echo "1. Source and Destination Configuration"
     read -p "   Source directory [${STORAGE_PATH}/downloads/Zurg/__all__]: " source_dir
-    read -p "   Destination directory [${STORAGE_PATH}/media]: " dest_dir
+    # Removed media destination prompt
     read -p "   Use source structure [false]: " use_source_structure
     
     echo ""
@@ -1893,10 +1888,10 @@ configure_cinesync_advanced() {
 
 # Directory Paths
 SOURCE_DIR=${source_dir:-${STORAGE_PATH}/downloads/Zurg/__all__}
-DESTINATION_DIR=${dest_dir:-${STORAGE_PATH}/media}
+DESTINATION_DIR=""
 USE_SOURCE_STRUCTURE=${use_source_structure:-false}
 
-# Media Organization Configuration  
+# Media Organization Configuration
 CINESYNC_LAYOUT=${layout_enabled:-true}
 ANIME_SEPARATION=${anime_separation:-true}
 4K_SEPARATION=${separation_4k:-false}
