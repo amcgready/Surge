@@ -169,6 +169,9 @@ services:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
       - ${STORAGE_PATH}/downloads/Decypharr:/mnt/downloads
+      - ${STORAGE_PATH}/downloads/Decypharr/symlinks:/mnt/downloads/symlinks
+      - ${STORAGE_PATH}/downloads/Decypharr/temp:/mnt/downloads/temp
+
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}

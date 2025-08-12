@@ -33,6 +33,12 @@ class DecypharrConfigurator:
         self.decypharr_movies_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "movies"
         self.decypharr_tv_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "tv"
 
+        # Container paths for use in config (must match docker-compose volume mappings)
+        self.container_downloads = "/mnt/downloads"
+        self.container_symlinks = f"{self.container_downloads}/symlinks"
+        self.container_temp = f"{self.container_downloads}/temp"
+        self.container_completed = f"{self.container_downloads}/completed"
+
         # Service URLs (using Docker network names)
         self.radarr_url = "http://radarr:7878"
         self.sonarr_url = "http://sonarr:8989"
@@ -210,7 +216,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "realdebrid",
                 "api_key": self.rd_api_key,
-                "folder": "${STORAGE_PATH}/downloads/Decypharr/realdebrid/__all__/",
+                "folder": f"{self.container_downloads}/realdebrid/__all__/",
                 "use_webdav": True,
                 "webdav_url": "https://webdav.real-debrid.com",
                 "enabled": True
@@ -221,7 +227,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "alldebrid",
                 "api_key": self.ad_api_key,
-                "folder": "${STORAGE_PATH}/downloads/Decypharr/alldebrid/__all__/",
+                "folder": f"{self.container_downloads}/alldebrid/__all__/",
                 "use_webdav": True,
                 "webdav_url": "https://webdav.alldebrid.com",
                 "enabled": True
@@ -232,7 +238,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "debridlink",
                 "api_key": self.dl_api_key,
-                "folder": "${STORAGE_PATH}/downloads/Decypharr/debridlink/__all__/",
+                "folder": f"{self.container_downloads}/debridlink/__all__/",
                 "use_webdav": True,
                 "enabled": True
             })
@@ -242,7 +248,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "torbox",
                 "api_key": self.tb_api_key,
-                "folder": "${STORAGE_PATH}/downloads/Decypharr/torbox/__all__/",
+                "folder": f"{self.container_downloads}/torbox/__all__/",
                 "use_webdav": True,
                 "enabled": True
             })
@@ -259,11 +265,11 @@ class DecypharrConfigurator:
             "debrids": debrid_configs,
             "qbittorrent": {
                 "port": "8282",
-                "download_folder": "${STORAGE_PATH}/downloads/Decypharr/symlinks/",
+                "download_folder": self.container_symlinks + "/",
                 "categories": ["sonarr", "radarr", "lidarr", "readarr"],
                 "default_category": "default",
-                "temp_folder": "${STORAGE_PATH}/downloads/Decypharr/temp/",
-                "completed_folder": "${STORAGE_PATH}/downloads/Decypharr/completed/"
+                "temp_folder": self.container_temp + "/",
+                "completed_folder": self.container_completed + "/"
             },
             "repair": {
                 "enabled": True,
@@ -320,9 +326,6 @@ class DecypharrConfigurator:
                 }
             }
         }
-
-        # Recursively replace ${STORAGE_PATH} with the actual storage path
-        config = self._replace_storage_path(config)
 
         # Save configuration
         config_file = self.decypharr_config_dir / "config.json"
