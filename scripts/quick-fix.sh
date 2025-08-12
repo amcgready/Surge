@@ -26,7 +26,7 @@ echo "📁 Creating media directories with proper permissions..."
 MEDIA_PATH="${STORAGE_PATH:-/opt/surge}/media"
 
 if [ "$(id -u)" -eq 0 ]; then
-    mkdir -p "$MEDIA_PATH"/{movies,tv,music}
+    # Removed creation of media subfolders
     echo "placeholder" > "$MEDIA_PATH/movies/.placeholder"
     echo "placeholder" > "$MEDIA_PATH/tv/.placeholder"
     echo "placeholder" > "$MEDIA_PATH/music/.placeholder"
@@ -34,7 +34,7 @@ if [ "$(id -u)" -eq 0 ]; then
     chmod -R 755 "$MEDIA_PATH"
     echo "✅ Media directories created with proper permissions"
 else
-    sudo mkdir -p "$MEDIA_PATH"/{movies,tv,music} 2>/dev/null || mkdir -p "$MEDIA_PATH"/{movies,tv,music}
+    # Removed creation of media subfolders
     echo "placeholder" | sudo tee "$MEDIA_PATH/movies/.placeholder" > /dev/null 2>&1 || echo "placeholder" > "$MEDIA_PATH/movies/.placeholder"
     echo "placeholder" | sudo tee "$MEDIA_PATH/tv/.placeholder" > /dev/null 2>&1 || echo "placeholder" > "$MEDIA_PATH/tv/.placeholder"
     echo "placeholder" | sudo tee "$MEDIA_PATH/music/.placeholder" > /dev/null 2>&1 || echo "placeholder" > "$MEDIA_PATH/music/.placeholder"

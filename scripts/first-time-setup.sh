@@ -1775,9 +1775,9 @@ create_service_directories() {
     # List of services and their required subfolders
     declare -A service_folders
     service_folders=(
-        [Bazarr]="config media"
-        [Radarr]="config media"
-        [Sonarr]="config media"
+        [Bazarr]="config"
+        [Radarr]="config"
+        [Sonarr]="config"
         [Prowlarr]="config"
         [NZBGet]="config downloads"
         [RDT-Client]="config downloads"
@@ -1791,9 +1791,9 @@ create_service_directories() {
         [CineSync]="config"
         [Placeholdarr]="config"
         [GAPS]="config"
-        [Plex]="config media"
-        [Emby]="config media"
-        [Jellyfin]="config media"
+        [Plex]="config"
+        [Emby]="config"
+        [Jellyfin]="config"
     )
 
     # Only create folders for enabled services
@@ -1811,13 +1811,13 @@ create_service_directories() {
     # Always create media server folders for the selected server
     case "$MEDIA_SERVER" in
         plex|Plex)
-            mkdir -p "$STORAGE_PATH/Plex/config" "$STORAGE_PATH/Plex/media"
+            mkdir -p "$STORAGE_PATH/Plex/config"
             ;;
         emby|Emby)
-            mkdir -p "$STORAGE_PATH/Emby/config" "$STORAGE_PATH/Emby/media"
+            mkdir -p "$STORAGE_PATH/Emby/config"
             ;;
         jellyfin|Jellyfin)
-            mkdir -p "$STORAGE_PATH/Jellyfin/config" "$STORAGE_PATH/Jellyfin/media"
+            mkdir -p "$STORAGE_PATH/Jellyfin/config"
             ;;
     esac
 
@@ -1830,7 +1830,7 @@ create_service_directories() {
 create_directories() {
     print_step "Creating directory structure..."
     # Create shared folders for media, downloads, config, logs
-    sudo mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
+    sudo mkdir -p "$STORAGE_PATH"/{downloads,config,logs}
     sudo chown -R "$PUID:$PGID" "$STORAGE_PATH"
     print_success "Directory structure created at $STORAGE_PATH"
 }

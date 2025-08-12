@@ -192,7 +192,7 @@ configure_plex_libraries() {
     # Create basic directory structure with proper permissions
     if [ "$(id -u)" -eq 0 ]; then
         # Running as root
-        mkdir -p "$media_base"/{movies,tv,music}
+        # Removed creation of media subfolders
         touch "$media_base/movies/.placeholder"
         touch "$media_base/tv/.placeholder" 
         touch "$media_base/music/.placeholder"
@@ -200,7 +200,7 @@ configure_plex_libraries() {
         chmod -R 755 "$media_base"
     else
         # Not running as root, try without sudo first, then with non-interactive sudo
-        if mkdir -p "$media_base"/{movies,tv,music} 2>/dev/null; then
+        # Removed creation of media subfolders
             # Regular user has write access
             touch "$media_base/movies/.placeholder" 2>/dev/null || true
             touch "$media_base/tv/.placeholder" 2>/dev/null || true
@@ -212,7 +212,7 @@ configure_plex_libraries() {
             # Need elevated permissions, but avoid interactive sudo
             log_info "Creating media directories with elevated permissions..."
             # Create directories without sudo first if possible
-            mkdir -p "$media_base"/{movies,tv,music} || {
+            # Removed creation of media subfolders
                 log_error "Cannot create media directories. Please ensure proper permissions on $media_base"
                 return 0  # Don't fail the entire deployment for this
             }

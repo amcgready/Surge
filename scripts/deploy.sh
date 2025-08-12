@@ -370,6 +370,16 @@ deploy_services() {
     if [ "$ENABLE_PD_ZURG" = "true" ]; then
         echo "  - pd_zurg: http://localhost:9999"
     fi
+
+    # Final permission fix to unlock all folders for Surge
+    if [ -n "$STORAGE_PATH" ]; then
+        print_info "Running final permission fix on $STORAGE_PATH (sudo chown -R 1000:1000)"
+        if sudo chown -R 1000:1000 "$STORAGE_PATH"; then
+            print_success "Final permissions fixed on $STORAGE_PATH"
+        else
+            print_warning "Failed to set final permissions on $STORAGE_PATH. You may need to fix manually."
+        fi
+    fi
 }
 
 # Configure services automatically
