@@ -191,7 +191,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "realdebrid",
                 "api_key": self.rd_api_key,
-                "folder": "/mnt/remote/realdebrid/__all__/",
+                "folder": "${STORAGE_PATH}/downloads/Decypharr/realdebrid/__all__/",
                 "use_webdav": True,
                 "webdav_url": "https://webdav.real-debrid.com",
                 "enabled": True
@@ -202,7 +202,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "alldebrid", 
                 "api_key": self.ad_api_key,
-                "folder": "/mnt/remote/alldebrid/__all__/",
+                "folder": "${STORAGE_PATH}/downloads/Decypharr/alldebrid/__all__/",
                 "use_webdav": True,
                 "webdav_url": "https://webdav.alldebrid.com",
                 "enabled": True
@@ -213,7 +213,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "debridlink",
                 "api_key": self.dl_api_key,
-                "folder": "/mnt/remote/debridlink/__all__/",
+                "folder": "${STORAGE_PATH}/downloads/Decypharr/debridlink/__all__/",
                 "use_webdav": True,
                 "enabled": True
             })
@@ -223,7 +223,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "torbox",
                 "api_key": self.tb_api_key,
-                "folder": "/mnt/remote/torbox/__all__/",
+                "folder": "${STORAGE_PATH}/downloads/Decypharr/torbox/__all__/",
                 "use_webdav": True,
                 "enabled": True
             })
@@ -240,11 +240,11 @@ class DecypharrConfigurator:
             "debrids": debrid_configs,
             "qbittorrent": {
                 "port": "8282",
-                "download_folder": "/mnt/downloads/symlinks/",
+                "download_folder": "${STORAGE_PATH}/downloads/Decypharr/symlinks/",
                 "categories": ["sonarr", "radarr", "lidarr", "readarr"],
                 "default_category": "default",
-                "temp_folder": "/mnt/downloads/temp/",
-                "completed_folder": "/mnt/downloads/completed/"
+                "temp_folder": "${STORAGE_PATH}/downloads/Decypharr/temp/",
+                "completed_folder": "${STORAGE_PATH}/downloads/Decypharr/completed/"
             },
             "repair": {
                 "enabled": True,
