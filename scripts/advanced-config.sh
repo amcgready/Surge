@@ -1986,7 +1986,7 @@ configure_imagemaid_advanced() {
 configure_gaps_advanced() {
     print_header "GAPS Advanced Configuration"
     
-    local config_dir="${STORAGE_PATH:-/opt/surge}/config/gaps"
+    local config_dir="${STORAGE_PATH:-/opt/surge}/GAPS/config"
     
     print_info "Configuring advanced GAPS settings..."
     

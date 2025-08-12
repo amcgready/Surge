@@ -13,7 +13,7 @@ from datetime import datetime
 class TautulliConfigurator:
     def __init__(self, storage_path=None):
         self.storage_path = storage_path or '/opt/surge'
-        self.config_dir = f"{self.storage_path}/config/tautulli"
+        self.config_dir = f"{self.storage_path}/Tautulli/config"
         self.config_file = f"{self.config_dir}/config.ini"
         
         # Load environment variables

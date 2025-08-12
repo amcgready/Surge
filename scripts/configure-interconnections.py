@@ -391,7 +391,7 @@ class SurgeInterconnectionManager:
         
         self.log("Configuring GAPS integration...", "INFO")
         
-        gaps_config_dir = f"{self.storage_path}/config/gaps"
+        gaps_config_dir = f"{self.storage_path}/GAPS/config"
         os.makedirs(gaps_config_dir, exist_ok=True)
         
         gaps_config = {
