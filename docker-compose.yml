@@ -8,7 +8,6 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - ${STORAGE_PATH}/Radarr/config:/config
-      - ${STORAGE_PATH}/Radarr/media:/movies
       - ${STORAGE_PATH}/Radarr/downloads:/downloads
     ports:
       - "${RADARR_PORT:-7878}:7878"
@@ -27,7 +26,6 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - ${STORAGE_PATH}/Sonarr/config:/config
-      - ${STORAGE_PATH}/Sonarr/media:/tv
       - ${STORAGE_PATH}/Sonarr/downloads:/downloads
     ports:
       - "${SONARR_PORT:-8989}:8989"
@@ -46,8 +44,6 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - ${STORAGE_PATH}/Bazarr/config:/config
-      - ${STORAGE_PATH}/Bazarr/media/movies:/movies
-      - ${STORAGE_PATH}/Bazarr/media/tv:/tv
     ports:
       - "${BAZARR_PORT:-6767}:6767"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -168,8 +164,6 @@ services:
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/downloads:/mnt/downloads
-      - ${STORAGE_PATH}/Decypharr/movies:/mnt/movies
-      - ${STORAGE_PATH}/Decypharr/tv:/mnt/tv
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -189,8 +183,6 @@ services:
       - ${STORAGE_PATH}/Posterizarr/config:/config
       - ${STORAGE_PATH}/Posterizarr/assets:/assets
       - ${STORAGE_PATH}/Posterizarr/logs:/logs
-      - ${STORAGE_PATH}/Posterizarr/movies:/movies
-      - ${STORAGE_PATH}/Posterizarr/tv:/tv
     ports:
       - "${POSTERIZARR_PORT:-5060}:5060"
     restart: "no"
@@ -212,7 +204,6 @@ services:
     volumes:
       - ${STORAGE_PATH}/Cinesync/config/:/app/.env:ro
       - ${STORAGE_PATH}/downloads:/downloads
-      - ${STORAGE_PATH}/media:/media
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network

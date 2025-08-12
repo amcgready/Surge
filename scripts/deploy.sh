@@ -136,13 +136,13 @@ create_directories() {
     declare -A service_folders
     service_folders=(
         [Bazarr]="config media"
-        [Radarr]="config media"
-        [Sonarr]="config media"
-        [Prowlarr]="config"
+        [Bazarr]="config"
+        [Radarr]="config"
+        [Sonarr]="config"
         [NZBGet]="config downloads"
-        [RDT-Client]="config downloads"
-        [Zurg]="config downloads"
-        [cli_debrid]="config"
+        [Plex]="config"
+        [Emby]="config"
+        [Jellyfin]="config"
         [Decypharr]="config"
         [Kometa]="config"
         [Posterizarr]="config"
@@ -171,19 +171,15 @@ create_directories() {
     # Always create media server folders for the selected server
     case "$MEDIA_SERVER" in
         plex|Plex)
-            mkdir -p "$STORAGE_PATH/Plex/config" "$STORAGE_PATH/Plex/media"
+            mkdir -p "$STORAGE_PATH/Plex/config"
             ;;
         emby|Emby)
-            mkdir -p "$STORAGE_PATH/Emby/config" "$STORAGE_PATH/Emby/media"
+            mkdir -p "$STORAGE_PATH/Emby/config"
             ;;
         jellyfin|Jellyfin)
-            mkdir -p "$STORAGE_PATH/Jellyfin/config" "$STORAGE_PATH/Jellyfin/media"
+            mkdir -p "$STORAGE_PATH/Jellyfin/config"
             ;;
     esac
-
-    # Always create shared folders for media, downloads, config, logs
-    mkdir -p "$STORAGE_PATH/media/movies" "$STORAGE_PATH/media/tv" "$STORAGE_PATH/media/music" "$STORAGE_PATH/downloads" "$STORAGE_PATH/config" "$STORAGE_PATH/logs"
-    mkdir -p "$PROJECT_DIR/logs"
 
     # Set permissions
     if [ "$(id -u)" -eq 0 ]; then
@@ -288,6 +284,8 @@ deploy_services() {
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server"
+    [ "$(grep '^ENABLE_RADARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" radarr"
+    [ "$(grep '^ENABLE_SONARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" sonarr"
     [ "$(grep '^ENABLE_BAZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" bazarr"
     [ "$(grep '^ENABLE_PROWLARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" prowlarr"
     [ "$(grep '^ENABLE_NZBGET=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" nzbget"
@@ -299,13 +297,13 @@ deploy_services() {
     [ "$(grep '^ENABLE_POSTERIZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" posterizarr"
     [ "$(grep '^ENABLE_OVERSEERR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" overseerr"
     [ "$(grep '^ENABLE_TAUTULLI=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" tautulli"
-    [ "$(grep '^ENABLE_SCANLY=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scanly"
     [ "$(grep '^ENABLE_CINESYNC=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" cinesync"
     [ "$(grep '^ENABLE_PLACEHOLDARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" placeholdarr"
     [ "$(grep '^ENABLE_GAPS=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" gaps"
     [ "$(grep '^ENABLE_HOMEPAGE=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" homepage"
     [ "$(grep '^ENABLE_WATCHTOWER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" watchtower"
     [ "$(grep '^ENABLE_PD_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" pd_zurg"
+    [ "$(grep '^ENABLE_SCANLY=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scanly"
 
     # Build multiple --profile flags
     COMPOSE_PROFILE_FLAGS=""
