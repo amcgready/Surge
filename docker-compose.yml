@@ -113,7 +113,7 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
-      - ZURG_DOWNLOADS_PATH=${ZURG_DOWNLOADS_PATH:-/downloads}
+      - PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-/downloads}
     volumes:
       - ${STORAGE_PATH}/Zurg/config:/app/config
       - ${STORAGE_PATH}/downloads/Zurg:/data:shared

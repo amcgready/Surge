@@ -414,7 +414,7 @@ gather_auto_preferences() {
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
     ENABLE_RDT_CLIENT="true"
-    ENABLE_ZURG="true"
+    ENABLE_PD_ZURG="false"
     DEPLOYMENT_TYPE="full"
 
     # Prompt for CineSync folder options if enabled (always in auto mode)
@@ -423,8 +423,12 @@ gather_auto_preferences() {
     fi
 
     # Set Zurg downloads path and CineSync origin path
-    ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/Zurg"
-    CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
+    PD_ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/pd_zurg"
+    if [ "$ENABLE_PD_ZURG" = "true" ]; then
+        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/pd_zurg/__all__"
+    else
+        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
+    fi
 
     # API Keys and External Services (wording and logic unified with custom install)
     echo ""
@@ -596,8 +600,12 @@ gather_custom_preferences() {
         fi
     fi
     # Set Zurg downloads path and CineSync origin path (always, no prompt)
-    ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/Zurg"
-    CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
+    PD_ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/pd_zurg"
+    if [ "$ENABLE_PD_ZURG" = "true" ]; then
+        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/pd_zurg/__all__"
+    else
+        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
+    fi
 
     # Storage location
     echo ""
@@ -731,8 +739,8 @@ gather_custom_preferences() {
             echo ""
             print_info "Zurg downloads destination"
             echo "Default: Uses standard Surge downloads directory"
-            read -p "Custom Zurg downloads path (optional): " zurg_downloads_path
-            ZURG_DOWNLOADS_PATH=${zurg_downloads_path:-}
+            read -p "Custom Zurg downloads path (optional): " PD_ZURG_DOWNLOADS_PATH
+            PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-}
         fi
         read -p "Enable Decypharr (automated decryption)? [y/N]: " enable_decypharr
         ENABLE_DECYPHARR=$([[ "$enable_decypharr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
@@ -1655,7 +1663,7 @@ NZBGET_USER=${NZBGET_USER:-admin}
 # Note: NZBGET_PASS should be set in .env file or will be auto-generated
 NZBGET_PASS=${NZBGET_PASS:-}
 RD_API_TOKEN=${RD_API_TOKEN:-}
-ZURG_DOWNLOADS_PATH=${ZURG_DOWNLOADS_PATH:-}
+PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-}
 AD_API_TOKEN=${AD_API_TOKEN:-}
 PREMIUMIZE_API_TOKEN=${PREMIUMIZE_API_TOKEN:-}
 RD_USERNAME=${RD_USERNAME:-}

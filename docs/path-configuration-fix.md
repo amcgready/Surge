@@ -42,7 +42,7 @@ DESTINATION_DIR=${STORAGE_PATH}/media/
 ```yaml
 volumes:
   - ${STORAGE_PATH}/Zurg/config:/app/config
-  - ${ZURG_DOWNLOADS_PATH:-${STORAGE_PATH}/Zurg/downloads}:/downloads  
+  - ${PD_ZURG_DOWNLOADS_PATH:-${STORAGE_PATH}/Zurg/downloads}:/downloads  
   - ${STORAGE_PATH}/Zurg:/data:shared  # ✅ FUSE mount point
 
 # Added FUSE capabilities:
@@ -80,7 +80,7 @@ Updated `.env` file with proper paths:
 ```bash
 # ZURG CONFIGURATION
 ZURG_PORT=9999
-ZURG_DOWNLOADS_PATH=${STORAGE_PATH}/Zurg
+PD_ZURG_DOWNLOADS_PATH=${STORAGE_PATH}/Zurg
 
 # CINESYNC CONFIGURATION  
 CINESYNC_SOURCE_DIR=${STORAGE_PATH}/Zurg/__all__
