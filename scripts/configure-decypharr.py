@@ -29,15 +29,15 @@ class DecypharrConfigurator:
     def __init__(self, storage_path: str):
         self.storage_path = self._validate_storage_path(storage_path)
         self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
-        self.decypharr_downloads_dir = Path(self.storage_path) / "Decypharr" / "downloads"
-        self.decypharr_movies_dir = Path(self.storage_path) / "Decypharr" / "movies"
-        self.decypharr_tv_dir = Path(self.storage_path) / "Decypharr" / "tv"
-        
+        self.decypharr_downloads_dir = Path(self.storage_path) / "downloads" / "Decypharr"
+        self.decypharr_movies_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "movies"
+        self.decypharr_tv_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "tv"
+
         # Service URLs (using Docker network names)
         self.radarr_url = "http://radarr:7878"
         self.sonarr_url = "http://sonarr:8989"
         self.decypharr_url = "http://decypharr:8282"
-        
+
         # API Keys from environment
         self.rd_api_key = os.environ.get('RD_API_TOKEN', '')
         self.ad_api_key = os.environ.get('AD_API_TOKEN', '')
@@ -107,26 +107,30 @@ class DecypharrConfigurator:
         print(f"  ⚠️  {service_name} not responding, continuing anyway...")
         return False
         
-    def get_api_key(self, service_name: str, base_url: str, config_path: str) -> Optional[str]:
-        """Extract API key from service configuration"""
-        try:
-            config_file = Path(config_path) / "config.xml"
-            if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                # Extract API key using basic string parsing
-                if '<ApiKey>' in content and '</ApiKey>' in content:
-                    start = content.find('<ApiKey>') + 8
-                    end = content.find('</ApiKey>')
-                    api_key = content[start:end].strip()
-                    if api_key and len(api_key) > 10:
-                        print(f"  ✓ Found {service_name} API key")
-                        return api_key
-                        
-        except Exception as e:
-            print(f"  ⚠️  Could not read {service_name} API key: {e}")
-            
+    def get_api_key(self, service_name: str, base_url: str, config_path: str, max_wait: int = 120, poll_interval: int = 5) -> Optional[str]:
+        """Extract API key from service configuration, waiting up to max_wait seconds if needed"""
+        config_file = Path(config_path) / "config.xml"
+        waited = 0
+        while waited < max_wait:
+            try:
+                if config_file.exists():
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    # Extract API key using basic string parsing
+                    if '<ApiKey>' in content and '</ApiKey>' in content:
+                        start = content.find('<ApiKey>') + 8
+                        end = content.find('</ApiKey>')
+                        api_key = content[start:end].strip()
+                        if api_key and len(api_key) > 10:
+                            print(f"  ✓ Found {service_name} API key after waiting {waited}s")
+                            return api_key
+                else:
+                    print(f"  ⏳ Waiting for {service_name} config.xml to appear...")
+            except Exception as e:
+                print(f"  ⚠️  Could not read {service_name} API key: {e}")
+            time.sleep(poll_interval)
+            waited += poll_interval
+        print(f"  ⚠️  Timed out waiting for {service_name} API key after {max_wait}s")
         return None
         
     def test_debrid_services(self):
@@ -230,7 +234,7 @@ class DecypharrConfigurator:
             print("  💡 Please set RD_API_TOKEN, AD_API_TOKEN, DEBRID_LINK_API_TOKEN, or TORBOX_API_TOKEN")
             print("  📝 Creating basic configuration without debrid services...")
             
-        # Create comprehensive Decypharr configuration
+        # Always include arr section with placeholders for API keys/URLs
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
@@ -259,8 +263,8 @@ class DecypharrConfigurator:
             "blackhole": {
                 "enabled": True,
                 "watch_folders": {
-                    "sonarr": "/mnt/downloads/blackhole/sonarr",
-                    "radarr": "/mnt/downloads/blackhole/radarr"
+                    "sonarr": str(Path(self.storage_path) / "downloads" / "blackhole" / "sonarr"),
+                    "radarr": str(Path(self.storage_path) / "downloads" / "blackhole" / "radarr")
                 },
                 "check_interval": "30s",
                 "auto_process": True
@@ -284,6 +288,16 @@ class DecypharrConfigurator:
                     "enabled": bool(os.environ.get('DISCORD_WEBHOOK_URL')),
                     "webhook_url": os.environ.get('DISCORD_WEBHOOK_URL', ''),
                     "events": ["download_complete", "download_failed", "repair_complete"]
+                }
+            },
+            "arr": {
+                "radarr": {
+                    "api_key": "RADARR_API_KEY_PLACEHOLDER",
+                    "url": self.radarr_url
+                },
+                "sonarr": {
+                    "api_key": "SONARR_API_KEY_PLACEHOLDER",
+                    "url": self.sonarr_url
                 }
             }
         }

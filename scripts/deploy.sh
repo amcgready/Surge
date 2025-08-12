@@ -310,22 +310,48 @@ deploy_services() {
     for profile in $PROFILES; do
         COMPOSE_PROFILE_FLAGS+=" --profile $profile"
     done
-    print_info "Starting deployment with profiles:$COMPOSE_PROFILE_FLAGS"
-    eval docker compose $COMPOSE_FILES $COMPOSE_PROFILE_FLAGS up -d
-    print_success "Surge deployed successfully!"
-    
+    print_info "Starting deployment (phase 1: all services except Decypharr) with profiles:$COMPOSE_PROFILE_FLAGS"
+    # Remove Decypharr from profiles for phase 1
+    PHASE1_PROFILE_FLAGS=$(echo "$COMPOSE_PROFILE_FLAGS" | sed 's/--profile decypharr//g')
+    eval docker compose $COMPOSE_FILES $PHASE1_PROFILE_FLAGS up -d
+    print_success "Phase 1: All services except Decypharr deployed successfully!"
+
     # Configure services automatically
     configure_services
-    
-    # Run post-deployment configuration (in background to not block)
-    print_info "Starting post-deployment configuration in background..."
+
+    # Run post-deployment configuration synchronously so API keys are ready before Decypharr config
+    print_info "Running post-deployment configuration..."
     if [ -f "$SCRIPT_DIR/post-deploy-config.sh" ]; then
         # Export STORAGE_PATH for post-deploy script
         STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
         export STORAGE_PATH
-        
-        nohup bash "$SCRIPT_DIR/post-deploy-config.sh" > "$PROJECT_DIR/logs/post-deploy.log" 2>&1 &
-        print_info "Post-deployment configuration running in background. Check logs/post-deploy.log for progress."
+        bash "$SCRIPT_DIR/post-deploy-config.sh" | tee "$PROJECT_DIR/logs/post-deploy.log"
+        print_info "Post-deployment configuration complete. See logs/post-deploy.log for details."
+    fi
+
+    # Run Decypharr configuration as the very last step
+    ENABLE_DECYPHARR_FLAG=$(grep '^ENABLE_DECYPHARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    if [ "$ENABLE_DECYPHARR_FLAG" = "true" ] || echo "$COMPOSE_PROFILES" | grep -q "decypharr"; then
+        print_info "Fixing permissions for Decypharr directories..."
+        if sudo chown -R 1000:1000 "$STORAGE_PATH"; then
+            print_success "Permissions fixed for $STORAGE_PATH"
+        else
+            print_warning "Failed to fix permissions for $STORAGE_PATH. You may need to fix manually."
+        fi
+        print_info "Generating Decypharr configuration..."
+        if [ -f "$SCRIPT_DIR/configure-decypharr.py" ]; then
+            if python3 "$SCRIPT_DIR/configure-decypharr.py" "$STORAGE_PATH"; then
+                print_success "Decypharr configuration generated successfully!"
+            else
+                print_warning "Failed to generate Decypharr configuration. You can run it manually:"
+                print_warning "  python3 $SCRIPT_DIR/configure-decypharr.py $STORAGE_PATH"
+            fi
+        else
+            print_warning "configure-decypharr.py script not found in $SCRIPT_DIR. Skipping Decypharr configuration."
+        fi
+        print_info "Starting Decypharr container (phase 2)"
+        eval docker compose $COMPOSE_FILES --profile decypharr up -d
+        print_success "Phase 2: Decypharr container started!"
     fi
     
     print_info "Access your services:"
@@ -384,8 +410,18 @@ deploy_services() {
 
 # Configure services automatically
 configure_services() {
-    # Generate Decypharr configuration if Decypharr is enabled
-    if echo "$COMPOSE_PROFILES" | grep -q "decypharr"; then
+    print_info "Configuring service connections automatically..."
+    # ...existing code for other service configuration...
+
+    # Generate Decypharr configuration last if Decypharr is enabled (by env or profile)
+    ENABLE_DECYPHARR_FLAG=$(grep '^ENABLE_DECYPHARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    if [ "$ENABLE_DECYPHARR_FLAG" = "true" ] || echo "$COMPOSE_PROFILES" | grep -q "decypharr"; then
+        print_info "Fixing permissions for Decypharr directories..."
+        if sudo chown -R 1000:1000 "$STORAGE_PATH"; then
+            print_success "Permissions fixed for $STORAGE_PATH"
+        else
+            print_warning "Failed to fix permissions for $STORAGE_PATH. You may need to fix manually."
+        fi
         print_info "Generating Decypharr configuration..."
         if [ -f "$SCRIPT_DIR/configure-decypharr.py" ]; then
             if python3 "$SCRIPT_DIR/configure-decypharr.py" "$STORAGE_PATH"; then
@@ -398,7 +434,6 @@ configure_services() {
             print_warning "configure-decypharr.py script not found in $SCRIPT_DIR. Skipping Decypharr configuration."
         fi
     fi
-    print_info "Configuring service connections automatically..."
     
     # Read STORAGE_PATH from .env file or use default
     STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")

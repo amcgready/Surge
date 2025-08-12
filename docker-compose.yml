@@ -167,7 +167,7 @@ services:
       - TORBOX_API_TOKEN=${TORBOX_API_TOKEN:-}
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
-      - ${STORAGE_PATH}/Decypharr/downloads:/mnt/downloads
+      - ${STORAGE_PATH}/downloads/Decypharr:/mnt/downloads
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -206,7 +206,7 @@ services:
       - "${CINESYNC_PORT:-8082}:8082"
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
-      - ${STORAGE_PATH}/Cinesync/config/:/app/.env:ro
+      - ${STORAGE_PATH}/CineSync/config/:/app/.env:ro
       - ${STORAGE_PATH}/downloads:/downloads
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
