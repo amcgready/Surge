@@ -384,6 +384,20 @@ deploy_services() {
 
 # Configure services automatically
 configure_services() {
+    # Generate Decypharr configuration if Decypharr is enabled
+    if echo "$COMPOSE_PROFILES" | grep -q "decypharr"; then
+        print_info "Generating Decypharr configuration..."
+        if [ -f "$SCRIPT_DIR/configure-decypharr.py" ]; then
+            if python3 "$SCRIPT_DIR/configure-decypharr.py" "$STORAGE_PATH"; then
+                print_success "Decypharr configuration generated successfully!"
+            else
+                print_warning "Failed to generate Decypharr configuration. You can run it manually:"
+                print_warning "  python3 $SCRIPT_DIR/configure-decypharr.py $STORAGE_PATH"
+            fi
+        else
+            print_warning "configure-decypharr.py script not found in $SCRIPT_DIR. Skipping Decypharr configuration."
+        fi
+    fi
     print_info "Configuring service connections automatically..."
     
     # Read STORAGE_PATH from .env file or use default

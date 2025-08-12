@@ -161,6 +161,10 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
+      - RD_API_TOKEN=${RD_API_TOKEN}
+      - AD_API_TOKEN=${AD_API_TOKEN:-}
+      - DEBRID_LINK_API_TOKEN=${DEBRID_LINK_API_TOKEN:-}
+      - TORBOX_API_TOKEN=${TORBOX_API_TOKEN:-}
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/downloads:/mnt/downloads

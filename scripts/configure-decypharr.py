@@ -26,7 +26,7 @@ from typing import Optional
 class DecypharrConfigurator:
     """Main Decypharr configuration class"""
     
-    def __init__(self, storage_path: str = "/opt/surge"):
+    def __init__(self, storage_path: str):
         self.storage_path = self._validate_storage_path(storage_path)
         self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
         self.decypharr_downloads_dir = Path(self.storage_path) / "Decypharr" / "downloads"
@@ -53,7 +53,7 @@ class DecypharrConfigurator:
             return str(path_obj)
         except Exception as e:
             print(f"⚠️  Invalid storage path '{path}': {e}")
-            return "/opt/surge"  # Fallback to safe default
+            raise ValueError(f"Invalid storage path '{path}': {e}")
             
     def ensure_directories(self):
         """Create necessary directories for Decypharr"""
@@ -636,15 +636,18 @@ if __name__ == "__main__":
 
 def main():
     """Main entry point"""
-    storage_path = sys.argv[1] if len(sys.argv) > 1 else "/opt/surge"
-    
+    if len(sys.argv) < 2 or not sys.argv[1].strip():
+        print("❌ ERROR: STORAGE_PATH argument is required.\nUsage: python3 configure-decypharr.py <STORAGE_PATH>")
+        sys.exit(1)
+    storage_path = sys.argv[1]
+
     print("=" * 60)
     print("🔧 DECYPHARR AUTOMATED CONFIGURATION")
     print("=" * 60)
-    
+
     configurator = DecypharrConfigurator(storage_path)
     success = configurator.run_configuration()
-    
+
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
