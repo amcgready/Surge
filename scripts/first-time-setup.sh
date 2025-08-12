@@ -569,6 +569,8 @@ gather_custom_preferences() {
         1)
             DEPLOYMENT_TYPE="full"
             ENABLE_CINESYNC="true"
+            ENABLE_PD_ZURG="false"
+            export ENABLE_PD_ZURG
             ;;
         2)
             DEPLOYMENT_TYPE="minimal"
@@ -1235,9 +1237,8 @@ configure_homepage_widgets() {
         echo "  - name: RDT-Client" >> "$homepage_yaml"
         echo "    url: http://localhost:6500" >> "$homepage_yaml"
     fi
-    if [ "$ENABLE_ZURG" = "true" ]; then
-        echo "  - name: Zurg" >> "$homepage_yaml"
-        echo "    url: http://localhost:9999" >> "$homepage_yaml"
+    if [ "$ENABLE_PD_ZURG" = "true" ]; then
+        echo "  - name: PD_Zurg" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
         echo "  - name: cli_debrid" >> "$homepage_yaml"
@@ -1582,9 +1583,6 @@ PUID=$PUID
 PGID=$PGID
 
 STORAGE_PATH=$STORAGE_PATH
-# Use CineSync folder variables for Plex library paths
-MOVIES_DIR="\${STORAGE_PATH}/media/${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
-TV_SHOWS_DIR="\${STORAGE_PATH}/media/${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
 CONFIG_DIR=\${STORAGE_PATH}/config
 
 # DOWNLOAD CLIENT PATHS (Accessible by all containers)
@@ -1613,21 +1611,6 @@ ENABLE_GAPS=${ENABLE_GAPS:-true}
 ENABLE_WATCHTOWER=${ENABLE_WATCHTOWER:-true}
 ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-true}
 
-# CINESYNC CONFIGURATION
-CINESYNC_ANIME_SEPARATION=${CINESYNC_ANIME_SEPARATION:-true}
-CINESYNC_4K_SEPARATION=${CINESYNC_4K_SEPARATION:-false}
-CINESYNC_KIDS_SEPARATION=${CINESYNC_KIDS_SEPARATION:-false}
-CINESYNC_CUSTOM_SHOW_FOLDER="${CINESYNC_CUSTOM_SHOW_FOLDER:-TV Series}"
-CINESYNC_CUSTOM_MOVIE_FOLDER="${CINESYNC_CUSTOM_MOVIE_FOLDER:-Movies}"
-CINESYNC_CUSTOM_ANIME_SHOW_FOLDER="${CINESYNC_CUSTOM_ANIME_SHOW_FOLDER:-Anime Series}"
-CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER="${CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER:-Anime Movies}"
-CINESYNC_CUSTOM_4KSHOW_FOLDER="${CINESYNC_CUSTOM_4KSHOW_FOLDER:-4K Series}"
-CINESYNC_CUSTOM_4KMOVIE_FOLDER="${CINESYNC_CUSTOM_4KMOVIE_FOLDER:-4K Movies}"
-CINESYNC_CUSTOM_KIDS_SHOW_FOLDER="${CINESYNC_CUSTOM_KIDS_SHOW_FOLDER:-Kids Series}"
-CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER="${CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER:-Kids Movies}"
-CINESYNC_SHOW_RESOLUTION_STRUCTURE=${CINESYNC_SHOW_RESOLUTION_STRUCTURE:-false}
-CINESYNC_MOVIE_RESOLUTION_STRUCTURE=${CINESYNC_MOVIE_RESOLUTION_STRUCTURE:-false}
-CINESYNC_USE_SOURCE_STRUCTURE=${CINESYNC_USE_SOURCE_STRUCTURE:-false}
 
 # NETWORK PORTS
 HOMEPAGE_PORT=${HOMEPAGE_PORT:-3000}
