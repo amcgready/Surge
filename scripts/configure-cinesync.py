@@ -99,59 +99,68 @@ class SurgeCineSyncConfigurator:
         """Create necessary directories for CineSync based on user configuration."""
         try:
             self.log("Creating CineSync directory structure...", "INFO")
-            
-            # Create config directory
-            self.config_dir.mkdir(parents=True, exist_ok=True)
-            
+
+            # Create config directory (but NOT the .env file as a directory)
+            if not self.config_dir.exists():
+                self.config_dir.mkdir(parents=True, exist_ok=True)
+            # If .env exists and is a directory, warn user
+            if self.env_file.exists() and self.env_file.is_dir():
+                self.log(f".env exists as a directory at {self.env_file}. Please remove it and re-run.", "ERROR")
+                return False
+
             # Create media directories based on user configuration
             media_base = Path(self.storage_path) / "media"
-            
+
             # Always create standard directories
             standard_dirs = [
                 self.config.get('CUSTOM_MOVIE_FOLDER', 'Movies'),
                 self.config.get('CUSTOM_SHOW_FOLDER', 'TV Series')
             ]
-            
+
             # Add anime directories if enabled
             if self.config.get('ANIME_SEPARATION', 'true') == 'true':
                 standard_dirs.extend([
                     self.config.get('CUSTOM_ANIME_MOVIE_FOLDER', 'Anime Movies'),
                     self.config.get('CUSTOM_ANIME_SHOW_FOLDER', 'Anime Series')
                 ])
-            
+
             # Add 4K directories if enabled
             if self.config.get('4K_SEPARATION', 'false') == 'true':
                 standard_dirs.extend([
                     self.config.get('CUSTOM_4KMOVIE_FOLDER', '4K Movies'),
                     self.config.get('CUSTOM_4KSHOW_FOLDER', '4K Series')
                 ])
-            
+
             # Add kids directories if enabled
             if self.config.get('KIDS_SEPARATION', 'false') == 'true':
                 standard_dirs.extend([
                     self.config.get('CUSTOM_KIDS_MOVIE_FOLDER', 'Kids Movies'),
                     self.config.get('CUSTOM_KIDS_SHOW_FOLDER', 'Kids Series')
                 ])
-            
-            # Create each directory
+
+            # Create each directory (skip .env)
             for dir_name in standard_dirs:
+                # Prevent accidental creation of a directory named .env
+                if dir_name == '.env':
+                    self.log("Skipping creation of directory named .env (reserved for environment file)", "WARNING")
+                    continue
                 dir_path = media_base / dir_name
                 dir_path.mkdir(parents=True, exist_ok=True)
                 self.log(f"Created directory: {dir_path}", "SUCCESS")
-            
+
             # Set proper permissions
             uid = int(os.environ.get('PUID', 1000))
             gid = int(os.environ.get('PGID', 1000))
-            
+
             try:
-                subprocess.run(['chown', '-R', f'{uid}:{gid}', str(self.config_dir)], 
+                subprocess.run(['chown', '-R', f'{uid}:{gid}', str(self.config_dir)],
                              check=True, capture_output=True)
                 self.log("Set directory permissions", "SUCCESS")
             except subprocess.CalledProcessError as e:
                 self.log(f"Could not set permissions: {e}", "WARNING")
-            
+
             return True
-            
+
         except Exception as e:
             self.log(f"Error creating directories: {e}", "ERROR")
             return False
