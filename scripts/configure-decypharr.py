@@ -58,15 +58,23 @@ class DecypharrConfigurator:
     def ensure_directories(self):
         """Create necessary directories for Decypharr"""
         print("📁 Creating Decypharr directories...")
-        
+
+        qbittorrent_symlinks = self.decypharr_downloads_dir / "symlinks"
+        qbittorrent_temp = self.decypharr_downloads_dir / "temp"
+        qbittorrent_completed = self.decypharr_downloads_dir / "completed"
+
         directories = [
             self.decypharr_config_dir,
             self.decypharr_downloads_dir,
             self.decypharr_movies_dir,
             self.decypharr_tv_dir,
+            # qBittorrent required folders
+            qbittorrent_symlinks,
+            qbittorrent_temp,
+            qbittorrent_completed,
             # Symlink directories for content organization
-            self.decypharr_downloads_dir / "symlinks" / "movies",
-            self.decypharr_downloads_dir / "symlinks" / "tv",
+            qbittorrent_symlinks / "movies",
+            qbittorrent_symlinks / "tv",
             # Blackhole directories
             self.decypharr_downloads_dir / "blackhole" / "sonarr",
             self.decypharr_downloads_dir / "blackhole" / "radarr",
@@ -74,7 +82,7 @@ class DecypharrConfigurator:
             Path(self.storage_path) / "mnt" / "remote" / "realdebrid",
             Path(self.storage_path) / "mnt" / "remote" / "alldebrid",
         ]
-        
+
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
             print(f"  ✓ Created: {directory}")
