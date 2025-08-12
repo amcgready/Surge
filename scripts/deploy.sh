@@ -211,11 +211,9 @@ deploy_services() {
     RD_API_TOKEN=$(grep "^RD_API_TOKEN=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
     ENABLE_CLI_DEBRID=$(grep "^ENABLE_CLI_DEBRID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     ENABLE_DECYPHARR=$(grep "^ENABLE_DECYPHARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
-    ENABLE_ZURG=$(grep "^ENABLE_ZURG=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
-    
-    # Export for use in post-deploy scripts
-    export RD_API_TOKEN ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_ZURG
-    
+    ENABLE_PD_ZURG=$(grep "^ENABLE_PD_ZURG=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    export RD_API_TOKEN ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_PD_ZURG
+
     # Base compose files
     COMPOSE_FILES="-f docker-compose.yml"
     
@@ -277,49 +275,13 @@ deploy_services() {
         print_info "✅ Decypharr enabled - will be deployed"
     fi
 
-    # Add Zurg profile if enabled
-    if [ "$ENABLE_ZURG" = "true" ]; then
-        PROFILES="$PROFILES,zurg"
-        print_info "✅ Zurg enabled - will be deployed"
-
-        # --- Zurg token fix: ensure config contains real token ---
-        ZURG_CONFIG="$STORAGE_PATH/Zurg/config/config.yml"
-        # If config does not exist, generate it
-        if [ ! -f "$ZURG_CONFIG" ]; then
-            print_info "Zurg config not found, generating with configure-zurg.py..."
-            # Source .env and export all variables for the Python script
-            set -a
-            [ -f "$PROJECT_DIR/.env" ] && . "$PROJECT_DIR/.env"
-            set +a
-            if ! python3 "$SCRIPT_DIR/configure-zurg.py" "$STORAGE_PATH"; then
-                print_error "Failed to generate Zurg config. Aborting deployment."
-                exit 1
-            fi
-        fi
-        if [ -f "$ZURG_CONFIG" ]; then
-            # Forcefully replace any 'token:' line with the real token
-            if [ -z "$RD_API_TOKEN" ]; then
-                print_error "Zurg is enabled but RD_API_TOKEN is missing in .env. Cannot continue."
-                exit 1
-            fi
-            sed -i -E "s|^token:.*$|token: $RD_API_TOKEN|g" "$ZURG_CONFIG"
-            print_info "Zurg config token replaced with real token."
-            # Safety check: fail if still not a real token
-            TOKEN_LINE=$(grep '^token:' "$ZURG_CONFIG" | head -1)
-            if echo "$TOKEN_LINE" | grep -q '\${'; then
-                print_error "Zurg config token is still a variable reference. Aborting deployment."
-                exit 1
-            fi
-            if [ -z "$RD_API_TOKEN" ] || [ "$TOKEN_LINE" = "token:" ] || [ "$TOKEN_LINE" = "token: " ]; then
-                print_error "Zurg config token is empty. Aborting deployment."
-                exit 1
-            fi
-        else
-            print_warning "Zurg config file not found at $ZURG_CONFIG. Skipping token fix."
-        fi
-        # --- End Zurg token fix ---
+    # Add pd_zurg profile if enabled
+    if [ "$ENABLE_PD_ZURG" = "true" ]; then
+        PROFILES="$PROFILES,pd_zurg"
+        print_info "✅ pd_zurg enabled - will be deployed"
+        # Add pd_zurg config generation here if needed
     fi
-    
+
     export COMPOSE_PROFILES="$PROFILES"
     
     # Deploy
@@ -380,9 +342,9 @@ deploy_services() {
         echo "  - Decypharr: http://localhost:8282"
     fi
 
-    # Show Zurg status  
-    if [ "$ENABLE_ZURG" = "true" ]; then
-        echo "  - Zurg: http://localhost:9999"
+    # Show pd_zurg status
+    if [ "$ENABLE_PD_ZURG" = "true" ]; then
+        echo "  - pd_zurg: http://localhost:9999"
     fi
 }
 

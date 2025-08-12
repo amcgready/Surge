@@ -1,3 +1,33 @@
+def configure_pd_zurg_automation(storage_path=None):
+    """Configure pd_zurg Real-Debrid filesystem mounting with rclone integration."""
+    if storage_path is None:
+        storage_path = find_storage_path()
+    print("🎯 Starting pd_zurg automation...")
+    import sys
+    import os
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    configure_script = os.path.join(script_dir, 'configure-pd_zurg.py')
+    try:
+        # Run the pd_zurg configuration script
+        result = subprocess.run([
+            sys.executable, configure_script, storage_path
+        ], capture_output=True, text=True, timeout=600)
+        if result.returncode == 0:
+            print("✅ pd_zurg automation completed successfully!")
+            print(result.stdout)
+            return True
+        else:
+            print("⚠️  pd_zurg automation completed with warnings")
+            print(result.stdout)
+            if result.stderr:
+                print("Error output:", result.stderr)
+            return True  # Return True since partial success is still useful
+    except subprocess.TimeoutExpired:
+        print("⚠️  pd_zurg configuration timed out after 10 minutes")
+        return False
+    except Exception as e:
+        print(f"❌ pd_zurg automation failed: {e}")
+        return False
 #!/usr/bin/env python3
 
 """
@@ -1552,43 +1582,9 @@ def configure_decypharr_automation(storage_path=None):
         print(f"❌ Decypharr automation failed: {e}")
         return False
 
-def configure_zurg_automation(storage_path=None):
-    """Configure Zurg Real-Debrid filesystem mounting with rclone integration."""
-    if storage_path is None:
-        storage_path = find_storage_path()
-    
-    print("🎯 Starting Zurg automation...")
-    
-    import sys
-    import os
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    configure_script = os.path.join(script_dir, 'configure-zurg.py')
-    
-    try:
-        # Run the Zurg configuration script
-        result = subprocess.run([
-            sys.executable, configure_script, storage_path
-        ], capture_output=True, text=True, timeout=600)
-        
-        if result.returncode == 0:
-            print("✅ Zurg automation completed successfully!")
-            print(result.stdout)
-            return True
-        else:
-            print("⚠️  Zurg automation completed with warnings")
-            print(result.stdout)
-            if result.stderr:
-                print("Error output:", result.stderr)
-            return True  # Return True since partial success is still useful
-            
-    except subprocess.TimeoutExpired:
-        print("⚠️  Zurg configuration timed out after 10 minutes")
-        return False
-    except Exception as e:
-        print(f"❌ Zurg automation failed: {e}")
-        return False
 
 if __name__ == '__main__':
+    configure_pd_zurg_automation()
     """Allow this module to be run directly for testing."""
     configure_prowlarr_applications()
     configure_bazarr_applications()
@@ -1601,4 +1597,3 @@ if __name__ == '__main__':
     configure_placeholdarr_automation()
     configure_cli_debrid_automation()
     configure_decypharr_automation()
-    configure_zurg_automation()
