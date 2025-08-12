@@ -320,7 +320,7 @@ gather_auto_preferences() {
 
     print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
     # ...existing code...
-    
+
     # Media server choice
     echo "Choose your media server:"
     echo "1) Plex Media Server (Premium)"
@@ -361,6 +361,47 @@ gather_auto_preferences() {
         done
         PLEX_CLAIM=${plex_claim_token}
     fi
+
+    # AUTO INSTALL PRESET: Only enable the default recommended services for auto installs
+    ENABLE_BAZARR="true"
+    ENABLE_PROWLARR="true"
+    ENABLE_NZBGET="true"
+    ENABLE_RADARR="true"
+    ENABLE_SONARR="true"
+    ENABLE_OVERSEERR="true"
+    ENABLE_TAUTULLI="true"
+    ENABLE_HOMEPAGE="true"
+    ENABLE_WATCHTOWER="true"
+    ENABLE_SCHEDULER="true"
+    ENABLE_CLI_DEBRID="false"
+    ENABLE_DECYPHARR="true"
+    ENABLE_CINESYNC="false"
+    ENABLE_PLACEHOLDARR="false"
+    ENABLE_GAPS="true"
+    ENABLE_RDT_CLIENT="false"
+    ENABLE_PD_ZURG="false"
+    ENABLE_KOMETA="true"
+    ENABLE_POSTERIZARR="true"
+    ENABLE_SCANLY="false"
+    # Set only the selected media server to true
+    case "$MEDIA_SERVER" in
+        plex)
+            ENABLE_PLEX="true"
+            ENABLE_EMBY="false"
+            ENABLE_JELLYFIN="false"
+            ;;
+        emby)
+            ENABLE_PLEX="false"
+            ENABLE_EMBY="true"
+            ENABLE_JELLYFIN="false"
+            ;;
+        jellyfin)
+            ENABLE_PLEX="false"
+            ENABLE_EMBY="false"
+            ENABLE_JELLYFIN="true"
+            ;;
+    esac
+    DEPLOYMENT_TYPE="auto"
     
     # Storage location (simplified)
     echo ""
@@ -424,9 +465,27 @@ gather_auto_preferences() {
     ENABLE_HOMEPAGE="true"
     ENABLE_RADARR="true"
     ENABLE_SONARR="true"
-    ENABLE_PLEX="true"
-    ENABLE_EMBY="true"
-    ENABLE_JELLYFIN="true"
+ENABLE_PLEX="true"
+ENABLE_EMBY="true"
+ENABLE_JELLYFIN="true"
+# Only enable the selected media server
+case "$MEDIA_SERVER" in
+    plex)
+        ENABLE_PLEX="true"
+        ENABLE_EMBY="false"
+        ENABLE_JELLYFIN="false"
+        ;;
+    emby)
+        ENABLE_PLEX="false"
+        ENABLE_EMBY="true"
+        ENABLE_JELLYFIN="false"
+        ;;
+    jellyfin)
+        ENABLE_PLEX="false"
+        ENABLE_EMBY="false"
+        ENABLE_JELLYFIN="true"
+        ;;
+esac
     DEPLOYMENT_TYPE="full"
 
     # Prompt for CineSync folder options if enabled (always in auto mode)
