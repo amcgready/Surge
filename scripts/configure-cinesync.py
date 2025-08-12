@@ -31,7 +31,7 @@ class SurgeCineSyncConfigurator:
         self.load_env()
 
         # Configuration paths
-        self.config_dir = Path(self.storage_path) / "CineSync" / "config"
+        self.config_dir = Path(self.storage_path) / "Cinesync" / "config"
         self.env_file = self.config_dir / ".env"
         self.template_file = self.project_root / "configs" / "cinesync-env.template"
 
@@ -168,8 +168,8 @@ class SurgeCineSyncConfigurator:
             # Load default configuration
             self.config = {
                 # Directory Paths
-                'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', f'{self.storage_path}/downloads/Zurg/__all__'),
-                'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/media'),
+                'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', f'{self.storage_path}/downloads/pd_zurg/__all__'),
+                'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/downloads/'),
                 'USE_SOURCE_STRUCTURE': os.environ.get('CINESYNC_USE_SOURCE_STRUCTURE', 'false'),
                 
                 # Media Organization
@@ -548,12 +548,7 @@ class SurgeCineSyncConfigurator:
 
 def main():
     """Main execution function."""
-    if len(sys.argv) < 2:
-        print("Usage: python3 configure-cinesync.py <storage_path>")
-        sys.exit(1)
-    
-    storage_path = sys.argv[1]
-    configurator = SurgeCineSyncConfigurator(storage_path)
+    configurator = SurgeCineSyncConfigurator()
     
     try:
         # Configuration process

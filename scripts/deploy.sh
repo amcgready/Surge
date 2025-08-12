@@ -359,11 +359,11 @@ configure_services() {
     # Generate CineSync configuration if CineSync is enabled
     if echo "$COMPOSE_PROFILES" | grep -q "cinesync"; then
         print_info "Generating CineSync configuration..."
-        if "$SCRIPT_DIR/configure-cinesync.sh"; then
+        if python3 "$SCRIPT_DIR/configure-cinesync.py"; then
             print_success "CineSync configuration generated successfully!"
         else
             print_warning "Failed to generate CineSync configuration. You can run it manually:"
-            print_warning "  $SCRIPT_DIR/configure-cinesync.sh"
+            print_warning "  python3 $SCRIPT_DIR/configure-cinesync.py"
         fi
     fi
     

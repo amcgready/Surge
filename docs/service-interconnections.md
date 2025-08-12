@@ -98,7 +98,7 @@ This document outlines all the automatic service interconnections configured by 
 - **Media organization** with automatic library structure detection
 - **Plex library updates** after file processing
 - **Real-time monitoring** and processing
-- **Script**: `configure-cinesync.sh`
+- **Script**: `configure-cinesync.py`
 
 ## 🔧 **Configuration Trigger Points**
 
