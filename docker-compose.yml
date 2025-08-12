@@ -225,6 +225,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - placeholdarr
 
   overseerr:
     image: sctx/overseerr:latest
@@ -240,6 +242,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - overseerr
 
   tautulli:
     image: lscr.io/linuxserver/tautulli:latest
@@ -293,6 +297,8 @@ services:
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
+    profiles:
+      - homepage
 
   watchtower:
     image: containrrr/watchtower:latest
@@ -313,23 +319,6 @@ services:
     profiles:
       - watchtower
 
-  scheduler:
-    image: crazymax/cron:latest
-    container_name: surge-scheduler
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - ${STORAGE_PATH}/Scheduler/config:/config
-      - ${STORAGE_PATH}/logs:/logs
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./scripts:/scripts:ro
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-    profiles:
-      - scheduler
 
   pd_zurg:
     image: iampuid0/pd_zurg:latest

@@ -126,50 +126,88 @@ setup_environment() {
 
 # Create directory structure
 create_directories() {
-    print_info "Creating directory structure..."
-    
-    # Read STORAGE_PATH from .env or use default
+    print_info "Creating directory structure for enabled services..."
     STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+    PUID=$(grep "^PUID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "1000")
+    PGID=$(grep "^PGID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "1000")
+    MEDIA_SERVER=$(grep "^MEDIA_SERVER=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "plex")
 
-    mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
+    # List of services and their required subfolders
+    declare -A service_folders
+    service_folders=(
+        [Bazarr]="config media"
+        [Radarr]="config media"
+        [Sonarr]="config media"
+        [Prowlarr]="config"
+        [NZBGet]="config downloads"
+        [RDT-Client]="config downloads"
+        [Zurg]="config downloads"
+        [cli_debrid]="config"
+        [Decypharr]="config"
+        [Kometa]="config"
+        [Posterizarr]="config"
+        [Overseerr]="config"
+        [Tautulli]="config"
+        [CineSync]="config"
+        [Placeholdarr]="config"
+        [GAPS]="config"
+        [Plex]="config media"
+        [Emby]="config media"
+        [Jellyfin]="config media"
+    )
 
-    # Ensure logs directory exists for post-deployment logging
+    # Only create folders for enabled services
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+        var_name="ENABLE_${service^^}"
+        var_name="${var_name//-/_}"
+        enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+        if [ "$enabled" = "true" ]; then
+            for sub in ${service_folders[$service]}; do
+                mkdir -p "$STORAGE_PATH/$service/$sub"
+            done
+        fi
+    done
+
+    # Always create media server folders for the selected server
+    case "$MEDIA_SERVER" in
+        plex|Plex)
+            mkdir -p "$STORAGE_PATH/Plex/config" "$STORAGE_PATH/Plex/media"
+            ;;
+        emby|Emby)
+            mkdir -p "$STORAGE_PATH/Emby/config" "$STORAGE_PATH/Emby/media"
+            ;;
+        jellyfin|Jellyfin)
+            mkdir -p "$STORAGE_PATH/Jellyfin/config" "$STORAGE_PATH/Jellyfin/media"
+            ;;
+    esac
+
+    # Always create shared folders for media, downloads, config, logs
+    mkdir -p "$STORAGE_PATH/media/movies" "$STORAGE_PATH/media/tv" "$STORAGE_PATH/media/music" "$STORAGE_PATH/downloads" "$STORAGE_PATH/config" "$STORAGE_PATH/logs"
     mkdir -p "$PROJECT_DIR/logs"
 
-    # Fix ownership for all directories (1000:1000 matches PUID:PGID used in containers)
-    print_info "Setting proper ownership for storage directories..."
-
-    # First create all necessary subdirectories with proper structure
-    mkdir -p "$STORAGE_PATH"/{Radarr,Sonarr,Prowlarr,Bazarr,Overseerr,Tautulli,NZBGet,Plex,Homepage,GAPS,RDT-Client,Posterizarr,Placeholdarr,Cinesync}/config
-    mkdir -p "$STORAGE_PATH"/{Radarr,Sonarr}/downloads
-    mkdir -p "$STORAGE_PATH"/{media/{movies,tv,music},downloads,config,logs}
-
+    # Set permissions
     if [ "$(id -u)" -eq 0 ]; then
-        # Running as root, set ownership directly
-        chown -R 1000:1000 "$STORAGE_PATH"
+        chown -R $PUID:$PGID "$STORAGE_PATH"
         chmod -R 755 "$STORAGE_PATH"
-        print_success "Directory ownership and permissions set to 1000:1000"
+        print_success "Directory ownership and permissions set to $PUID:$PGID"
     else
-        # Not running as root, use sudo
         if sudo -n true 2>/dev/null; then
-            # Sudo available without password prompt
-            sudo chown -R 1000:1000 "$STORAGE_PATH"
+            sudo chown -R $PUID:$PGID "$STORAGE_PATH"
             sudo chmod -R 755 "$STORAGE_PATH"
-            print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
+            print_success "Directory ownership and permissions set to $PUID:$PGID (with sudo)"
         else
-            # Prompt for sudo
             print_warning "Setting directory ownership requires sudo privileges..."
-            if sudo chown -R 1000:1000 "$STORAGE_PATH" && sudo chmod -R 755 "$STORAGE_PATH"; then
-                print_success "Directory ownership and permissions set to 1000:1000 (with sudo)"
+            if sudo chown -R $PUID:$PGID "$STORAGE_PATH" && sudo chmod -R 755 "$STORAGE_PATH"; then
+                print_success "Directory ownership and permissions set to $PUID:$PGID (with sudo)"
             else
                 print_warning "Failed to set directory ownership/permissions. You may need to run manually:"
-                print_warning "  sudo chown -R 1000:1000 $STORAGE_PATH"
+                print_warning "  sudo chown -R $PUID:$PGID $STORAGE_PATH"
                 print_warning "  sudo chmod -R 755 $STORAGE_PATH"
             fi
         fi
     fi
 
-    print_success "Directory structure created at $STORAGE_PATH"
+    print_success "Directory structure created at $STORAGE_PATH for enabled services."
 }
 
 # Show usage
@@ -247,6 +285,7 @@ deploy_services() {
         fi
     fi
 
+
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server"
     [ "$(grep '^ENABLE_BAZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" bazarr"
@@ -266,13 +305,15 @@ deploy_services() {
     [ "$(grep '^ENABLE_GAPS=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" gaps"
     [ "$(grep '^ENABLE_HOMEPAGE=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" homepage"
     [ "$(grep '^ENABLE_WATCHTOWER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" watchtower"
-    [ "$(grep '^ENABLE_SCHEDULER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scheduler"
     [ "$(grep '^ENABLE_PD_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" pd_zurg"
-    # Remove leading/trailing/multiple spaces and convert to comma-separated
-    COMPOSE_PROFILES=$(echo $PROFILES | xargs | tr ' ' ',')
-    export COMPOSE_PROFILES
-    print_info "Starting deployment with profiles: $COMPOSE_PROFILES"
-    docker compose $COMPOSE_FILES --profile $COMPOSE_PROFILES up -d
+
+    # Build multiple --profile flags
+    COMPOSE_PROFILE_FLAGS=""
+    for profile in $PROFILES; do
+        COMPOSE_PROFILE_FLAGS+=" --profile $profile"
+    done
+    print_info "Starting deployment with profiles:$COMPOSE_PROFILE_FLAGS"
+    eval docker compose $COMPOSE_FILES $COMPOSE_PROFILE_FLAGS up -d
     print_success "Surge deployed successfully!"
     
     # Configure services automatically
