@@ -421,11 +421,16 @@ class DecypharrConfigurator:
         # Determine which debrid services are available
         debrid_configs = []
 
+
+        # Helper to build debrid folder path
+        def build_debrid_folder(service_name):
+            return str(Path(self.storage_path) / "downloads" / "Decypharr" / service_name / "__all__")
+
         if self.rd_api_key:
             debrid_configs.append({
                 "name": "realdebrid",
                 "api_key": self.rd_api_key,
-                "folder": f"{self.container_downloads}/realdebrid/__all__/",
+                "folder": build_debrid_folder("realdebrid"),
                 "use_webdav": True,
                 "webdav_url": "https://webdav.real-debrid.com",
                 "enabled": True
@@ -436,7 +441,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "alldebrid",
                 "api_key": self.ad_api_key,
-                "folder": f"{self.container_downloads}/alldebrid/__all__/",
+                "folder": build_debrid_folder("alldebrid"),
                 "use_webdav": True,
                 "webdav_url": "https://webdav.alldebrid.com",
                 "enabled": True
@@ -447,7 +452,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "debridlink",
                 "api_key": self.dl_api_key,
-                "folder": f"{self.container_downloads}/debridlink/__all__/",
+                "folder": build_debrid_folder("debridlink"),
                 "use_webdav": True,
                 "enabled": True
             })
@@ -457,7 +462,7 @@ class DecypharrConfigurator:
             debrid_configs.append({
                 "name": "torbox",
                 "api_key": self.tb_api_key,
-                "folder": f"{self.container_downloads}/torbox/__all__/",
+                "folder": build_debrid_folder("torbox"),
                 "use_webdav": True,
                 "enabled": True
             })
