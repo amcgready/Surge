@@ -1,19 +1,111 @@
+def generate_config_template(self):
+        """Generate a commented config template exposing all variables"""
+        print("📝 Generating Decypharr config template...")
+        template = {
+            "version": "1.0",  # Config version
+            "debrids": [
+                {
+                    "name": "realdebrid",  # Debrid provider name
+                    "api_key": "<YOUR_REALDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/realdebrid/__all__",  # Folder for downloads
+                    "use_webdav": True,  # Enable WebDAV
+                    "webdav_url": "https://webdav.real-debrid.com",  # WebDAV URL
+                    "enabled": True  # Enable this provider
+                },
+                {
+                    "name": "alldebrid",
+                    "api_key": "<YOUR_ALLDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/alldebrid/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "https://webdav.alldebrid.com",
+                    "enabled": True
+                },
+                {
+                    "name": "debridlink",
+                    "api_key": "<YOUR_DEBRIDLINK_API_KEY>",
+                    "folder": "/mnt/downloads/debridlink/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                },
+                {
+                    "name": "torbox",
+                    "api_key": "<YOUR_TORBOX_API_KEY>",
+                    "folder": "/mnt/downloads/torbox/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                }
+            ],
+            "qbittorrent": {
+                "port": 8282,  # API port
+                "download_folder": "/mnt/downloads/symlinks/",  # Download folder
+                "categories": ["sonarr", "radarr", "lidarr", "readarr"],  # Supported categories
+                "default_category": "default",
+                "temp_folder": "/mnt/downloads/temp/",
+                "completed_folder": "/mnt/downloads/completed/"
+            },
+            "repair": {
+                "enabled": True,  # Enable repair worker
+                "interval": "6h",  # Repair interval (e.g. 1h, 6h, cron syntax)
+                "check_symlinks": True,  # Check for broken symlinks
+                "check_missing_files": True,  # Check for missing files
+                "auto_repair": True,  # Auto process repairs
+                "max_retries": 3  # Max retries for repair jobs
+            },
+            "webdav": {
+                "enabled": True,  # Enable WebDAV server
+                "port": 8283,  # WebDAV port
+                "prefix": "/webdav",  # WebDAV URL prefix
+                "auto_mount": True  # Auto-mount WebDAV folders
+            },
+            "blackhole": {
+                "enabled": True,  # Enable blackhole processing
+                "watch_folders": {
+                    "sonarr": "/mnt/downloads/blackhole/sonarr",
+                    "radarr": "/mnt/downloads/blackhole/radarr"
+                },
+                "check_interval": "30s",  # Interval to check for new files
+                "auto_process": True  # Auto process new files
+            },
+            "api": {
+                "enable_cors": True,  # Enable CORS
+                "rate_limit": {
+                    "enabled": True,
+                    "requests_per_minute": 60
+                }
+            },
+            "use_auth": False,  # Enable authentication for WebUI/API
+            "log_level": "info",  # Log level (info, debug, warning, error)
+            "metrics": {
+                "enabled": True,  # Enable metrics endpoint
+                "port": 8284,  # Metrics port
+                "endpoint": "/metrics"  # Metrics endpoint path
+            },
+            "notifications": {
+                "discord": {
+                    "enabled": False,  # Enable Discord notifications
+                    "webhook_url": "<YOUR_DISCORD_WEBHOOK_URL>",
+                    "events": ["download_complete", "download_failed", "repair_complete"]
+                }
+            },
+            "arr": {
+                "radarr": {
+                    "api_key": "<YOUR_RADARR_API_KEY>",
+                    "url": "http://radarr:7878"
+                },
+                "sonarr": {
+                    "api_key": "<YOUR_SONARR_API_KEY>",
+                    "url": "http://sonarr:8989"
+                }
+            }
+        }
+        # Save template
+        template_file = self.decypharr_config_dir / "config.template.json"
+        with open(template_file, 'w', encoding='utf-8') as f:
+            json.dump(template, f, indent=2)
+        print(f"  ✓ Config template saved to: {template_file}")
 #!/usr/bin/env python3
-
-"""
-Decypharr Automation Configuration
-
-This script automatically configures Decypharr for the Surge media stack.
-Decypharr provides a mock qBittorrent API that integrates with multiple debrid services
-and works seamlessly with Sonarr, Radarr, and other *arr applications.
-
-Key Features:
-- Multi-debrid service support (Real-Debrid, AllDebrid, Debrid-Link, Torbox)
-- Mock qBittorrent API for *arr integration
-- Blackhole directory processing
-- WebDAV server support
-- Repair worker for missing files
-"""
 
 import os
 import sys
@@ -206,7 +298,7 @@ class DecypharrConfigurator:
             return obj
 
     def create_decypharr_config(self):
-        """Generate Decypharr configuration file"""
+        """Generate Decypharr configuration file with dynamic API keys"""
         print("📝 Generating Decypharr configuration...")
 
         # Determine which debrid services are available
@@ -259,7 +351,11 @@ class DecypharrConfigurator:
             print("  💡 Please set RD_API_TOKEN, AD_API_TOKEN, DEBRID_LINK_API_TOKEN, or TORBOX_API_TOKEN")
             print("  📝 Creating basic configuration without debrid services...")
 
-        # Always include arr section with placeholders for API keys/URLs
+        # Dynamically get Radarr and Sonarr API keys
+        radarr_api_key = self.get_api_key("Radarr", self.radarr_url, f"{self.storage_path}/Radarr/config")
+        sonarr_api_key = self.get_api_key("Sonarr", self.sonarr_url, f"{self.storage_path}/Sonarr/config")
+
+        # Always include arr section with detected API keys
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
@@ -317,11 +413,11 @@ class DecypharrConfigurator:
             },
             "arr": {
                 "radarr": {
-                    "api_key": "RADARR_API_KEY_PLACEHOLDER",
+                    "api_key": radarr_api_key if radarr_api_key else "RADARR_API_KEY_PLACEHOLDER",
                     "url": self.radarr_url
                 },
                 "sonarr": {
-                    "api_key": "SONARR_API_KEY_PLACEHOLDER",
+                    "api_key": sonarr_api_key if sonarr_api_key else "SONARR_API_KEY_PLACEHOLDER",
                     "url": self.sonarr_url
                 }
             }
@@ -334,6 +430,14 @@ class DecypharrConfigurator:
 
         print(f"  ✓ Configuration saved to: {config_file}")
         print(f"  ✓ Configured {len(debrid_configs)} debrid service(s)")
+        if radarr_api_key:
+            print(f"  ✓ Radarr API key injected: {radarr_api_key}")
+        else:
+            print("  ⚠️  Radarr API key not found, using placeholder")
+        if sonarr_api_key:
+            print(f"  ✓ Sonarr API key injected: {sonarr_api_key}")
+        else:
+            print("  ⚠️  Sonarr API key not found, using placeholder")
         return True
         
     def configure_arr_download_client(self, service_name: str, service_url: str, api_key: str):
@@ -584,6 +688,12 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Step 1/6 failed: {e}")
             
+        # Step 1b: Generate config template
+        try:
+            self.generate_config_template()
+            print("✅ Step 1b: Config template generated")
+        except Exception as e:
+            print(f"❌ Step 1b failed: {e}")
         # Step 2: Test debrid services
         try:
             if self.test_debrid_services():
