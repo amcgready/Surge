@@ -521,16 +521,20 @@ class DecypharrConfigurator:
             "source": "auto"
         })
 
+        qbittorrent_download_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "symlinks")
+        qbittorrent_temp_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "temp")
+        qbittorrent_completed_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "completed")
+
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
             "qbittorrent": {
                 "port": "8282",
-                "download_folder": self.container_symlinks + "/",
+                "download_folder": qbittorrent_download_folder,
                 "categories": ["sonarr", "radarr", "lidarr", "readarr"],
                 "default_category": "default",
-                "temp_folder": self.container_temp + "/",
-                "completed_folder": self.container_completed + "/"
+                "temp_folder": qbittorrent_temp_folder,
+                "completed_folder": qbittorrent_completed_folder
             },
             "repair": {
                 "enabled": True,
