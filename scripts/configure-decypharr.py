@@ -472,12 +472,9 @@ class DecypharrConfigurator:
         radarr_api_key = self.get_api_key("Radarr", self.radarr_url, f"{self.storage_path}/Radarr/config")
         sonarr_api_key = self.get_api_key("Sonarr", self.sonarr_url, f"{self.storage_path}/Sonarr/config")
 
-        # Always include arr section with detected API keys
-        # Dynamically grab Discord webhook URL (always populate, even if notifications.discord.enabled is false)
-        # Always import DISCORD_WEBHOOK_URL from .env if present, else fallback to env or file
+
+        # Dynamically grab Discord webhook URL (existing logic)
         discord_webhook_url = None
-        # Use project root for .env file, not storage path
-        # Use absolute path for .env to ensure correct lookup regardless of invocation location
         import os
         project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent.parent
         env_path = project_root / ".env"
@@ -486,7 +483,6 @@ class DecypharrConfigurator:
                 for line in env_file:
                     if line.strip().startswith("DISCORD_WEBHOOK_URL="):
                         discord_webhook_url = line.strip().split("=", 1)[1]
-                        # Remove any surrounding quotes and whitespace
                         discord_webhook_url = discord_webhook_url.strip().strip('"').strip("'")
                         break
         if not discord_webhook_url or not discord_webhook_url.strip():
@@ -498,6 +494,27 @@ class DecypharrConfigurator:
                     discord_webhook_url = wf.read().strip()
         if not discord_webhook_url or not discord_webhook_url.strip():
             discord_webhook_url = "<YOUR_DISCORD_WEBHOOK_URL>"
+
+        # --- ARR SECTION UPDATE ---
+        arrs = []
+        # Sonarr
+        arrs.append({
+            "name": "sonarr",
+            "host": self.sonarr_url,
+            "token": sonarr_api_key if sonarr_api_key else "SONARR_API_KEY_PLACEHOLDER",
+            "cleanup": True,
+            "download_unacached": False,
+            "source": "auto"
+        })
+        # Radarr
+        arrs.append({
+            "name": "radarr",
+            "host": self.radarr_url,
+            "token": radarr_api_key if radarr_api_key else "RADARR_API_KEY_PLACEHOLDER",
+            "cleanup": True,
+            "download_unacached": False,
+            "source": "auto"
+        })
 
         config = {
             "version": "1.0",
@@ -554,16 +571,7 @@ class DecypharrConfigurator:
                     "events": ["download_complete", "download_failed", "repair_complete"]
                 }
             },
-            "arr": {
-                "radarr": {
-                    "api_key": radarr_api_key if radarr_api_key else "RADARR_API_KEY_PLACEHOLDER",
-                    "url": self.radarr_url
-                },
-                "sonarr": {
-                    "api_key": sonarr_api_key if sonarr_api_key else "SONARR_API_KEY_PLACEHOLDER",
-                    "url": self.sonarr_url
-                }
-            }
+            "arrs": arrs
         }
 
         # Save configuration
