@@ -1,3 +1,120 @@
+class DecypharrConfigurator:
+    """Main Decypharr configuration class"""
+    def __init__(self, storage_path: str):
+        self.storage_path = self._validate_storage_path(storage_path)
+        self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
+        self.decypharr_downloads_dir = Path(self.storage_path) / "downloads" / "Decypharr"
+        self.decypharr_movies_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "movies"
+        self.decypharr_tv_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "tv"
+        # ...existing code...
+
+    def generate_config_template(self):
+        """Generate a commented config template exposing all variables"""
+        print("📝 Generating Decypharr config template...")
+        template = {
+            "version": "1.0",  # Config version
+            "debrids": [
+                {
+                    "name": "realdebrid",  # Debrid provider name
+                    "api_key": "<YOUR_REALDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/realdebrid/__all__",  # Folder for downloads
+                    "use_webdav": True,  # Enable WebDAV
+                    "webdav_url": "https://webdav.real-debrid.com",  # WebDAV URL
+                    "enabled": True  # Enable this provider
+                },
+                {
+                    "name": "alldebrid",
+                    "api_key": "<YOUR_ALLDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/alldebrid/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "https://webdav.alldebrid.com",
+                    "enabled": True
+                },
+                {
+                    "name": "debridlink",
+                    "api_key": "<YOUR_DEBRIDLINK_API_KEY>",
+                    "folder": "/mnt/downloads/debridlink/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                },
+                {
+                    "name": "torbox",
+                    "api_key": "<YOUR_TORBOX_API_KEY>",
+                    "folder": "/mnt/downloads/torbox/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                }
+            ],
+            "qbittorrent": {
+                "port": 8282,  # API port
+                "download_folder": "/mnt/downloads/symlinks/",  # Download folder
+                "categories": ["sonarr", "radarr", "lidarr", "readarr"],  # Supported categories
+                "default_category": "default",
+                "temp_folder": "/mnt/downloads/temp/",
+                "completed_folder": "/mnt/downloads/completed/"
+            },
+            "repair": {
+                "enabled": True,  # Enable repair worker
+                "interval": "6h",  # Repair interval (e.g. 1h, 6h, cron syntax)
+                "check_symlinks": True,  # Check for broken symlinks
+                "check_missing_files": True,  # Check for missing files
+                "auto_repair": True,  # Auto process repairs
+                "max_retries": 3  # Max retries for repair jobs
+            },
+            "webdav": {
+                "enabled": True,  # Enable WebDAV server
+                "port": 8283,  # WebDAV port
+                "prefix": "/webdav",  # WebDAV URL prefix
+                "auto_mount": True  # Auto-mount WebDAV folders
+            },
+            "blackhole": {
+                "enabled": True,  # Enable blackhole processing
+                "watch_folders": {
+                    "sonarr": "/mnt/downloads/blackhole/sonarr",
+                    "radarr": "/mnt/downloads/blackhole/radarr"
+                },
+                "check_interval": "30s",  # Interval to check for new files
+                "auto_process": True  # Auto process new files
+            },
+            "api": {
+                "enable_cors": True,  # Enable CORS
+                "rate_limit": {
+                    "enabled": True,
+                    "requests_per_minute": 60
+                }
+            },
+            "use_auth": False,  # Enable authentication for WebUI/API
+            "log_level": "info",  # Log level (info, debug, warning, error)
+            "metrics": {
+                "enabled": True,  # Enable metrics endpoint
+                "port": 8284,  # Metrics port
+                "endpoint": "/metrics"  # Metrics endpoint path
+            },
+            "notifications": {
+                "discord": {
+                    "enabled": False,  # Enable Discord notifications
+                    "webhook_url": "<YOUR_DISCORD_WEBHOOK_URL>",
+                    "events": ["download_complete", "download_failed", "repair_complete"]
+                }
+            },
+            "arr": {
+                "radarr": {
+                    "api_key": "<YOUR_RADARR_API_KEY>",
+                    "url": "http://radarr:7878"
+                },
+                "sonarr": {
+                    "api_key": "<YOUR_SONARR_API_KEY>",
+                    "url": "http://sonarr:8989"
+                }
+            }
+        }
+        # Save template
+        template_file = self.decypharr_config_dir / "config.template.json"
+        with open(template_file, 'w', encoding='utf-8') as f:
+            json.dump(template, f, indent=2)
+        print(f"  ✓ Config template saved to: {template_file}")
 def generate_config_template(self):
         """Generate a commented config template exposing all variables"""
         print("📝 Generating Decypharr config template...")
@@ -356,6 +473,32 @@ class DecypharrConfigurator:
         sonarr_api_key = self.get_api_key("Sonarr", self.sonarr_url, f"{self.storage_path}/Sonarr/config")
 
         # Always include arr section with detected API keys
+        # Dynamically grab Discord webhook URL (always populate, even if notifications.discord.enabled is false)
+        # Always import DISCORD_WEBHOOK_URL from .env if present, else fallback to env or file
+        discord_webhook_url = None
+        # Use project root for .env file, not storage path
+        # Use absolute path for .env to ensure correct lookup regardless of invocation location
+        import os
+        project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent.parent
+        env_path = project_root / ".env"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as env_file:
+                for line in env_file:
+                    if line.strip().startswith("DISCORD_WEBHOOK_URL="):
+                        discord_webhook_url = line.strip().split("=", 1)[1]
+                        # Remove any surrounding quotes and whitespace
+                        discord_webhook_url = discord_webhook_url.strip().strip('"').strip("'")
+                        break
+        if not discord_webhook_url or not discord_webhook_url.strip():
+            discord_webhook_url = os.environ.get('DISCORD_WEBHOOK_URL', None)
+        if not discord_webhook_url or not discord_webhook_url.strip():
+            webhook_file = Path(self.storage_path) / "discord_webhook.txt"
+            if webhook_file.exists():
+                with open(webhook_file, 'r', encoding='utf-8') as wf:
+                    discord_webhook_url = wf.read().strip()
+        if not discord_webhook_url or not discord_webhook_url.strip():
+            discord_webhook_url = "<YOUR_DISCORD_WEBHOOK_URL>"
+
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
@@ -406,8 +549,8 @@ class DecypharrConfigurator:
             },
             "notifications": {
                 "discord": {
-                    "enabled": bool(os.environ.get('DISCORD_WEBHOOK_URL')),
-                    "webhook_url": os.environ.get('DISCORD_WEBHOOK_URL', ''),
+                    "enabled": bool(discord_webhook_url and discord_webhook_url != "<YOUR_DISCORD_WEBHOOK_URL>"),
+                    "webhook_url": discord_webhook_url,
                     "events": ["download_complete", "download_failed", "repair_complete"]
                 }
             },
