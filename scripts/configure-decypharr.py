@@ -481,7 +481,8 @@ class DecypharrConfigurator:
         # Dynamically grab Discord webhook URL (existing logic)
         discord_webhook_url = None
         import os
-        project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent.parent
+        # Fix: Use Surge project root for .env
+        project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent
         env_path = project_root / ".env"
         if env_path.exists():
             with open(env_path, 'r', encoding='utf-8') as env_file:
@@ -525,6 +526,9 @@ class DecypharrConfigurator:
         qbittorrent_temp_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "temp")
         qbittorrent_completed_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "completed")
 
+        rclone_mount_path = str(Path(self.storage_path) / "downloads" / "Decypharr" / "rclone" / "remote")
+        rclone_cache_dir = str(Path(self.storage_path) / "downloads" / "Decypharr" / "rclone" / "cache")
+
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
@@ -535,6 +539,44 @@ class DecypharrConfigurator:
                 "default_category": "default",
                 "temp_folder": qbittorrent_temp_folder,
                 "completed_folder": qbittorrent_completed_folder
+            },
+            "rclone": {
+                "enabled": True,
+                "mount_path": rclone_mount_path,
+                "cache_dir": rclone_cache_dir,
+                "vfs_cache_mode": "full",
+                "vfs_cache_max_age": "1000h",
+                "vfs_cache_max_size": "10G",
+                "vfs_cache_poll_interval": "1m",
+                "vfs_read_chunk_size": "10M",
+                "vfs_read_chunk_size_limit": "off",
+                "vfs_read_ahead": "0",
+                "buffer_size": "10M",
+                "uid": 1000,
+                "gid": 1000,
+                "attr_timeout": "10y",
+                "dir_cache_time": "5m",
+                "no_modtime": True,
+                "no_checksum": True
+            },
+            "rclone": {
+                "enabled": True,
+                "mount_path": rclone_mount_path,
+                "cache_dir": rclone_cache_dir,
+                "vfs_cache_mode": "full",
+                "vfs_cache_max_age": "1000h",
+                "vfs_cache_max_size": "10G",
+                "vfs_cache_poll_interval": "1m",
+                "vfs_read_chunk_size": "10M",
+                "vfs_read_chunk_size_limit": "off",
+                "vfs_read_ahead": "0",
+                "buffer_size": "10M",
+                "uid": 1000,
+                "gid": 1000,
+                "attr_timeout": "10y",
+                "dir_cache_time": "5m",
+                "no_modtime": True,
+                "no_checksum": True
             },
             "repair": {
                 "enabled": True,
