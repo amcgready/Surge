@@ -640,6 +640,33 @@ class DecypharrConfigurator:
             print(f"  ✓ Sonarr API key injected: {sonarr_api_key}")
         else:
             print("  ⚠️  Sonarr API key not found, using placeholder")
+
+        # Dynamically create all Decypharr config folders with sudo mkdir
+        import subprocess
+        folders_to_create = set()
+        # Add all folder paths from config
+        folders_to_create.add(str(self.decypharr_config_dir))
+        folders_to_create.add(str(self.decypharr_downloads_dir))
+        folders_to_create.add(str(self.decypharr_movies_dir))
+        folders_to_create.add(str(self.decypharr_tv_dir))
+        folders_to_create.add(qbittorrent_download_folder)
+        folders_to_create.add(qbittorrent_temp_folder)
+        folders_to_create.add(qbittorrent_completed_folder)
+        folders_to_create.add(rclone_mount_path)
+        folders_to_create.add(rclone_cache_dir)
+        folders_to_create.add(str(Path(self.storage_path) / "downloads" / "Decypharr" / "blackhole" / "sonarr"))
+        folders_to_create.add(str(Path(self.storage_path) / "downloads" / "Decypharr" / "blackhole" / "radarr"))
+        # Add debrid folders
+        for debrid in debrid_configs:
+            folders_to_create.add(debrid.get("folder"))
+        # Create each folder with sudo mkdir -p
+        for folder in folders_to_create:
+            if folder and not Path(folder).exists():
+                try:
+                    print(f"  🛠️  Creating folder: {folder}")
+                    subprocess.run(["sudo", "mkdir", "-p", folder], check=True)
+                except Exception as e:
+                    print(f"  ⚠️  Could not create folder {folder}: {e}")
         return True
         
     def configure_arr_download_client(self, service_name: str, service_url: str, api_key: str):
