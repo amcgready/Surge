@@ -522,12 +522,17 @@ class DecypharrConfigurator:
             "source": "auto"
         })
 
-        qbittorrent_download_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "symlinks")
-        qbittorrent_temp_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "temp")
-        qbittorrent_completed_folder = str(Path(self.storage_path) / "downloads" / "Decypharr" / "completed")
 
-        rclone_mount_path = str(Path(self.storage_path) / "downloads" / "Decypharr" / "rclone" / "remote")
-        rclone_cache_dir = str(Path(self.storage_path) / "downloads" / "Decypharr" / "rclone" / "cache")
+        # Use fixed container paths for config values to match Docker volume mappings
+        qbittorrent_download_folder = "/mnt/downloads/symlinks"
+        qbittorrent_temp_folder = "/mnt/downloads/temp"
+        qbittorrent_completed_folder = "/mnt/downloads/completed"
+
+        rclone_mount_path = "/mnt/rclone/remote"
+        rclone_cache_dir = "/mnt/rclone/cache"
+
+        blackhole_sonarr = "/mnt/downloads/blackhole/sonarr"
+        blackhole_radarr = "/mnt/downloads/blackhole/radarr"
 
         config = {
             "version": "1.0",
@@ -539,25 +544,6 @@ class DecypharrConfigurator:
                 "default_category": "default",
                 "temp_folder": qbittorrent_temp_folder,
                 "completed_folder": qbittorrent_completed_folder
-            },
-            "rclone": {
-                "enabled": True,
-                "mount_path": rclone_mount_path,
-                "cache_dir": rclone_cache_dir,
-                "vfs_cache_mode": "full",
-                "vfs_cache_max_age": "1000h",
-                "vfs_cache_max_size": "10G",
-                "vfs_cache_poll_interval": "1m",
-                "vfs_read_chunk_size": "10M",
-                "vfs_read_chunk_size_limit": "off",
-                "vfs_read_ahead": "0",
-                "buffer_size": "10M",
-                "uid": 1000,
-                "gid": 1000,
-                "attr_timeout": "10y",
-                "dir_cache_time": "5m",
-                "no_modtime": True,
-                "no_checksum": True
             },
             "rclone": {
                 "enabled": True,
@@ -595,8 +581,8 @@ class DecypharrConfigurator:
             "blackhole": {
                 "enabled": True,
                 "watch_folders": {
-                    "sonarr": str(Path(self.storage_path) / "downloads" / "blackhole" / "sonarr"),
-                    "radarr": str(Path(self.storage_path) / "downloads" / "blackhole" / "radarr")
+                    "sonarr": blackhole_sonarr,
+                    "radarr": blackhole_radarr
                 },
                 "check_interval": "30s",
                 "auto_process": True
@@ -910,12 +896,9 @@ if __name__ == "__main__":
         total_steps = 6
         
         # Step 1: Create directories
-        try:
-            self.ensure_directories()
-            success_count += 1
-            print("✅ Step 1/6: Directory structure created")
-        except Exception as e:
-            print(f"❌ Step 1/6 failed: {e}")
+        self.ensure_directories()
+        success_count += 1
+        print("✅ Step 1/6: Directory structure created")
             
         # Step 1b: Generate config template
         try:

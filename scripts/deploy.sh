@@ -81,6 +81,7 @@ validate_storage_path() {
     else
         print_warning "Storage path validation script not found, skipping..."
     fi
+
 }
 
 # Create environment file

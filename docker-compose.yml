@@ -168,9 +168,13 @@ services:
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
-      - ${STORAGE_PATH}/downloads/Decypharr:/mnt/downloads
+      - ${STORAGE_PATH}/downloads/Decypharr:/media/remote/realdebrid/__all__/
       - ${STORAGE_PATH}/downloads/Decypharr/symlinks:/mnt/downloads/symlinks
       - ${STORAGE_PATH}/downloads/Decypharr/temp:/mnt/downloads/temp
+      - ${STORAGE_PATH}/downloads/Decypharr/rclone/remote:/mnt/rclone/remote
+      - ${STORAGE_PATH}/downloads/Decypharr/rclone/cache:/mnt/rclone/cache
+      - ${STORAGE_PATH}/downloads/Decypharr/blackhole/sonarr:/mnt/downloads/blackhole/sonarr
+      - ${STORAGE_PATH}/downloads/Decypharr/blackhole/radarr:/mnt/downloads/blackhole/radarr
 
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"

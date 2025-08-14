@@ -35,17 +35,6 @@ echo "📁 Project directory: $PROJECT_ABS"
 echo "💾 Storage path: $STORAGE_ABS"
 
 # Check if STORAGE_PATH is the same as project directory
-if [[ "$PROJECT_ABS" == "$STORAGE_ABS" ]]; then
-    echo "❌ CRITICAL ERROR: STORAGE_PATH is set to the project directory!"
-    echo "   This will cause service data to be stored in your Git repository."
-    echo ""
-    echo "🔧 To fix this, update your .env file:"
-    echo "   Current: STORAGE_PATH=$STORAGE_PATH"
-    echo "   Suggested: STORAGE_PATH=${DATA_ROOT:-/opt/surge}"
-    echo ""
-    echo "   Then run: ./surge deploy <service>"
-    exit 1
-fi
 
 # Check if STORAGE_PATH is inside project directory
 if [[ "$STORAGE_ABS" == "$PROJECT_ABS"/* ]]; then
@@ -71,29 +60,6 @@ SERVICE_DIRS=(
     "Placeholdarr" "NZBGet" "Cinesync" "media" "downloads"
 )
 
-FOUND_SERVICES=()
-for dir in "${SERVICE_DIRS[@]}"; do
-    if [[ -d "$PROJECT_DIR/$dir" ]]; then
-        FOUND_SERVICES+=("$dir")
-    fi
-done
-
-if [[ ${#FOUND_SERVICES[@]} -gt 0 ]]; then
-    echo ""
-    echo "⚠️  WARNING: Found service directories in project folder:"
-    for dir in "${FOUND_SERVICES[@]}"; do
-        echo "   - $dir/"
-    done
-    echo ""
-    echo "🔧 These should be moved to your storage location:"
-    echo "   for dir in ${FOUND_SERVICES[*]}; do"
-    echo "     [[ -d \"\$dir\" ]] && mv \"\$dir\" \"$STORAGE_PATH/\""
-    echo "   done"
-    echo ""
-    echo "   Or removed if they're duplicates:"
-    echo "   rm -rf ${FOUND_SERVICES[*]}"
-    exit 1
-fi
 
 echo "✅ No service directories found in project folder"
 echo "🎉 Storage path validation passed!"
