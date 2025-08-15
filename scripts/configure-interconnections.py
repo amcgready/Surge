@@ -24,8 +24,35 @@ from datetime import datetime
 from pathlib import Path
 
 class SurgeInterconnectionManager:
+    def remove_existing_nzbget_client(self, service):
+        """Remove any existing NZBGet download client from the given service (radarr/sonarr)."""
+        api_key = self.api_keys.get(service)
+        if not api_key:
+            return
+        port = {'radarr': 7878, 'sonarr': 8989}[service]
+        url = f"http://localhost:{port}/api/v3/downloadclient"
+        headers = {
+            'X-Api-Key': api_key,
+            'Content-Type': 'application/json'
+        }
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                clients = resp.json()
+                for client in clients:
+                    if client.get('implementation') == 'NZBGet':
+                        del_url = f"{url}/{client['id']}"
+                        del_resp = requests.delete(del_url, headers=headers, timeout=10)
+                        if del_resp.status_code in [200, 204]:
+                            self.log(f"Removed existing NZBGet client from {service.title()}", "SUCCESS")
+                        else:
+                            self.log(f"Failed to remove NZBGet client from {service.title()}: {del_resp.status_code}", "WARNING")
+            else:
+                self.log(f"Failed to list download clients for {service.title()}: {resp.status_code}", "WARNING")
+        except Exception as e:
+            self.log(f"Error removing NZBGet client from {service.title()}: {e}", "ERROR")
     def update_nzbget_config_categories(self):
-        """Directly update nzbget.conf to keep Category1, set Category2 to TV, remove Category3/4."""
+        """Directly update nzbget.conf to ensure Movies and TV categories have all required fields."""
         config_path = os.path.join(self.storage_path, "NZBGet/config/nzbget.conf")
         if not os.path.exists(config_path):
             self.log(f"NZBGet config not found at {config_path}", "WARNING")
@@ -33,25 +60,47 @@ class SurgeInterconnectionManager:
         try:
             with open(config_path, "r") as f:
                 lines = f.readlines()
+            # Find where categories start
+            cat_start = None
+            for i, line in enumerate(lines):
+                if line.strip().startswith("### CATEGORIES"):
+                    cat_start = i
+                    break
+            if cat_start is None:
+                self.log("Could not find CATEGORIES section in nzbget.conf", "ERROR")
+                return
+            # Compose new category blocks
+            category_block = [
+                "Category1.Name=Movies\n",
+                "Category1.DestDir=\n",
+                "Category1.Unpack=yes\n",
+                "Category1.Extensions=\n",
+                "Category1.Aliases=\n",
+                "\n",
+                "Category2.Name=TV\n",
+                "Category2.DestDir=\n",
+                "Category2.Unpack=yes\n",
+                "Category2.Extensions=\n",
+                "Category2.Aliases=\n",
+                "\n"
+            ]
+            # Remove all existing CategoryN.* lines
             new_lines = []
-            skip = False
             for line in lines:
-                if line.startswith("Category2.Name="):
-                    new_lines.append("Category2.Name=TV\n")
-                    skip = False
-                elif line.startswith("Category3.Name=") or line.startswith("Category4.Name="):
-                    skip = True
-                elif skip and (line.strip() == "" or line.startswith("#")):
+                if line.strip().startswith("Category"):
                     continue
-                else:
-                    new_lines.append(line)
-                    skip = False
-            # Remove any trailing blank lines after categories
-            while new_lines and new_lines[-1].strip() == "":
-                new_lines.pop()
+                new_lines.append(line)
+            # Insert new category block after CATEGORIES section
+            for i, line in enumerate(new_lines):
+                if line.strip().startswith("### CATEGORIES"):
+                    insert_idx = i + 1
+                    break
+            else:
+                insert_idx = len(new_lines)
+            final_lines = new_lines[:insert_idx] + category_block + new_lines[insert_idx:]
             with open(config_path, "w") as f:
-                f.writelines(new_lines)
-            self.log("✅ NZBGet config categories updated (Category1 kept, Category2 set to TV, Category3/4 removed)", "SUCCESS")
+                f.writelines(final_lines)
+            self.log("✅ NZBGet config categories updated (Movies and TV with all required fields)", "SUCCESS")
         except Exception as e:
             self.log(f"Error updating NZBGet config: {e}", "ERROR")
     
@@ -336,6 +385,7 @@ class SurgeInterconnectionManager:
         nzbget_pass = os.environ.get('NZBGET_PASS', 'password')
         for service in ['radarr', 'sonarr']:
             if service in self.enabled_services and service in self.api_keys:
+                self.remove_existing_nzbget_client(service)
                 category_field = 'movieCategory' if service == 'radarr' else 'tvCategory'
                 category_value = 'Movies' if service == 'radarr' else 'TV'
                 nzbget_config = {
