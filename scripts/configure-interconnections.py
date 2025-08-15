@@ -24,6 +24,36 @@ from datetime import datetime
 from pathlib import Path
 
 class SurgeInterconnectionManager:
+    def update_nzbget_config_categories(self):
+        """Directly update nzbget.conf to keep Category1, set Category2 to TV, remove Category3/4."""
+        config_path = os.path.join(self.storage_path, "NZBGet/config/nzbget.conf")
+        if not os.path.exists(config_path):
+            self.log(f"NZBGet config not found at {config_path}", "WARNING")
+            return
+        try:
+            with open(config_path, "r") as f:
+                lines = f.readlines()
+            new_lines = []
+            skip = False
+            for line in lines:
+                if line.startswith("Category2.Name="):
+                    new_lines.append("Category2.Name=TV\n")
+                    skip = False
+                elif line.startswith("Category3.Name=") or line.startswith("Category4.Name="):
+                    skip = True
+                elif skip and (line.strip() == "" or line.startswith("#")):
+                    continue
+                else:
+                    new_lines.append(line)
+                    skip = False
+            # Remove any trailing blank lines after categories
+            while new_lines and new_lines[-1].strip() == "":
+                new_lines.pop()
+            with open(config_path, "w") as f:
+                f.writelines(new_lines)
+            self.log("✅ NZBGet config categories updated (Category1 kept, Category2 set to TV, Category3/4 removed)", "SUCCESS")
+        except Exception as e:
+            self.log(f"Error updating NZBGet config: {e}", "ERROR")
     
     def _generate_secure_nzbget_password(self):
         """Generate a secure password for NZBGet if none provided"""
@@ -300,51 +330,32 @@ class SurgeInterconnectionManager:
     
     def configure_nzbget_clients(self):
         """Configure NZBGet as download client in Radarr and Sonarr, ensuring categories exist."""
+        self.update_nzbget_config_categories()
         self.ensure_nzbget_categories(['Movies', 'TV'])
         nzbget_user = os.environ.get('NZBGET_USER', 'admin')
         nzbget_pass = os.environ.get('NZBGET_PASS', 'password')
         for service in ['radarr', 'sonarr']:
-            if service in self.enabled_services:
-                if service in self.api_keys:
-                    if service == 'radarr':
-                        nzbget_config = {
-                            'name': 'NZBGet',
-                            'implementation': 'NZBGet',
-                            'configContract': 'NzbgetSettings',
-                            'protocol': 'usenet',
-                            'enable': True,
-                            'priority': 1,
-                            'fields': [
-                                {'name': 'host', 'value': 'surge-nzbget'},
-                                {'name': 'port', 'value': 6789},
-                                {'name': 'username', 'value': nzbget_user},
-                                {'name': 'password', 'value': nzbget_pass},
-                                {'name': 'movieCategory', 'value': 'Movies'}
-                            ]
-                        }
-                    else:  # sonarr
-                        # Ensure TV category exists before adding client
-                        self.ensure_nzbget_categories(['TV'])
-                        import time
-                        time.sleep(2)  # Wait for NZBGet to update categories
-                        nzbget_config = {
-                            'name': 'NZBGet',
-                            'implementation': 'NZBGet',
-                            'configContract': 'NzbgetSettings',
-                            'protocol': 'usenet',
-                            'enable': True,
-                            'priority': 1,
-                            'fields': [
-                                {'name': 'host', 'value': 'surge-nzbget'},
-                                {'name': 'port', 'value': 6789},
-                                {'name': 'username', 'value': nzbget_user},
-                                {'name': 'password', 'value': nzbget_pass},
-                                {'name': 'tvCategory', 'value': 'TV'}
-                            ]
-                        }
-                    self.add_download_client(service, nzbget_config)
-                else:
-                    self.log(f"NZBGet integration: Missing API key for {service}. Cannot add NZBGet as download client.", "ERROR")
+            if service in self.enabled_services and service in self.api_keys:
+                category_field = 'movieCategory' if service == 'radarr' else 'tvCategory'
+                category_value = 'Movies' if service == 'radarr' else 'TV'
+                nzbget_config = {
+                    'name': 'NZBGet',
+                    'implementation': 'NZBGet',
+                    'configContract': 'NzbgetSettings',
+                    'protocol': 'usenet',
+                    'enable': True,
+                    'priority': 1,
+                    'fields': [
+                        {'name': 'host', 'value': 'surge-nzbget'},
+                        {'name': 'port', 'value': 6789},
+                        {'name': 'username', 'value': nzbget_user},
+                        {'name': 'password', 'value': nzbget_pass},
+                        {'name': category_field, 'value': category_value}
+                    ]
+                }
+                self.add_download_client(service, nzbget_config)
+            elif service in self.enabled_services:
+                self.log(f"NZBGet integration: Missing API key for {service}. Cannot add NZBGet as download client.", "ERROR")
 
     def ensure_nzbget_categories(self, categories):
         """Ensure only the required categories exist in NZBGet."""
@@ -352,44 +363,102 @@ class SurgeInterconnectionManager:
         user = os.environ.get('NZBGET_USER', 'admin')
         password = os.environ.get('NZBGET_PASS') or 'password'
         headers = {'Content-Type': 'application/json'}
-        payload = {
+        # List current categories using config
+        get_payload = {
             "method": "config",
             "params": ["Categories"],
             "id": 1
         }
+        import time
+        max_retries = 3
         try:
-            response = requests.post(url, json=payload, headers=headers, auth=(user, password), timeout=10)
+            response = requests.post(url, json=get_payload, headers=headers, auth=(user, password), timeout=10)
             if response.status_code == 200:
                 result = response.json().get('result', [])
-                existing = [cat['Name'] for cat in result]
-                # Remove unwanted categories
-                for category in existing:
-                    if category not in categories:
-                        self.log(f"Removing NZBGet category: {category}", "INFO")
-                        remove_payload = {
-                            "method": "configdelete",
-                            "params": ["Categories", category],
-                            "id": 1
-                        }
-                        remove_resp = requests.post(url, json=remove_payload, headers=headers, auth=(user, password), timeout=10)
-                        if remove_resp.status_code == 200:
-                            self.log(f"✅ NZBGet category '{category}' removed", "SUCCESS")
-                        else:
-                            self.log(f"Failed to remove NZBGet category '{category}': {remove_resp.status_code}", "WARNING")
-                # Add missing required categories
-                for category in categories:
-                    if category not in existing:
+                # Only treat items as categories if they have 'Name' and at least one category-specific field
+                def is_nzbget_category(cat):
+                    return (
+                        isinstance(cat, dict)
+                        and 'Name' in cat
+                        and isinstance(cat['Name'], str)
+                        and ('DestDir' in cat or 'Unpack' in cat)
+                    )
+
+                actual_categories = [cat['Name'] for cat in result if is_nzbget_category(cat)]
+                default_categories = set(["Movies", "Series", "Music", "Software"])
+                required_and_default = set(categories) | default_categories
+                # Remove unwanted categories: only those that are true categories and not required/default
+                for cat in result:
+                    if not is_nzbget_category(cat):
+                        continue  # skip non-category config items
+                    category = cat['Name']
+                    if category in required_and_default:
+                        continue  # never remove required or default categories
+                    self.log(f"Removing NZBGet category: {category}", "INFO")
+                    remove_payload = {
+                        "method": "configdelete",
+                        "params": ["Categories", category],
+                        "id": 1
+                    }
+                    for attempt in range(max_retries):
+                        try:
+                            remove_resp = requests.post(url, json=remove_payload, headers=headers, auth=(user, password), timeout=10)
+                            if remove_resp.status_code == 200:
+                                self.log(f"✅ NZBGet category '{category}' removed", "SUCCESS")
+                                break
+                            else:
+                                self.log(f"Failed to remove NZBGet category '{category}': {remove_resp.status_code}", "WARNING")
+                        except requests.exceptions.ConnectionError as ce:
+                            self.log(f"Connection error while removing '{category}': {ce}", "WARNING")
+                            if attempt < max_retries - 1:
+                                time.sleep(1)
+                                self.log(f"Retrying removal of '{category}' (attempt {attempt+2}/{max_retries})", "INFO")
+                            else:
+                                self.log(f"Giving up on removing '{category}' after {max_retries} attempts", "ERROR")
+                    time.sleep(0.5)
+                # Add missing required and default categories
+                for category in required_and_default:
+                    if category not in actual_categories:
                         self.log(f"Creating NZBGet category: {category}", "INFO")
                         add_payload = {
                             "method": "configappend",
-                            "params": ["Categories", f"{category}"],
+                            "params": [
+                                "Categories",
+                                {
+                                    "Name": category,
+                                    "DestDir": f"/downloads/{category.lower()}",
+                                    "Unpack": "yes"
+                                }
+                            ],
                             "id": 1
                         }
-                        add_resp = requests.post(url, json=add_payload, headers=headers, auth=(user, password), timeout=10)
-                        if add_resp.status_code == 200:
-                            self.log(f"✅ NZBGet category '{category}' created", "SUCCESS")
-                        else:
-                            self.log(f"Failed to create NZBGet category '{category}': {add_resp.status_code}", "WARNING")
+                        for attempt in range(max_retries):
+                            try:
+                                add_resp = requests.post(url, json=add_payload, headers=headers, auth=(user, password), timeout=10)
+                                if add_resp.status_code == 200:
+                                    self.log(f"✅ NZBGet category '{category}' created", "SUCCESS")
+                                    break
+                                else:
+                                    self.log(f"Failed to create NZBGet category '{category}': {add_resp.status_code}", "WARNING")
+                            except requests.exceptions.ConnectionError as ce:
+                                self.log(f"Connection error while creating '{category}': {ce}", "WARNING")
+                                if attempt < max_retries - 1:
+                                    time.sleep(1)
+                                    self.log(f"Retrying creation of '{category}' (attempt {attempt+2}/{max_retries})", "INFO")
+                                else:
+                                    self.log(f"Giving up on creating '{category}' after {max_retries} attempts", "ERROR")
+                        time.sleep(0.5)
+                # Reload NZBGet config to apply changes
+                reload_payload = {
+                    "method": "reload",
+                    "params": [],
+                    "id": 1
+                }
+                reload_resp = requests.post(url, json=reload_payload, headers=headers, auth=(user, password), timeout=10)
+                if reload_resp.status_code == 200:
+                    self.log("✅ NZBGet configuration reloaded", "SUCCESS")
+                else:
+                    self.log(f"Failed to reload NZBGet configuration: {reload_resp.status_code}", "WARNING")
             else:
                 self.log(f"Failed to fetch NZBGet categories: {response.status_code}", "WARNING")
         except Exception as e:
