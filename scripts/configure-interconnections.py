@@ -50,19 +50,15 @@ class SurgeInterconnectionManager:
         self.log(f"Enabled services: {', '.join(self.enabled_services)}", "INFO")
     
     def find_storage_path(self):
-        """Find storage path from environment or common locations."""
-        possible_paths = [
-            os.environ.get('STORAGE_PATH'),
-            '/opt/surge',
-            os.path.expanduser('~/surge-data'),
-            './data'
-        ]
-        
-        for path in possible_paths:
-            if path and os.path.exists(path):
-                return path
-        
-        return '/opt/surge'
+        """Require user-set STORAGE_PATH from environment or .env file."""
+        storage_path = os.environ.get('STORAGE_PATH')
+        if not storage_path:
+            self.log("STORAGE_PATH environment variable is not set. Please set it before running the script.", "ERROR")
+            sys.exit(1)
+        if not os.path.exists(storage_path):
+            self.log(f"STORAGE_PATH '{storage_path}' does not exist. Please check your configuration.", "ERROR")
+            sys.exit(1)
+        return storage_path
     
     def load_env(self):
         """Load environment variables from .env file."""
@@ -303,34 +299,101 @@ class SurgeInterconnectionManager:
             self.configure_rdt_clients()
     
     def configure_nzbget_clients(self):
-        """Configure NZBGet as download client in Radarr and Sonarr."""
-        nzbget_config = {
-            'name': 'NZBGet',
-            'implementation': 'NZBGet',
-            'configContract': 'NzbgetSettings',
-            'protocol': 'usenet',
-            'enable': True,
-            'fields': [
-                {'name': 'host', 'value': 'nzbget'},
-                {'name': 'port', 'value': 6789},
-                {'name': 'username', 'value': os.environ.get('NZBGET_USER', 'admin')},
-                {'name': 'password', 'value': os.environ.get('NZBGET_PASS') or self._generate_secure_nzbget_password()},
-                {'name': 'movieCategory', 'value': 'Movies'},
-                {'name': 'tvCategory', 'value': 'TV'},
-                {'name': 'recentMoviesPriority', 'value': 0},
-                {'name': 'recentTvPriority', 'value': 0},
-                {'name': 'olderMoviesPriority', 'value': -100},
-                {'name': 'olderTvPriority', 'value': -100}
-            ]
+        """Configure NZBGet as download client in Radarr and Sonarr, ensuring categories exist."""
+        self.ensure_nzbget_categories(['Movies', 'TV'])
+        nzbget_user = os.environ.get('NZBGET_USER', 'admin')
+        nzbget_pass = os.environ.get('NZBGET_PASS', 'password')
+        for service in ['radarr', 'sonarr']:
+            if service in self.enabled_services:
+                if service in self.api_keys:
+                    if service == 'radarr':
+                        nzbget_config = {
+                            'name': 'NZBGet',
+                            'implementation': 'NZBGet',
+                            'configContract': 'NzbgetSettings',
+                            'protocol': 'usenet',
+                            'enable': True,
+                            'priority': 1,
+                            'fields': [
+                                {'name': 'host', 'value': 'surge-nzbget'},
+                                {'name': 'port', 'value': 6789},
+                                {'name': 'username', 'value': nzbget_user},
+                                {'name': 'password', 'value': nzbget_pass},
+                                {'name': 'movieCategory', 'value': 'Movies'}
+                            ]
+                        }
+                    else:  # sonarr
+                        # Ensure TV category exists before adding client
+                        self.ensure_nzbget_categories(['TV'])
+                        import time
+                        time.sleep(2)  # Wait for NZBGet to update categories
+                        nzbget_config = {
+                            'name': 'NZBGet',
+                            'implementation': 'NZBGet',
+                            'configContract': 'NzbgetSettings',
+                            'protocol': 'usenet',
+                            'enable': True,
+                            'priority': 1,
+                            'fields': [
+                                {'name': 'host', 'value': 'surge-nzbget'},
+                                {'name': 'port', 'value': 6789},
+                                {'name': 'username', 'value': nzbget_user},
+                                {'name': 'password', 'value': nzbget_pass},
+                                {'name': 'tvCategory', 'value': 'TV'}
+                            ]
+                        }
+                    self.add_download_client(service, nzbget_config)
+                else:
+                    self.log(f"NZBGet integration: Missing API key for {service}. Cannot add NZBGet as download client.", "ERROR")
+
+    def ensure_nzbget_categories(self, categories):
+        """Ensure only the required categories exist in NZBGet."""
+        url = "http://localhost:6789/jsonrpc"
+        user = os.environ.get('NZBGET_USER', 'admin')
+        password = os.environ.get('NZBGET_PASS') or 'password'
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "method": "config",
+            "params": ["Categories"],
+            "id": 1
         }
-        
-        # Add to Radarr
-        if 'radarr' in self.enabled_services and 'radarr' in self.api_keys:
-            self.add_download_client('radarr', nzbget_config)
-        
-        # Add to Sonarr
-        if 'sonarr' in self.enabled_services and 'sonarr' in self.api_keys:
-            self.add_download_client('sonarr', nzbget_config)
+        try:
+            response = requests.post(url, json=payload, headers=headers, auth=(user, password), timeout=10)
+            if response.status_code == 200:
+                result = response.json().get('result', [])
+                existing = [cat['Name'] for cat in result]
+                # Remove unwanted categories
+                for category in existing:
+                    if category not in categories:
+                        self.log(f"Removing NZBGet category: {category}", "INFO")
+                        remove_payload = {
+                            "method": "configdelete",
+                            "params": ["Categories", category],
+                            "id": 1
+                        }
+                        remove_resp = requests.post(url, json=remove_payload, headers=headers, auth=(user, password), timeout=10)
+                        if remove_resp.status_code == 200:
+                            self.log(f"✅ NZBGet category '{category}' removed", "SUCCESS")
+                        else:
+                            self.log(f"Failed to remove NZBGet category '{category}': {remove_resp.status_code}", "WARNING")
+                # Add missing required categories
+                for category in categories:
+                    if category not in existing:
+                        self.log(f"Creating NZBGet category: {category}", "INFO")
+                        add_payload = {
+                            "method": "configappend",
+                            "params": ["Categories", f"{category}"],
+                            "id": 1
+                        }
+                        add_resp = requests.post(url, json=add_payload, headers=headers, auth=(user, password), timeout=10)
+                        if add_resp.status_code == 200:
+                            self.log(f"✅ NZBGet category '{category}' created", "SUCCESS")
+                        else:
+                            self.log(f"Failed to create NZBGet category '{category}': {add_resp.status_code}", "WARNING")
+            else:
+                self.log(f"Failed to fetch NZBGet categories: {response.status_code}", "WARNING")
+        except Exception as e:
+            self.log(f"Error ensuring NZBGet categories: {e}", "ERROR")
     
     def configure_rdt_clients(self):
         """Configure RDT-Client as download client in Radarr and Sonarr."""
@@ -340,6 +403,7 @@ class SurgeInterconnectionManager:
             'configContract': 'RTorrentSettings', 
             'protocol': 'torrent',
             'enable': True,
+            'priority': 1,  # <-- Move priority here
             'fields': [
                 {'name': 'host', 'value': 'rdt-client'},
                 {'name': 'port', 'value': 6500},
@@ -350,39 +414,43 @@ class SurgeInterconnectionManager:
                 {'name': 'tvDirectory', 'value': '/downloads/tv'}
             ]
         }
-        
         # Add to Radarr
         if 'radarr' in self.enabled_services and 'radarr' in self.api_keys:
             self.add_download_client('radarr', rdt_config)
-        
         # Add to Sonarr  
         if 'sonarr' in self.enabled_services and 'sonarr' in self.api_keys:
             self.add_download_client('sonarr', rdt_config)
     
     def add_download_client(self, service, config):
         """Add download client to service via API."""
+        import traceback
         try:
             api_key = self.api_keys.get(service)
             if not api_key:
                 return
-            
+
+            # Use localhost for API calls since the script runs on the host
             port = {'radarr': 7878, 'sonarr': 8989}[service]
             url = f"http://localhost:{port}/api/v3/downloadclient"
-            
+
             headers = {
                 'X-Api-Key': api_key,
                 'Content-Type': 'application/json'
             }
-            
+
             response = requests.post(url, json=config, headers=headers, timeout=10)
-            
+
             if response.status_code in [200, 201]:
                 self.log(f"✅ {config['name']} configured in {service.title()}", "SUCCESS")
             else:
                 self.log(f"Failed to configure {config['name']} in {service.title()}: {response.status_code}", "WARNING")
-                
+                self.log(f"Payload sent: {json.dumps(config)}", "DEBUG")
+                self.log(f"Response body: {response.text}", "DEBUG")
+
         except Exception as e:
             self.log(f"Error configuring download client in {service}: {e}", "ERROR")
+            self.log(f"Payload sent: {json.dumps(config)}", "DEBUG")
+            self.log(f"Traceback: {traceback.format_exc()}", "ERROR")
     
     def configure_gaps_integration(self):
         """Configure GAPS integration with Plex and Radarr."""
