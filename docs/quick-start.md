@@ -107,7 +107,6 @@ Once deployed, access your services:
 2. Login with `admin`/`tegbzn6789`
 3. Configure your Usenet providers
 
-**RDT-Client (if using Real-Debrid):**
 1. Go to http://localhost:6500
 2. Enter your Real-Debrid API token
 3. Configure download paths

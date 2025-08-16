@@ -501,7 +501,6 @@ All services can be configured through:
 | Bazarr | 6767 | Subtitle management |
 | NZBGet | 6789 | Usenet downloader |
 | GAPS | 8484 | Plex missing movies integration |
-| RDT-Client | 6500 | Real-Debrid torrent client |
 | Decypharr | 8282 | QBittorrent API with debrid support |
 | Tautulli | 8182 | Media server stats |
 | Posterizarr | 5060 | Custom poster management |

@@ -127,7 +127,6 @@ This guide covers common issues and their solutions when running Surge.
 **Solution**:
 1. Use container names for internal communication:
    - NZBGet: `surge-nzbget:6789`
-   - RDT-Client: `surge-rdt-client:6500`
 
 2. Check network exists:
    ```bash

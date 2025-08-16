@@ -34,7 +34,6 @@ This document outlines all the automatic service interconnections configured by 
 - **Authentication** using environment variables
 - **Script**: `configure-interconnections.py`
 
-#### **RDT-Client ↔ Radarr/Sonarr** (if enabled)
 - **Real-Debrid integration** with automatic API token injection
 - **Download client setup** seamlessly integrated
 - **Torrentio indexer** automatically configured in Prowlarr
@@ -174,7 +173,6 @@ After Surge deployment completes:
 
 1. **Search for content** in Overseerr → Automatically sent to Radarr/Sonarr
 2. **Radarr/Sonarr search** via Prowlarr → Finds content across all indexers  
-3. **Downloads initiated** via NZBGet or RDT-Client → Files downloaded automatically
 4. **CineSync processes** files → Organized into proper library structure
 5. **Plex detects** new content → Libraries updated automatically
 6. **Bazarr downloads** subtitles → Added to media files

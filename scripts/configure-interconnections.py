@@ -24,6 +24,33 @@ from datetime import datetime
 from pathlib import Path
 
 class SurgeInterconnectionManager:
+    def remove_existing_rdt_client(self, service):
+        """Remove any existing RDT-Client download client from the given service (radarr/sonarr)."""
+        api_key = self.api_keys.get(service)
+        if not api_key:
+            return
+        port = {'radarr': 7878, 'sonarr': 8989}[service]
+        url = f"http://localhost:{port}/api/v3/downloadclient"
+        headers = {
+            'X-Api-Key': api_key,
+            'Content-Type': 'application/json'
+        }
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                clients = resp.json()
+                for client in clients:
+                    if client.get('implementation') == 'RTorrent':
+                        del_url = f"{url}/{client['id']}"
+                        del_resp = requests.delete(del_url, headers=headers, timeout=10)
+                        if del_resp.status_code in [200, 204]:
+                            self.log(f"Removed existing RDT-Client from {service.title()}", "SUCCESS")
+                        else:
+                            self.log(f"Failed to remove RDT-Client from {service.title()}: {del_resp.status_code}", "WARNING")
+            else:
+                self.log(f"Failed to list download clients for {service.title()}: {resp.status_code}", "WARNING")
+        except Exception as e:
+            self.log(f"Error removing RDT-Client from {service.title()}: {e}", "ERROR")
     def remove_existing_nzbget_client(self, service):
         """Remove any existing NZBGet download client from the given service (radarr/sonarr)."""
         api_key = self.api_keys.get(service)
@@ -516,29 +543,28 @@ class SurgeInterconnectionManager:
     
     def configure_rdt_clients(self):
         """Configure RDT-Client as download client in Radarr and Sonarr."""
-        rdt_config = {
-            'name': 'RDT-Client',
-            'implementation': 'RTorrent',
-            'configContract': 'RTorrentSettings', 
-            'protocol': 'torrent',
-            'enable': True,
-            'priority': 1,  # <-- Move priority here
-            'fields': [
-                {'name': 'host', 'value': 'rdt-client'},
-                {'name': 'port', 'value': 6500},
-                {'name': 'urlBase', 'value': '/'},
-                {'name': 'movieCategory', 'value': 'movies'},
-                {'name': 'tvCategory', 'value': 'tv'},
-                {'name': 'movieDirectory', 'value': '/downloads/movies'},
-                {'name': 'tvDirectory', 'value': '/downloads/tv'}
-            ]
-        }
-        # Add to Radarr
-        if 'radarr' in self.enabled_services and 'radarr' in self.api_keys:
-            self.add_download_client('radarr', rdt_config)
-        # Add to Sonarr  
-        if 'sonarr' in self.enabled_services and 'sonarr' in self.api_keys:
-            self.add_download_client('sonarr', rdt_config)
+        # Use correct implementation/configContract for RDT-Client
+        for service in ['radarr', 'sonarr']:
+            if service in self.enabled_services and service in self.api_keys:
+                category = 'movies' if service == 'radarr' else 'tv'
+                rdt_config = {
+                    'name': 'RDT-Client',
+                    'implementation': 'QBittorrent',
+                    'configContract': 'QBittorrentSettings',
+                    'protocol': 'torrent',
+                    'enable': True,
+                    'priority': 1,
+                    'fields': [
+                        {'name': 'host', 'value': 'rdt-client'},
+                        {'name': 'port', 'value': 6500},
+                        {'name': 'urlBase', 'value': '/'},
+                        {'name': 'category', 'value': category},
+                        {'name': 'username', 'value': 'admin'},
+                        {'name': 'password', 'value': 'password'}
+                    ]
+                }
+                self.remove_existing_rdt_client(service)
+                self.add_download_client(service, rdt_config)
     
     def add_download_client(self, service, config):
         """Add download client to service via API."""

@@ -90,23 +90,6 @@ services:
     profiles:
       - nzbget
 
-  rdt-client:
-    image: rogerfar/rdtclient:latest
-    container_name: surge-rdt-client
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-    volumes:
-      - ${STORAGE_PATH}/RDT-Client/config:/data/db
-      - ${STORAGE_PATH}/RDT-Client/downloads:/data/downloads
-    ports:
-      - "${RDT_CLIENT_PORT:-6500}:6500"
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-    profiles:
-      - rdt-client
 
   zurg:
     image: ghcr.io/debridmediamanager/zurg-testing:latest
