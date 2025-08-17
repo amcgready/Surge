@@ -90,32 +90,6 @@ services:
     profiles:
       - nzbget
 
-
-  zurg:
-    image: ghcr.io/debridmediamanager/zurg-testing:latest
-    container_name: surge-zurg
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-      - PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-/downloads}
-    volumes:
-      - ${STORAGE_PATH}/Zurg/config:/app/config
-      - ${STORAGE_PATH}/downloads/Zurg:/data:shared
-    ports:
-      - "${ZURG_PORT:-9999}:9999"
-    restart: ${RESTART_POLICY:-unless-stopped}
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - /dev/fuse:/dev/fuse
-    security_opt:
-      - apparmor:unconfined
-    networks:
-      - surge-network
-    profiles:
-      - zurg
-
   cli-debrid:
     image: godver3/cli_debrid:latest
     container_name: surge-cli-debrid
@@ -153,12 +127,12 @@ services:
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
       - ${STORAGE_PATH}/downloads/Decypharr:/media/remote/realdebrid/__all__/
       - ${STORAGE_PATH}/downloads/Decypharr/symlinks:/mnt/downloads/symlinks
-      - ${STORAGE_PATH}/downloads/Decypharr/temp:/mnt/downloads/temp
-      - ${STORAGE_PATH}/downloads/Decypharr/rclone/remote:/mnt/rclone/remote
-      - ${STORAGE_PATH}/downloads/Decypharr/rclone/cache:/mnt/rclone/cache
+      - ${STORAGE_PATH}/Decypharr/temp:/mnt/downloads/temp
+      - ${STORAGE_PATH}/downloads/Decypharr/remote:/mnt/rclone/remote
+      - ${STORAGE_PATH}/downloads/Decypharr/cache:/mnt/rclone/cache
       - ${STORAGE_PATH}/downloads/Decypharr/blackhole/sonarr:/mnt/downloads/blackhole/sonarr
       - ${STORAGE_PATH}/downloads/Decypharr/blackhole/radarr:/mnt/downloads/blackhole/radarr
-
+      - ${STORAGE_PATH}/downloads/Decypharr/realdebrid:/mnt/rclone/remote/realdebrid:rshared
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -166,6 +140,12 @@ services:
       - surge-network
     profiles:
       - decypharr
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse:/dev/fuse
+    security_opt:
+      - apparmor:unconfined
 
   posterizarr:
     image: ghcr.io/fscorrupt/posterizarr:latest
@@ -310,36 +290,6 @@ services:
       - surge-network
     profiles:
       - watchtower
-
-
-  pd_zurg:
-    image: iampuid0/pd_zurg:latest
-    container_name: surge-pd_zurg
-    stdin_open: true
-    tty: true
-    environment:
-      - TZ=${TZ:-UTC}
-      - ZURG_ENABLED=true
-      - RD_API_KEY=${RD_API_TOKEN}
-      - RCLONE_MOUNT_NAME=pd_zurg
-    volumes:
-      - ${STORAGE_PATH}/pd_zurg/config:/config
-      - ${STORAGE_PATH}/pd_zurg/log:/log
-      - ${STORAGE_PATH}/pd_zurg/cache:/cache
-      - ${STORAGE_PATH}/pd_zurg/RD:/zurg/RD
-      - ${STORAGE_PATH}/downloads/:/data:shared
-    restart: ${RESTART_POLICY:-unless-stopped}
-    networks:
-      - surge-network
-    devices:
-      - /dev/fuse:/dev/fuse:rwm
-    cap_add:
-      - SYS_ADMIN     
-    security_opt:
-      - apparmor:unconfined    
-      - no-new-privileges
-    profiles:
-      - pd_zurg
 
 networks:
   surge-network:
