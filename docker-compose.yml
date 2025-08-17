@@ -125,14 +125,18 @@ services:
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
-      - ${STORAGE_PATH}/downloads/Decypharr:/media/remote/realdebrid/__all__/
-      - ${STORAGE_PATH}/downloads/Decypharr/symlinks:/mnt/downloads/symlinks
+      - ${STORAGE_PATH}/Decypharr:/media/remote/realdebrid/__all__/
+      - ${STORAGE_PATH}/Decypharr/symlinks:/mnt/downloads/symlinks
       - ${STORAGE_PATH}/Decypharr/temp:/mnt/downloads/temp
-      - ${STORAGE_PATH}/downloads/Decypharr/remote:/mnt/rclone/remote
-      - ${STORAGE_PATH}/downloads/Decypharr/cache:/mnt/rclone/cache
+      - ${STORAGE_PATH}/Decypharr/remote:/mnt/rclone/remote
+      - ${STORAGE_PATH}/Decypharr/cache:/mnt/rclone/cache
       - ${STORAGE_PATH}/downloads/Decypharr/blackhole/sonarr:/mnt/downloads/blackhole/sonarr
       - ${STORAGE_PATH}/downloads/Decypharr/blackhole/radarr:/mnt/downloads/blackhole/radarr
-      - ${STORAGE_PATH}/downloads/Decypharr/realdebrid:/mnt/rclone/remote/realdebrid:rshared
+      - ${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid:/mnt/rclone/remote/realdebrid:rshared
+      - ${STORAGE_PATH}/downloads/Decypharr/debrids/alldebrid:/mnt/rclone/remote/alldebrid:rshared
+      - ${STORAGE_PATH}/downloads/Decypharr/debrids/debridlink:/mnt/rclone/remote/debridlink:rshared
+      - ${STORAGE_PATH}/downloads/Decypharr/debrids/torbox:/mnt/rclone/remote/torbox:rshared
+
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}

@@ -3,9 +3,13 @@ class DecypharrConfigurator:
     def __init__(self, storage_path: str):
         self.storage_path = self._validate_storage_path(storage_path)
         self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
-        self.decypharr_downloads_dir = Path(self.storage_path) / "downloads" / "Decypharr"
-        self.decypharr_movies_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "movies"
-        self.decypharr_tv_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "tv"
+        self.decypharr_dir = Path(self.storage_path) / "Decypharr"
+        self.decypharr_config_dir = self.decypharr_dir / "config"
+        self.decypharr_cache_dir = self.decypharr_dir / "cache"
+        self.decypharr_completed_dir = self.decypharr_dir / "completed"
+        self.decypharr_remote_dir = self.decypharr_dir / "remote"
+        self.decypharr_symlinks_dir = self.decypharr_dir / "symlinks"
+        self.decypharr_temp_dir = self.decypharr_dir / "temp"
         # ...existing code...
 
     def generate_config_template(self):
@@ -274,26 +278,16 @@ class DecypharrConfigurator:
         """Create necessary directories for Decypharr"""
         print("📁 Creating Decypharr directories...")
 
-        qbittorrent_symlinks = self.decypharr_downloads_dir / "symlinks"
-        qbittorrent_temp = self.decypharr_downloads_dir / "temp"
-        qbittorrent_completed = self.decypharr_downloads_dir / "completed"
-
         directories = [
             self.decypharr_config_dir,
-            self.decypharr_downloads_dir,
-            self.decypharr_movies_dir,
-            self.decypharr_tv_dir,
-            # qBittorrent required folders
-            qbittorrent_symlinks,
-            qbittorrent_temp,
-            qbittorrent_completed,
-            # Symlink directories for content organization
-            qbittorrent_symlinks / "movies",
-            qbittorrent_symlinks / "tv",
-            # Blackhole directories
-            self.decypharr_downloads_dir / "blackhole" / "sonarr",
-            self.decypharr_downloads_dir / "blackhole" / "radarr",
-            # Remote mount points (for potential future use)
+            self.decypharr_dir,
+            self.decypharr_cache_dir,
+            self.decypharr_completed_dir,
+            self.decypharr_remote_dir,
+            self.decypharr_symlinks_dir,
+            self.decypharr_temp_dir,
+            self.decypharr_symlinks_dir / "blackhole" / "sonarr",
+            self.decypharr_symlinks_dir / "blackhole" / "radarr",
             Path(self.storage_path) / "mnt" / "remote" / "realdebrid",
             Path(self.storage_path) / "mnt" / "remote" / "alldebrid",
         ]
