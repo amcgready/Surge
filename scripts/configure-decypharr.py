@@ -1,231 +1,3 @@
-class DecypharrConfigurator:
-    """Main Decypharr configuration class"""
-    def __init__(self, storage_path: str):
-        self.storage_path = self._validate_storage_path(storage_path)
-        self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
-        self.decypharr_dir = Path(self.storage_path) / "Decypharr"
-        self.decypharr_config_dir = self.decypharr_dir / "config"
-        self.decypharr_cache_dir = self.decypharr_dir / "cache"
-        self.decypharr_completed_dir = self.decypharr_dir / "completed"
-        self.decypharr_remote_dir = self.decypharr_dir / "remote"
-        self.decypharr_symlinks_dir = self.decypharr_dir / "symlinks"
-        self.decypharr_temp_dir = self.decypharr_dir / "temp"
-        # ...existing code...
-
-    def generate_config_template(self):
-        """Generate a commented config template exposing all variables"""
-        print("📝 Generating Decypharr config template...")
-        template = {
-            "version": "1.0",  # Config version
-            "debrids": [
-                {
-                    "name": "realdebrid",  # Debrid provider name
-                    "api_key": "<YOUR_REALDEBRID_API_KEY>",
-                    "folder": "/mnt/downloads/realdebrid/__all__",  # Folder for downloads
-                    "use_webdav": True,  # Enable WebDAV
-                    "webdav_url": "https://webdav.real-debrid.com",  # WebDAV URL
-                    "enabled": True  # Enable this provider
-                },
-                {
-                    "name": "alldebrid",
-                    "api_key": "<YOUR_ALLDEBRID_API_KEY>",
-                    "folder": "/mnt/downloads/alldebrid/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "https://webdav.alldebrid.com",
-                    "enabled": True
-                },
-                {
-                    "name": "debridlink",
-                    "api_key": "<YOUR_DEBRIDLINK_API_KEY>",
-                    "folder": "/mnt/downloads/debridlink/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "",
-                    "enabled": True
-                },
-                {
-                    "name": "torbox",
-                    "api_key": "<YOUR_TORBOX_API_KEY>",
-                    "folder": "/mnt/downloads/torbox/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "",
-                    "enabled": True
-                }
-            ],
-            "qbittorrent": {
-                "port": 8282,  # API port
-                "download_folder": "/mnt/downloads/symlinks/",  # Download folder
-                "categories": ["sonarr", "radarr", "lidarr", "readarr"],  # Supported categories
-                "default_category": "default",
-                "temp_folder": "/mnt/downloads/temp/",
-                "completed_folder": "/mnt/downloads/completed/"
-            },
-            "repair": {
-                "enabled": True,  # Enable repair worker
-                "interval": "6h",  # Repair interval (e.g. 1h, 6h, cron syntax)
-                "check_symlinks": True,  # Check for broken symlinks
-                "check_missing_files": True,  # Check for missing files
-                "auto_repair": True,  # Auto process repairs
-                "max_retries": 3  # Max retries for repair jobs
-            },
-            "webdav": {
-                "enabled": True,  # Enable WebDAV server
-                "port": 8283,  # WebDAV port
-                "prefix": "/webdav",  # WebDAV URL prefix
-                "auto_mount": True  # Auto-mount WebDAV folders
-            },
-            "blackhole": {
-                "enabled": True,  # Enable blackhole processing
-                "watch_folders": {
-                    "sonarr": "/mnt/downloads/blackhole/sonarr",
-                    "radarr": "/mnt/downloads/blackhole/radarr"
-                },
-                "check_interval": "30s",  # Interval to check for new files
-                "auto_process": True  # Auto process new files
-            },
-            "api": {
-                "enable_cors": True,  # Enable CORS
-                "rate_limit": {
-                    "enabled": True,
-                    "requests_per_minute": 60
-                }
-            },
-            "use_auth": False,  # Enable authentication for WebUI/API
-            "log_level": "info",  # Log level (info, debug, warning, error)
-            "metrics": {
-                "enabled": True,  # Enable metrics endpoint
-                "port": 8284,  # Metrics port
-                "endpoint": "/metrics"  # Metrics endpoint path
-            },
-            "notifications": {
-                "discord": {
-                    "enabled": False,  # Enable Discord notifications
-                    "webhook_url": "<YOUR_DISCORD_WEBHOOK_URL>",
-                    "events": ["download_complete", "download_failed", "repair_complete"]
-                }
-            },
-            "arr": {
-                "radarr": {
-                    "api_key": "<YOUR_RADARR_API_KEY>",
-                    "url": "http://radarr:7878"
-                },
-                "sonarr": {
-                    "api_key": "<YOUR_SONARR_API_KEY>",
-                    "url": "http://sonarr:8989"
-                }
-            }
-        }
-        # Save template
-        template_file = self.decypharr_config_dir / "config.template.json"
-        with open(template_file, 'w', encoding='utf-8') as f:
-            json.dump(template, f, indent=2)
-        print(f"  ✓ Config template saved to: {template_file}")
-def generate_config_template(self):
-        """Generate a commented config template exposing all variables"""
-        print("📝 Generating Decypharr config template...")
-        template = {
-            "version": "1.0",  # Config version
-            "debrids": [
-                {
-                    "name": "realdebrid",  # Debrid provider name
-                    "api_key": "<YOUR_REALDEBRID_API_KEY>",
-                    "folder": "/mnt/downloads/realdebrid/__all__",  # Folder for downloads
-                    "use_webdav": True,  # Enable WebDAV
-                    "webdav_url": "https://webdav.real-debrid.com",  # WebDAV URL
-                    "enabled": True  # Enable this provider
-                },
-                {
-                    "name": "alldebrid",
-                    "api_key": "<YOUR_ALLDEBRID_API_KEY>",
-                    "folder": "/mnt/downloads/alldebrid/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "https://webdav.alldebrid.com",
-                    "enabled": True
-                },
-                {
-                    "name": "debridlink",
-                    "api_key": "<YOUR_DEBRIDLINK_API_KEY>",
-                    "folder": "/mnt/downloads/debridlink/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "",
-                    "enabled": True
-                },
-                {
-                    "name": "torbox",
-                    "api_key": "<YOUR_TORBOX_API_KEY>",
-                    "folder": "/mnt/downloads/torbox/__all__",
-                    "use_webdav": True,
-                    "webdav_url": "",
-                    "enabled": True
-                }
-            ],
-            "qbittorrent": {
-                "port": 8282,  # API port
-                "download_folder": "/mnt/downloads/symlinks/",  # Download folder
-                "categories": ["sonarr", "radarr", "lidarr", "readarr"],  # Supported categories
-                "default_category": "default",
-                "temp_folder": "/mnt/downloads/temp/",
-                "completed_folder": "/mnt/downloads/completed/"
-            },
-            "repair": {
-                "enabled": True,  # Enable repair worker
-                "interval": "6h",  # Repair interval (e.g. 1h, 6h, cron syntax)
-                "check_symlinks": True,  # Check for broken symlinks
-                "check_missing_files": True,  # Check for missing files
-                "auto_repair": True,  # Auto process repairs
-                "max_retries": 3  # Max retries for repair jobs
-            },
-            "webdav": {
-                "enabled": True,  # Enable WebDAV server
-                "port": 8283,  # WebDAV port
-                "prefix": "/webdav",  # WebDAV URL prefix
-                "auto_mount": True  # Auto-mount WebDAV folders
-            },
-            "blackhole": {
-                "enabled": True,  # Enable blackhole processing
-                "watch_folders": {
-                    "sonarr": "/mnt/downloads/blackhole/sonarr",
-                    "radarr": "/mnt/downloads/blackhole/radarr"
-                },
-                "check_interval": "30s",  # Interval to check for new files
-                "auto_process": True  # Auto process new files
-            },
-            "api": {
-                "enable_cors": True,  # Enable CORS
-                "rate_limit": {
-                    "enabled": True,
-                    "requests_per_minute": 60
-                }
-            },
-            "use_auth": False,  # Enable authentication for WebUI/API
-            "log_level": "info",  # Log level (info, debug, warning, error)
-            "metrics": {
-                "enabled": True,  # Enable metrics endpoint
-                "port": 8284,  # Metrics port
-                "endpoint": "/metrics"  # Metrics endpoint path
-            },
-            "notifications": {
-                "discord": {
-                    "enabled": False,  # Enable Discord notifications
-                    "webhook_url": "<YOUR_DISCORD_WEBHOOK_URL>",
-                    "events": ["download_complete", "download_failed", "repair_complete"]
-                }
-            },
-            "arr": {
-                "radarr": {
-                    "api_key": "<YOUR_RADARR_API_KEY>",
-                    "url": "http://radarr:7878"
-                },
-                "sonarr": {
-                    "api_key": "<YOUR_SONARR_API_KEY>",
-                    "url": "http://sonarr:8989"
-                }
-            }
-        }
-        # Save template
-        template_file = self.decypharr_config_dir / "config.template.json"
-        with open(template_file, 'w', encoding='utf-8') as f:
-            json.dump(template, f, indent=2)
-        print(f"  ✓ Config template saved to: {template_file}")
 #!/usr/bin/env python3
 
 import os
@@ -239,12 +11,34 @@ from typing import Optional
 class DecypharrConfigurator:
     """Main Decypharr configuration class"""
     
+    def _get_env_or_file(self, key, fallback=None):
+        """Get environment variable, fallback to .env file if not set"""
+        value = os.environ.get(key)
+        if value:
+            return value
+        # Try to read from .env file
+        project_root = Path(os.path.abspath(os.path.dirname(__file__))).parent
+        env_path = project_root / ".env"
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as env_file:
+                for line in env_file:
+                    if line.strip().startswith(f"{key}="):
+                        env_value = line.strip().split("=", 1)[1]
+                        return env_value.strip().strip('"').strip("'")
+        return fallback
+
     def __init__(self, storage_path: str):
         self.storage_path = self._validate_storage_path(storage_path)
-        self.decypharr_config_dir = Path(self.storage_path) / "Decypharr" / "config"
+        self.decypharr_dir = Path(self.storage_path) / "Decypharr"
+        self.decypharr_config_dir = self.decypharr_dir / "config"
+        self.decypharr_cache_dir = self.decypharr_dir / "cache"
+        self.decypharr_completed_dir = self.decypharr_dir / "completed"
+        self.decypharr_remote_dir = self.decypharr_dir / "remote"
+        self.decypharr_symlinks_dir = self.decypharr_dir / "symlinks"
+        self.decypharr_temp_dir = self.decypharr_dir / "temp"
         self.decypharr_downloads_dir = Path(self.storage_path) / "downloads" / "Decypharr"
-        self.decypharr_movies_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "movies"
-        self.decypharr_tv_dir = Path(self.storage_path) / "downloads" / "Decypharr" / "tv"
+        self.decypharr_movies_dir = self.decypharr_downloads_dir / "movies"
+        self.decypharr_tv_dir = self.decypharr_downloads_dir / "tv"
 
         # Container paths for use in config (must match docker-compose volume mappings)
         self.container_downloads = "/mnt/downloads"
@@ -257,11 +51,11 @@ class DecypharrConfigurator:
         self.sonarr_url = "http://sonarr:8989"
         self.decypharr_url = "http://decypharr:8282"
 
-        # API Keys from environment
-        self.rd_api_key = os.environ.get('RD_API_TOKEN', '')
-        self.ad_api_key = os.environ.get('AD_API_TOKEN', '')
-        self.dl_api_key = os.environ.get('DEBRID_LINK_API_TOKEN', '')
-        self.tb_api_key = os.environ.get('TORBOX_API_TOKEN', '')
+        # API Keys from environment or .env
+        self.rd_api_key = self._get_env_or_file('RD_API_TOKEN', '')
+        self.ad_api_key = self._get_env_or_file('AD_API_TOKEN', '')
+        self.dl_api_key = self._get_env_or_file('DEBRID_LINK_API_TOKEN', '')
+        self.tb_api_key = self._get_env_or_file('TORBOX_API_TOKEN', '')
         
     def _validate_storage_path(self, path: str) -> str:
         """Validate storage path for security"""
@@ -325,7 +119,7 @@ class DecypharrConfigurator:
         return False
         
     def get_api_key(self, service_name: str, base_url: str, config_path: str, max_wait: int = 120, poll_interval: int = 5) -> Optional[str]:
-        """Extract API key from service configuration, waiting up to max_wait seconds if needed"""
+        """Extract API key from service configuration, waiting up to max_wait seconds if needed. Fallback to env if not found."""
         config_file = Path(config_path) / "config.xml"
         waited = 0
         while waited < max_wait:
@@ -347,6 +141,12 @@ class DecypharrConfigurator:
                 print(f"  ⚠️  Could not read {service_name} API key: {e}")
             time.sleep(poll_interval)
             waited += poll_interval
+        # Fallback to environment variable
+        env_key = f'{service_name.upper()}_API_KEY'
+        env_value = self._get_env_or_file(env_key)
+        if env_value and len(env_value) > 10:
+            print(f"  ✓ Found {service_name} API key in environment")
+            return env_value
         print(f"  ⚠️  Timed out waiting for {service_name} API key after {max_wait}s")
         return None
         
@@ -879,6 +679,113 @@ if __name__ == "__main__":
         print(f"  ✓ Created repair script: {repair_script}")
         
         return True
+    
+    def generate_config_template(self):
+        """Generate a commented config template exposing all variables"""
+        print("📝 Generating Decypharr config template...")
+        template = {
+            "version": "1.0",
+            "debrids": [
+                {
+                    "name": "realdebrid",
+                    "api_key": "<YOUR_REALDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/realdebrid/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "https://webdav.real-debrid.com",
+                    "enabled": True
+                },
+                {
+                    "name": "alldebrid",
+                    "api_key": "<YOUR_ALLDEBRID_API_KEY>",
+                    "folder": "/mnt/downloads/alldebrid/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "https://webdav.alldebrid.com",
+                    "enabled": True
+                },
+                {
+                    "name": "debridlink",
+                    "api_key": "<YOUR_DEBRIDLINK_API_KEY>",
+                    "folder": "/mnt/downloads/debridlink/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                },
+                {
+                    "name": "torbox",
+                    "api_key": "<YOUR_TORBOX_API_KEY>",
+                    "folder": "/mnt/downloads/torbox/__all__",
+                    "use_webdav": True,
+                    "webdav_url": "",
+                    "enabled": True
+                }
+            ],
+            "qbittorrent": {
+                "port": 8282,
+                "download_folder": "/mnt/downloads/symlinks/",
+                "categories": ["sonarr", "radarr", "lidarr", "readarr"],
+                "default_category": "default",
+                "temp_folder": "/mnt/downloads/temp/",
+                "completed_folder": "/mnt/downloads/completed/"
+            },
+            "repair": {
+                "enabled": True,
+                "interval": "6h",
+                "check_symlinks": True,
+                "check_missing_files": True,
+                "auto_repair": True,
+                "max_retries": 3
+            },
+            "webdav": {
+                "enabled": True,
+                "port": 8283,
+                "prefix": "/webdav",
+                "auto_mount": True
+            },
+            "blackhole": {
+                "enabled": True,
+                "watch_folders": {
+                    "sonarr": "/mnt/downloads/blackhole/sonarr",
+                    "radarr": "/mnt/downloads/blackhole/radarr"
+                },
+                "check_interval": "30s",
+                "auto_process": True
+            },
+            "api": {
+                "enable_cors": True,
+                "rate_limit": {
+                    "enabled": True,
+                    "requests_per_minute": 60
+                }
+            },
+            "use_auth": False,
+            "log_level": "info",
+            "metrics": {
+                "enabled": True,
+                "port": 8284,
+                "endpoint": "/metrics"
+            },
+            "notifications": {
+                "discord": {
+                    "enabled": False,
+                    "webhook_url": "<YOUR_DISCORD_WEBHOOK_URL>",
+                    "events": ["download_complete", "download_failed", "repair_complete"]
+                }
+            },
+            "arr": {
+                "radarr": {
+                    "api_key": "<YOUR_RADARR_API_KEY>",
+                    "url": "http://radarr:7878"
+                },
+                "sonarr": {
+                    "api_key": "<YOUR_SONARR_API_KEY>",
+                    "url": "http://sonarr:8989"
+                }
+            }
+        }
+        template_file = self.decypharr_config_dir / "config.template.json"
+        with open(template_file, 'w', encoding='utf-8') as f:
+            json.dump(template, f, indent=2)
+        print(f"  ✓ Config template saved to: {template_file}")
         
     def run_configuration(self):
         """Main configuration process"""
