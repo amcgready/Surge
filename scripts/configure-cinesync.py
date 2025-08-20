@@ -20,6 +20,21 @@ from pathlib import Path
 from typing import List
 
 class SurgeCineSyncConfigurator:
+    def detect_enabled_services(self):
+        """Detect enabled services from environment variables."""
+        services = []
+        service_map = {
+            'ENABLE_CINESYNC': 'cinesync',
+            'ENABLE_RADARR': 'radarr',
+            'ENABLE_SONARR': 'sonarr',
+            'ENABLE_PLEX': 'plex',
+            'ENABLE_EMBY': 'emby',
+            'ENABLE_JELLYFIN': 'jellyfin'
+        }
+        for env_var, service in service_map.items():
+            if os.environ.get(env_var, '').lower() == 'true':
+                services.append(service)
+        return services
     def __init__(self):
         """Initialize CineSync configurator."""
         self.project_root = Path(__file__).parent.parent
@@ -51,34 +66,42 @@ class SurgeCineSyncConfigurator:
     # def find_storage_path(self) -> str:
     #     Deprecated: No fallback to /opt/surge. STORAGE_PATH is required.
 
-    def load_env(self):
-        """Load environment variables from .env file."""
-        env_file = self.project_root / '.env'
-        if env_file.exists():
-            with open(env_file, 'r') as f:
+
+    def __init__(self):
+        """Initialize CineSync configurator."""
+        self.project_root = Path(__file__).parent.parent
+
+        # Always load .env from absolute project root before anything else
+        env_path = Path.home() / "Desktop" / "Surge" / ".env"
+        if env_path.exists():
+            with open(env_path, 'r') as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith('#') and '=' in line:
                         key, value = line.split('=', 1)
                         os.environ[key] = value
 
-    def detect_enabled_services(self) -> List[str]:
-        """Detect enabled services from environment variables."""
-        services = []
-        service_map = {
-            'ENABLE_CINESYNC': 'cinesync',
-            'ENABLE_RADARR': 'radarr',
-            'ENABLE_SONARR': 'sonarr',
-            'ENABLE_PLEX': 'plex',
-            'ENABLE_EMBY': 'emby',
-            'ENABLE_JELLYFIN': 'jellyfin'
-        }
+        # Now check for STORAGE_PATH after loading .env
+        self.storage_path = os.environ.get('STORAGE_PATH')
+        if not self.storage_path:
+            raise RuntimeError("STORAGE_PATH environment variable is required but not set. Please run './surge setup' or export STORAGE_PATH before running this script.")
+
+        # Configuration paths
+        self.config_dir = Path(self.storage_path) / "CineSync" / "config"
+        self.env_file = self.config_dir / ".env"
+        self.template_file = self.project_root / "configs" / "cinesync-env.template"
+
+        # Service detection
+        self.enabled_services = self.detect_enabled_services()
+
+        # Configuration settings
+        self.config = {}
+        self.api_keys = {}
+
+        self.log("CineSync Configurator initialized", "INFO")
+        self.log(f"Storage path: {self.storage_path}", "INFO")
+        self.log(f"Config directory: {self.config_dir}", "INFO")
         
-        for env_var, service in service_map.items():
-            if os.environ.get(env_var, '').lower() == 'true':
-                services.append(service)
-        
-        return services
 
     def log(self, message: str, level: str = "INFO"):
         """Log a message with timestamp and level."""
@@ -171,26 +194,29 @@ class SurgeCineSyncConfigurator:
 
     def load_configuration_template(self) -> bool:
         """Load configuration template and merge with environment variables."""
+        import time
         try:
+            self.log("Delaying CineSync configuration to allow dependencies to start...", "INFO")
+            time.sleep(30)  # Wait 30 seconds before starting
             self.log("Loading CineSync configuration template...", "INFO")
-            
+
             if not self.template_file.exists():
                 self.log(f"Template file not found: {self.template_file}", "ERROR")
                 return False
-            
+
             # Load default configuration
             self.config = {
                 # Directory Paths
                 'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', f'{self.storage_path}/downloads/Decypharr/debrids'),
                 'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/downloads/'),
                 'USE_SOURCE_STRUCTURE': os.environ.get('CINESYNC_USE_SOURCE_STRUCTURE', 'false'),
-                
+
                 # Media Organization
                 'CINESYNC_LAYOUT': os.environ.get('CINESYNC_LAYOUT', 'true'),
                 'ANIME_SEPARATION': os.environ.get('CINESYNC_ANIME_SEPARATION', 'true'),
                 '4K_SEPARATION': os.environ.get('CINESYNC_4K_SEPARATION', 'false'),
                 'KIDS_SEPARATION': os.environ.get('CINESYNC_KIDS_SEPARATION', 'false'),
-                
+
                 # Custom Folders
                 'CUSTOM_SHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_SHOW_FOLDER', 'TV Series'),
                 'CUSTOM_4KSHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_4KSHOW_FOLDER', '4K Series'),
@@ -200,55 +226,69 @@ class SurgeCineSyncConfigurator:
                 'CUSTOM_ANIME_MOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER', 'Anime Movies'),
                 'CUSTOM_KIDS_MOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER', 'Kids Movies'),
                 'CUSTOM_KIDS_SHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_KIDS_SHOW_FOLDER', 'Kids Series'),
-                
+
                 # Resolution Structure
                 'SHOW_RESOLUTION_STRUCTURE': os.environ.get('CINESYNC_SHOW_RESOLUTION_STRUCTURE', 'false'),
                 'MOVIE_RESOLUTION_STRUCTURE': os.environ.get('CINESYNC_MOVIE_RESOLUTION_STRUCTURE', 'false'),
-                
+
                 # Logging
                 'LOG_LEVEL': os.environ.get('CINESYNC_LOG_LEVEL', 'INFO'),
-                
+
                 # Rclone Mount
                 'RCLONE_MOUNT': os.environ.get('CINESYNC_RCLONE_MOUNT', 'false'),
                 'MOUNT_CHECK_INTERVAL': os.environ.get('CINESYNC_MOUNT_CHECK_INTERVAL', '30'),
-                
+
                 # API Keys
                 'TMDB_API_KEY': os.environ.get('CINESYNC_TMDB_API_KEY') or os.environ.get('TMDB_API_KEY', ''),
                 'LANGUAGE': os.environ.get('CINESYNC_LANGUAGE', 'English'),
-                
+
                 # Metadata Settings
                 'ANIME_SCAN': os.environ.get('CINESYNC_ANIME_SCAN', 'false'),
                 'TMDB_FOLDER_ID': os.environ.get('CINESYNC_TMDB_FOLDER_ID', 'false'),
                 'IMDB_FOLDER_ID': os.environ.get('CINESYNC_IMDB_FOLDER_ID', 'false'),
                 'TVDB_FOLDER_ID': os.environ.get('CINESYNC_TVDB_FOLDER_ID', 'false'),
-                
+
                 # File Processing
                 'RENAME_ENABLED': os.environ.get('CINESYNC_RENAME_ENABLED', 'false'),
                 'MEDIAINFO_PARSER': os.environ.get('CINESYNC_MEDIAINFO_PARSER', 'false'),
                 'RENAME_TAGS': os.environ.get('CINESYNC_RENAME_TAGS', 'Resolution'),
-                
+
                 # Collections
                 'MOVIE_COLLECTION_ENABLED': os.environ.get('CINESYNC_MOVIE_COLLECTION_ENABLED', 'false'),
-                
+
                 # System Settings
                 'PUID': os.environ.get('PUID', '1000'),
                 'PGID': os.environ.get('PGID', '1000'),
                 'TZ': os.environ.get('TZ', 'UTC')
             }
-            
-            # Validate source directory exists or can be created
+
+            # Validate source directory exists or can be created, with retry
             source_dir = Path(self.config['SOURCE_DIR'])
-            if not source_dir.exists():
-                self.log(f"Source directory doesn't exist, creating: {source_dir}", "WARNING")
-                source_dir.mkdir(parents=True, exist_ok=True)
-            
+            max_retries = 5
+            for attempt in range(max_retries):
+                if source_dir.exists():
+                    break
+                try:
+                    self.log(f"Source directory doesn't exist, creating: {source_dir} (attempt {attempt+1})", "WARNING")
+                    source_dir.mkdir(parents=True, exist_ok=True)
+                    break
+                except PermissionError as e:
+                    self.log(f"Permission denied creating source directory: {e}. Retrying in 10 seconds...", "ERROR")
+                    time.sleep(10)
+                except Exception as e:
+                    self.log(f"Error creating source directory: {e}. Retrying in 10 seconds...", "ERROR")
+                    time.sleep(10)
+            else:
+                self.log(f"Failed to create source directory after {max_retries} attempts: {source_dir}", "ERROR")
+                return False
+
             # Validate destination directory
             dest_dir = Path(self.config['DESTINATION_DIR'])
             dest_dir.mkdir(parents=True, exist_ok=True)
-            
+
             self.log("Configuration template loaded successfully", "SUCCESS")
             return True
-            
+
         except Exception as e:
             self.log(f"Error loading configuration template: {e}", "ERROR")
             return False

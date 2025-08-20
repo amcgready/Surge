@@ -311,6 +311,32 @@ deploy_services() {
     for profile in $PROFILES; do
         COMPOSE_PROFILE_FLAGS+=" --profile $profile"
     done
+    # Generate CineSync configuration before deploying containers
+    if echo "$PROFILES" | grep -q "cinesync"; then
+        print_info "Generating CineSync configuration before container deployment..."
+        STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+        export STORAGE_PATH
+        if python3 "$SCRIPT_DIR/configure-cinesync.py"; then
+            print_success "CineSync environment file created successfully!"
+            # Wait for .env file to exist before continuing
+            ENV_PATH="$STORAGE_PATH/CineSync/config/.env"
+            WAIT_SECONDS=0
+            while [ ! -f "$ENV_PATH" ] && [ $WAIT_SECONDS -lt 60 ]; do
+                print_info "Waiting for CineSync .env file to be created... ($WAIT_SECONDS seconds)"
+                sleep 2
+                WAIT_SECONDS=$((WAIT_SECONDS+2))
+            done
+            if [ -f "$ENV_PATH" ]; then
+                print_success "CineSync .env file detected: $ENV_PATH"
+            else
+                print_warning "CineSync .env file not found after waiting. Please check logs."
+            fi
+        else
+            print_warning "Failed to generate CineSync environment file. You can run it manually:"
+            print_warning "  python3 $SCRIPT_DIR/configure-cinesync.py"
+        fi
+    fi
+
     print_info "Starting deployment (phase 1: all services except Decypharr) with profiles:$COMPOSE_PROFILE_FLAGS"
     # Remove Decypharr from profiles for phase 1
     PHASE1_PROFILE_FLAGS=$(echo "$COMPOSE_PROFILE_FLAGS" | sed 's/--profile decypharr//g')
@@ -443,6 +469,9 @@ configure_services() {
     # Generate CineSync configuration if CineSync is enabled
     if echo "$COMPOSE_PROFILES" | grep -q "cinesync"; then
         print_info "Generating CineSync configuration..."
+        # Always export STORAGE_PATH from .env before running the config script
+        STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
+        export STORAGE_PATH
         if python3 "$SCRIPT_DIR/configure-cinesync.py"; then
             print_success "CineSync configuration generated successfully!"
         else
