@@ -181,7 +181,7 @@ services:
       - "${CINESYNC_PORT:-8082}:8082"
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
-      - ${STORAGE_PATH}/CineSync/config/.env:/app/.env:ro
+      - ${STORAGE_PATH}/CineSync/config/.env:/app/.env
       - ${STORAGE_PATH}/downloads:/downloads
       - /mnt:/mnt
       - ${STORAGE_PATH}:${STORAGE_PATH}
