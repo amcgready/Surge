@@ -208,7 +208,7 @@ class SurgeCineSyncConfigurator:
             self.config = {
                 # Directory Paths
                 'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', f'{self.storage_path}/downloads/Decypharr/debrids'),
-                'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/downloads/'),
+                'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/downloads/CineSync'),
                 'USE_SOURCE_STRUCTURE': os.environ.get('CINESYNC_USE_SOURCE_STRUCTURE', 'false'),
 
                 # Media Organization

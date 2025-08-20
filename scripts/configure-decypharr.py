@@ -82,8 +82,6 @@ class DecypharrConfigurator:
             self.decypharr_temp_dir,
             self.decypharr_symlinks_dir / "blackhole" / "sonarr",
             self.decypharr_symlinks_dir / "blackhole" / "radarr",
-            Path(self.storage_path) / "mnt" / "remote" / "realdebrid",
-            Path(self.storage_path) / "mnt" / "remote" / "alldebrid",
         ]
 
         for directory in directories:
@@ -427,8 +425,7 @@ class DecypharrConfigurator:
         # Add all folder paths from config
         folders_to_create.add(str(self.decypharr_config_dir))
         folders_to_create.add(str(self.decypharr_downloads_dir))
-        folders_to_create.add(str(self.decypharr_movies_dir))
-        folders_to_create.add(str(self.decypharr_tv_dir))
+        # Removed movies and tv folders
         folders_to_create.add(qbittorrent_download_folder)
         folders_to_create.add(qbittorrent_temp_folder)
         folders_to_create.add(qbittorrent_completed_folder)
@@ -436,9 +433,7 @@ class DecypharrConfigurator:
         folders_to_create.add(rclone_cache_dir)
         folders_to_create.add(str(Path(self.storage_path) / "downloads" / "Decypharr" / "blackhole" / "sonarr"))
         folders_to_create.add(str(Path(self.storage_path) / "downloads" / "Decypharr" / "blackhole" / "radarr"))
-        # Add debrid folders
-        for debrid in debrid_configs:
-            folders_to_create.add(debrid.get("folder"))
+        # Do not add debrid folders (e.g., realdebrid)
         # Create each folder with sudo mkdir -p
         for folder in folders_to_create:
             if folder and not Path(folder).exists():
