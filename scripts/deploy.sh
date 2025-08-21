@@ -1,3 +1,9 @@
+    # Dynamically generate Pangolin config
+    if python3 "$SCRIPT_DIR/configure-pangolin.py" "$STORAGE_PATH"; then
+        print_success "Pangolin config.json generated in $STORAGE_PATH/Pangolin/config/"
+    else
+        print_warning "Failed to generate Pangolin config.json. Please check configure-pangolin.py."
+    fi
 #!/bin/bash
 
 # ===========================================
@@ -205,6 +211,13 @@ create_directories() {
     fi
 
     print_success "Directory structure created at $STORAGE_PATH for enabled services."
+
+    # Dynamically generate Pangolin config after directories are created
+    if python3 "$SCRIPT_DIR/configure-pangolin.py" "$STORAGE_PATH"; then
+        print_success "Pangolin config.json generated in $STORAGE_PATH/Pangolin/config/"
+    else
+        print_warning "Failed to generate Pangolin config.json. Please check configure-pangolin.py."
+    fi
 }
 
 # Show usage
@@ -284,7 +297,7 @@ deploy_services() {
 
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
-    PROFILES="$media_server"
+    PROFILES="$media_server pangolin"
     [ "$(grep '^ENABLE_RADARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" radarr"
     [ "$(grep '^ENABLE_SONARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" sonarr"
     [ "$(grep '^ENABLE_BAZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" bazarr"
