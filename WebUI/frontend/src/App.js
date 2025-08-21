@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import Step1 from './Step1';
+import Step2 from './Step2';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip, Divider } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
 import bgImage from './assets/background.jpg';
@@ -650,47 +651,9 @@ function App() {
         {activeStep === 1 && (
           <Step1 config={config} setConfig={setConfig} coreServers={coreServers} />
         )}
-          {activeStep === 2 && (
-            <Box>
-              <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Storage Config</Typography>
-              <Typography style={{ color: '#fff', marginBottom: 8 }}>Where would you like to store your media and config?</Typography>
-              <Box display="flex" gap={2} alignItems="center">
-                <input
-                  type="text"
-                  name="storagePath"
-                  placeholder="/mnt/media or /home/user/SurgeData"
-                  value={config.storagePath}
-                  onChange={handleChange}
-                  style={{ flex: 1, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
-                />
-                <Button
-                  variant="outlined"
-                  style={{ color: '#fff', borderColor: '#fff', minWidth: 120 }}
-                  onClick={async () => {
-                    // Use the File System Access API if available
-                    if (window.showDirectoryPicker) {
-                      try {
-                        const dirHandle = await window.showDirectoryPicker();
-                        setConfig((prev) => ({ ...prev, storagePath: dirHandle.name }));
-                      } catch (e) {
-                        // User cancelled or not supported
-                      }
-                    } else {
-                      alert('Directory picker is not supported in this browser. Please type the path manually.');
-                    }
-                  }}
-                >
-                  Browse
-                </Button>
-              </Box>
-              <Typography style={{ color: '#fff', background: '#232323', fontSize: 14, marginTop: 12, padding: 12, borderRadius: 4 }}>
-                The storage path you set here will be treated as the main directory for your Surge stack. All service data, configuration, and volumes will be stored under this directory, just like in the setup script.
-              </Typography>
-              <Typography style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
-                You can type a path or use the Browse button (if supported by your browser).
-              </Typography>
-            </Box>
-          )}
+        {activeStep === 2 && (
+          <Step2 config={config} setConfig={setConfig} />
+        )}
           {activeStep === 3 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>External API Configuration</Typography>
