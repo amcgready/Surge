@@ -2772,7 +2772,7 @@ function App() {
               ))}
             </Box>
           )}
-          {activeStep === 5 && (
+          {activeStep === 6 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Content Enhancement</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
@@ -3055,7 +3055,7 @@ function App() {
               {/* Repeat similar advanced config UI for NZBGet, RDT-Client, Gaps, cli-debrid, ImageMaid, CineSync, Zurg, Decypharr, etc., matching backend-documented options */}
             </Box>
           )}
-          {activeStep === 6 && (
+          {activeStep === 7 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Monitoring & Interface</Typography>
               <Box display="flex" gap={3} mb={3} justifyContent="center">
@@ -3346,7 +3346,7 @@ function App() {
               ))}
             </Box>
           )}
-          {activeStep === 7 && (
+          {activeStep === 8 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Shared Configuration</Typography>
               <Box mb={2}>
@@ -3406,14 +3406,14 @@ function App() {
               <input name="groupId" placeholder="Group ID (default 1000)" value={config.groupId} onChange={handleChange} style={{width:'100%',margin:'8px 0',background:'#222',color:'#fff',border:'1px solid #444',borderRadius:4}} />
             </Box>
           )}
-          {activeStep === 8 && (
+          {activeStep === 9 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Review</Typography>
               <pre style={{ color: '#fff', background: '#222', padding: 12, borderRadius: 4 }}>{JSON.stringify(config, null, 2)}</pre>
               <Button onClick={handleSave} variant="contained">Save Configuration</Button>
             </Box>
           )}
-          {activeStep === 9 && (
+          {activeStep === 10 && (
             <Box>
               <Typography variant="h6" style={{ color: '#fff' }}>Deploy</Typography>
               <Button 
