@@ -278,24 +278,18 @@ services:
     profiles:
       - homepage
 
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: surge-watchtower
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-UTC}
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_INTERVAL:-86400}
-      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_WEBHOOK:-}
-      - WATCHTOWER_NOTIFICATIONS_LEVEL=info
+  avenia:
+    image: containrrr/avenia:latest
+    container_name: surge-avenia
+    env_file:
+      - ${STORAGE_PATH}/Avenia/.avenia.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
     profiles:
-      - watchtower
+      - avenia
 
   pangolin:
     image: fosrl/pangolin:latest
