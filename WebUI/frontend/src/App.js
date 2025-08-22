@@ -660,7 +660,22 @@ function App() {
               <MediaServerStep config={config} setConfig={setConfig} coreServers={coreServers} />
             )}
             {activeStep === 2 && (
-              <StorageConfigStep config={config} setConfig={setConfig} />
+              <StorageConfigStep
+                config={config}
+                setConfig={setConfig}
+                nextButton={
+                  <Button
+                    disableRipple
+                    disableElevation
+                    disabled={!config.storagePath}
+                    onClick={handleNext}
+                    variant="outlined"
+                    sx={{ color: '#fff', borderColor: '#fff', boxShadow: 'none', '&:hover': { boxShadow: 'none' }, '&:focus': { boxShadow: 'none', outline: 'none' }, '&.Mui-focusVisible': { boxShadow: 'none', outline: 'none' } }}
+                  >
+                    Next
+                  </Button>
+                }
+              />
             )}
             {activeStep === 3 && (
               <ExternalAPIStep config={config} setConfig={setConfig} />

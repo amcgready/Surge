@@ -12,8 +12,8 @@ export default function ContentEnhancementStep(props) {
   } = props;
 
   return (
-    <Box>
-      <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Content Enhancement</Typography>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h6" align="center" style={{ color: '#fff', marginBottom: 16 }}>Content Enhancement</Typography>
       <Box display="flex" gap={1.5} mb={3} justifyContent="center">
         {contentEnhancementList.map((tool) => (
           <Tooltip key={tool.key} title={tool.desc} placement="top">

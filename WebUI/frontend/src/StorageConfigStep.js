@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const Step2 = ({ config, setConfig }) => {
+const Step2 = ({ config, setConfig, nextButton }) => {
   // Handler for input change
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -9,8 +9,8 @@ const Step2 = ({ config, setConfig }) => {
   };
 
   return (
-    <Box>
-      <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Storage Config</Typography>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h6" align="center" style={{ color: '#fff', marginBottom: 16 }}>Storage Config</Typography>
       <Typography style={{ color: '#fff', marginBottom: 8 }}>Where would you like to store your media and config?</Typography>
       <Box display="flex" gap={2} alignItems="center">
         <input
@@ -46,6 +46,7 @@ const Step2 = ({ config, setConfig }) => {
       <Typography style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>
         You can type a path or use the Browse button (if supported by your browser).
       </Typography>
+      {nextButton}
     </Box>
   );
 };

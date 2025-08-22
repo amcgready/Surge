@@ -5,7 +5,7 @@ import { Box, Typography, Tooltip, Button, Divider } from '@mui/material';
 const Step1 = ({ config, setConfig, coreServers }) => {
   return (
     <Box>
-      <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>Core Media Server</Typography>
+      <Typography variant="h6" align="center" style={{ color: '#fff', marginBottom: 16 }}>Core Media Server</Typography>
       <Box display="flex" gap={3} mb={3} justifyContent="center">
         {coreServers.map((srv) => (
           <Tooltip key={srv.key} title={srv.desc} placement="top">
@@ -17,15 +17,21 @@ const Step1 = ({ config, setConfig, coreServers }) => {
                 filter: config.mediaServer === srv.key ? 'none' : 'grayscale(100%)',
                 border: config.mediaServer === srv.key ? '2px solid #07938f' : '2px solid #444',
                 borderRadius: 2,
-                p: 1,
+                p: 3,
                 background: '#181818',
                 transition: 'all 0.2s',
                 position: 'relative',
-                boxShadow: config.mediaServer === srv.key ? '0 0 8px #07938f' : 'none',
-                '&:hover': { boxShadow: '0 0 16px #07938f' }
+                boxShadow: 'none',
+                '&:hover': { boxShadow: 'none' },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 220,
+                minWidth: 220
               }}
             >
-              <img src={srv.logo} alt={srv.name} style={{ maxWidth: 192, maxHeight: 192, width: 'auto', height: 'auto', display: 'block', margin: '0 auto' }} />
+              <img src={srv.logo} alt={srv.name} style={{ width: 128, height: 128, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
               {config.mediaServer !== srv.key && (
                 <Box sx={{
                   position: 'absolute',

@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 
 const ExternalAPIStep = ({ config, setConfig }) => {
   return (
-    <Box>
+    <Box sx={{ p: 4 }}>
       <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>External API Configuration</Typography>
       <Typography style={{ color: '#aaa', marginBottom: 24, fontSize: 14 }}>
         Configure external API keys to enhance your media server with metadata, artwork, and additional features. 
