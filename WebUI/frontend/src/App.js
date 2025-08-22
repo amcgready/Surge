@@ -1,8 +1,8 @@
 
 import React, { useEffect } from 'react';
-import Step1 from './Step1';
-import Step2 from './Step2';
-import Step3 from './Step3';
+import MediaServerStep from './MediaServerStep';
+import StorageConfigStep from './StorageConfigStep';
+import ExternalAPIStep from './ExternalAPIStep';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip, Divider } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
 import bgImage from './assets/background.jpg';
@@ -650,13 +650,13 @@ function App() {
         </Stepper>
         <Box sx={{ my: 4 }}>
         {activeStep === 1 && (
-          <Step1 config={config} setConfig={setConfig} coreServers={coreServers} />
+          <MediaServerStep config={config} setConfig={setConfig} coreServers={coreServers} />
         )}
         {activeStep === 2 && (
-          <Step2 config={config} setConfig={setConfig} />
+          <StorageConfigStep config={config} setConfig={setConfig} />
         )}
         {activeStep === 3 && (
-          <Step3 config={config} setConfig={setConfig} />
+          <ExternalAPIStep config={config} setConfig={setConfig} />
         )}
           {activeStep === 4 && (
             <Box>

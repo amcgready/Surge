@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-const Step3 = ({ config, setConfig }) => {
+const ExternalAPIStep = ({ config, setConfig }) => {
   return (
     <Box>
       <Typography variant="h6" style={{ color: '#fff', marginBottom: 16 }}>External API Configuration</Typography>
@@ -159,4 +159,4 @@ const Step3 = ({ config, setConfig }) => {
   );
 };
 
-export default Step3;
+export default ExternalAPIStep;
