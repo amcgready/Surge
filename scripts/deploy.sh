@@ -163,7 +163,7 @@ create_directories() {
         [Jellyfin]="config media"
     )
 
-    # Only create folders for enabled services
+    # Only create folders for enabled services, and only copy default configs/envs if missing
     for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
@@ -172,6 +172,20 @@ create_directories() {
             for sub in ${service_folders[$service]}; do
                 mkdir -p "$STORAGE_PATH/$service/$sub"
             done
+            # Only copy default config/env if missing
+            default_config="$SCRIPT_DIR/initial-configs/${service,,}-config.yml"
+            target_config="$STORAGE_PATH/$service/config/config.yml"
+            if [ -f "$default_config" ] && [ ! -f "$target_config" ]; then
+                cp "$default_config" "$target_config"
+                print_info "Default config for $service copied to $target_config"
+            fi
+            # Example for env files (customize per service as needed)
+            default_env="$SCRIPT_DIR/initial-configs/${service,,}.env"
+            target_env="$STORAGE_PATH/$service/.env"
+            if [ -f "$default_env" ] && [ ! -f "$target_env" ]; then
+                cp "$default_env" "$target_env"
+                print_info "Default env for $service copied to $target_env"
+            fi
         fi
     done
 
@@ -589,17 +603,20 @@ sys.exit(0 if success else 1)
     
     # Configure service API keys if needed (only if config files don't exist)
     if [ -f "$SCRIPT_DIR/inject-api-keys.py" ]; then
-        # Check if API keys need to be generated (only for new installations)
-        if [ ! -f "$STORAGE_PATH/Prowlarr/config/config.xml" ] || [ ! -f "$STORAGE_PATH/Radarr/config/config.xml" ] || [ ! -f "$STORAGE_PATH/Sonarr/config/config.xml" ]; then
-            print_info "Generating initial API keys for new services..."
-            if python3 "$SCRIPT_DIR/inject-api-keys.py" --generate-all --config-dir "$STORAGE_PATH" 2>/dev/null; then
-                print_success "Initial API keys generated successfully!"
+        # Only generate API keys for services that do not already have them
+        for service in "Prowlarr" "Radarr" "Sonarr"; do
+            config_file="$STORAGE_PATH/$service/config/config.xml"
+            if [ ! -f "$config_file" ]; then
+                print_info "Generating initial API key for $service..."
+                if python3 "$SCRIPT_DIR/inject-api-keys.py" --generate "$service" --config-dir "$STORAGE_PATH" 2>/dev/null; then
+                    print_success "Initial API key for $service generated successfully!"
+                else
+                    print_info "API key for $service will be generated automatically when service starts"
+                fi
             else
-                print_info "API keys will be generated automatically when services start"
+                print_info "API key for $service already exists, skipping generation"
             fi
-        else
-            print_info "API keys already exist, skipping generation"
-        fi
+        done
     fi
     
     print_success "Service configuration completed!"
