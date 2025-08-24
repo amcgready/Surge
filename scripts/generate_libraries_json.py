@@ -1,22 +1,29 @@
 import os
 import json
 import sys
+from dotenv import load_dotenv
 
-# Usage: python generate_libraries_json.py <cinesync_media_root> <output_json_path>
-if len(sys.argv) != 3:
-    print("Usage: generate_libraries_json.py <cinesync_media_root> <output_json_path>")
+# Load environment variables from .env file in project directory
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(project_dir, '.env')
+load_dotenv(env_path)
+
+# Always use STORAGE_PATH for cinesync_media_root and output_json_path
+storage_path = os.environ.get('STORAGE_PATH')
+if not storage_path:
+    print("Error: STORAGE_PATH environment variable not set.")
     sys.exit(1)
-
-cinesync_media_root = sys.argv[1]
-output_json_path = sys.argv[2]
+cinesync_media_root = os.path.join(storage_path, 'downloads', 'CineSync')
+output_json_path = os.path.join(storage_path, 'Plex', 'config', 'Library', 'Application Support', 'Plex Media Server', 'Libraries.json')
 
 # Map folder names to Plex library types
 LIBRARY_TYPE_MAP = {
     "Movies": "movie",
-    "TV": "show",
-    "TV Shows": "show",
-    "Music": "music",
-    "Photos": "photo",
+    "TV Series": "show",
+    "Anime Series": "show",
+    "Anime Movies": "movie",
+    "4K Movies": "movie",
+    "4K TV Series": "show",
     # Add more mappings as needed
 }
 

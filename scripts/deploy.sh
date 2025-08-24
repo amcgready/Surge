@@ -411,18 +411,36 @@ deploy_services() {
     print_info "Access your services:"
     echo "  - Homepage Dashboard: http://localhost:3000"
     echo "  - CineSync Media Manager: http://localhost:8082"
-    case $media_server in
-        plex)
-            echo "  - Plex Media Server: http://localhost:32400/web"
-            ;;
-        emby)
-            echo "  - Emby Server: http://localhost:8096"
-            ;;
-        jellyfin)
-            echo "  - Jellyfin Server: http://localhost:8096"
-            ;;
-    esac
-    
+    if [ "$media_server" = "plex" ]; then
+        echo "  - Plex Media Server: http://localhost:32400/web"
+        print_info "Please open http://localhost:32400/web in your browser."
+        print_info "Name your Plex server and click Next in the browser."
+        read -p "After you have named your Plex server and clicked Next, press Enter to continue..."
+        # Extract Plex token from Preferences.xml (correct location)
+        PLEX_PREFS="$STORAGE_PATH/Plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+        if [ -f "$PLEX_PREFS" ]; then
+            PLEX_TOKEN=$(grep -o 'PlexOnlineToken="[^"]*"' "$PLEX_PREFS" | head -1 | sed 's/PlexOnlineToken="\([^"]*\)"/\1/')
+            if [ -n "$PLEX_TOKEN" ]; then
+                print_success "Extracted Plex token: $PLEX_TOKEN"
+                # Save to .env
+                if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
+                    sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
+                else
+                    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
+                fi
+                print_info "Plex token saved to .env file."
+            else
+                print_warning "Could not extract Plex token from Preferences.xml."
+            fi
+        else
+            print_warning "Preferences.xml not found at $PLEX_PREFS. Plex may not be fully initialized yet."
+        fi
+    elif [ "$media_server" = "emby" ]; then
+        echo "  - Emby Server: http://localhost:8096"
+    elif [ "$media_server" = "jellyfin" ]; then
+        echo "  - Jellyfin Server: http://localhost:8096"
+    fi
+
     # Show optional service status messages
     if [ -n "$RD_API_TOKEN" ]; then
         echo "  - RDT-Client (Real-Debrid): http://localhost:6500"
