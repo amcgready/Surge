@@ -177,12 +177,40 @@ update_surge() {
     
     # Recreate containers with new images (only if pull succeeded)
     if [ "$update_failed" = false ]; then
-        print_step "Recreating containers with latest images..."
-        if docker compose up -d; then
-            print_success "Successfully recreated containers"
-        else
-            print_error "Failed to recreate containers"
+        print_step "Selecting enabled services from .env..."
+        # Parse enabled services from .env
+        # Get all service names from docker-compose.yml
+        compose_services=($(grep -E '^  [a-zA-Z0-9_-]+:' "$PROJECT_DIR/docker-compose.yml" | awk '{print $1}' | tr -d ':'))
+        enabled_services=()
+        while IFS= read -r line; do
+            if [[ $line =~ ^ENABLE_([A-Z0-9_]+)=true ]]; then
+                env_name="${BASH_REMATCH[1],,}"
+                # Map env_name to service name
+                case "$env_name" in
+                    cli_debrid)
+                        service_name="cli-debrid" ;;
+                    rdt_client)
+                        service_name="rdt-client" ;;
+                    *)
+                        service_name="$env_name" ;;
+                esac
+                # Only add if service exists in compose file
+                if [[ " ${compose_services[@]} " =~ " $service_name " ]]; then
+                    enabled_services+=("$service_name")
+                fi
+            fi
+        done < "$PROJECT_DIR/.env"
+        if [ ${#enabled_services[@]} -eq 0 ]; then
+            print_error "No enabled services found in .env that exist in docker-compose.yml. Aborting update."
             update_failed=true
+        else
+            print_step "Recreating enabled containers: ${enabled_services[*]}"
+            if docker compose up -d "${enabled_services[@]}"; then
+                print_success "Successfully recreated enabled containers"
+            else
+                print_error "Failed to recreate enabled containers"
+                update_failed=true
+            fi
         fi
     fi
     
