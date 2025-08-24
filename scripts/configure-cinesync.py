@@ -54,9 +54,10 @@ class SurgeCineSyncConfigurator:
         self.enabled_services = self.detect_enabled_services()
 
         # Configuration settings
-        self.config = {}
-        self.api_keys = {}
-
+        self.config = {
+            'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', '/downloads/Decypharr/debrids'),
+            'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', '/downloads/CineSync'),
+        }
         self.log("CineSync Configurator initialized", "INFO")
         self.log(f"Storage path: {self.storage_path}", "INFO")
         self.log(f"Config directory: {self.config_dir}", "INFO")
