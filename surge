@@ -163,7 +163,14 @@ case ${1:-} in
         fi
         exec "$SCRIPT_DIR/scripts/exec.sh" "${@:2}"
         ;;
-    update|--update)
+    update)
+        if [ "$2" = "config" ]; then
+            exec "$SCRIPT_DIR/scripts/update-config.sh" "${@:3}"
+        else
+            exec "$SCRIPT_DIR/scripts/update.sh" "${@:2}"
+        fi
+        ;;
+    --update)
         exec "$SCRIPT_DIR/scripts/update.sh" "${@:2}"
         ;;
     status|logs|restart|cleanup|health|reset)
