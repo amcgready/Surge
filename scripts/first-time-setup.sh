@@ -54,8 +54,31 @@ main_setup_logic() {
 
     # ...existing code for install type, media server, deployment type, etc...
 
+    # Interactive media server selection and deployment
+    echo "Choose your media server:"
+    echo "1) Plex Media Server (Premium)"
+    echo "2) Jellyfin (Free & Open Source)"
+    echo "3) Emby (Feature-rich)"
+    echo ""
+    read -p "Enter choice (1-3): " media_choice
+    case $media_choice in
+        1)
+            MEDIA_SERVER="plex"
+            ;;
+        2)
+            MEDIA_SERVER="jellyfin"
+            ;;
+        3)
+            MEDIA_SERVER="emby"
+            ;;
+        *)
+            print_error "Invalid choice"; exit 1 ;;
+    esac
+
+    echo "Deploying $MEDIA_SERVER..."
+    ./surge deploy "$MEDIA_SERVER"
+
     # After deployment type and service selection, but BEFORE Plex setup, prompt for CineSync folders if enabled
-    # (Assume DEPLOYMENT_TYPE and ENABLE_CINESYNC are set by gather_auto_preferences/gather_custom_preferences)
     if [ "$ENABLE_CINESYNC" = "true" ]; then
         configure_cinesync_organization
     fi
@@ -256,7 +279,33 @@ check_first_run() {
     
     if [ -f "$PROJECT_DIR/.surge_initialized" ]; then
         print_info "Surge has already been initialized"
-        echo "Run './surge deploy <media-server>' to start services"
+    read -p "Would you like to deploy now? [Y/n]: " deploy_now
+    if [[ ! "$deploy_now" =~ ^[Nn]$ ]]; then
+        echo "Select the type of media server to deploy:"
+        echo "  1) Plex"
+        echo "  2) Jellyfin"
+        echo "  3) Emby"
+        read -p "Enter choice (1-3): " server_choice
+        case $server_choice in
+            1)
+                echo "Deploying Plex..."
+                ./surge deploy plex
+                ;;
+            2)
+                echo "Deploying Jellyfin..."
+                ./surge deploy jellyfin
+                ;;
+            3)
+                echo "Deploying Emby..."
+                ./surge deploy emby
+                ;;
+            *)
+                echo "Invalid choice. Please run './surge deploy <plex|jellyfin|emby>' manually."
+                ;;
+        esac
+    else
+        echo "You can deploy later by running './surge deploy <plex|jellyfin|emby>'"
+    fi
         echo "Run './surge setup --reconfigure' to reconfigure"
         exit 0
     fi
@@ -319,70 +368,25 @@ gather_auto_preferences() {
     echo ""
 
     print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
-    # ...existing code...
 
-    # Media server choice
-    echo "Choose your media server:"
-    echo "1) Plex Media Server (Premium)"
-    echo "2) Jellyfin (Free & Open Source)" 
-    echo "3) Emby (Feature-rich)"
-    echo ""
-    read -p "Enter choice (1-3): " media_choice
-    case $media_choice in
-        1) MEDIA_SERVER="plex" ;;
-        2) MEDIA_SERVER="jellyfin" ;;
-        3) MEDIA_SERVER="emby" ;;
-        *) print_error "Invalid choice"; exit 1 ;;
-    esac
-    # Plex server name configuration (required for proper library setup)
-    if [ "$MEDIA_SERVER" = "plex" ]; then
-        echo ""
-        print_info "Plex Server Configuration"
-        echo "Enter a name for your Plex server (required for proper library setup)"
-        echo "This will be displayed in the Plex interface and used for identification"
-        read -p "Plex server name [MyPlexServer]: " plex_server_name
-        PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
-        print_success "Plex server name set to: $PLEX_SERVER_NAME"
-        echo ""
-        print_info "Opening web browser for Plex claim token..."
-        if command -v xdg-open >/dev/null 2>&1; then
-            xdg-open "https://plex.tv/claim" >/dev/null 2>&1 &
-        else
-            echo "Please open https://plex.tv/claim in your browser to get your Plex claim token."
-        fi
-        echo "Generate your Plex claim token here: ${YELLOW}https://plex.tv/claim${NC} (login required)"
-        while true; do
-            read -p "Paste your Plex claim token: " plex_claim_token
-            if [ -n "$plex_claim_token" ]; then
-                break
-            else
-                print_error "Plex claim token is required to continue. Please paste your token."
-            fi
-        done
-        PLEX_CLAIM=${plex_claim_token}
-    fi
-
-    # AUTO INSTALL PRESET: Only enable the default recommended services for auto installs
+    # AUTO INSTALL PRESET: Only enable services present in docker-compose.yml
+    ENABLE_RADARR="true"
+    ENABLE_SONARR="true"
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
     ENABLE_NZBGET="true"
-    ENABLE_RADARR="true"
-    ENABLE_SONARR="true"
+    ENABLE_CLI_DEBRID="true"
+    ENABLE_DECYPHARR="true"
+    ENABLE_POSTERIZARR="true"
+    ENABLE_CINESYNC="true"
+    ENABLE_PLACEHOLDARR="true"
     ENABLE_OVERSEERR="true"
     ENABLE_TAUTULLI="true"
-    ENABLE_HOMEPAGE="true"
-    ENABLE_WATCHTOWER="true"
-    ENABLE_SCHEDULER="true"
-    ENABLE_CLI_DEBRID="false"
-    ENABLE_DECYPHARR="true"
-    ENABLE_CINESYNC="false"
-    ENABLE_PLACEHOLDARR="false"
     ENABLE_GAPS="true"
-    ENABLE_RDT_CLIENT="false"
-    ENABLE_PD_ZURG="false"
+    ENABLE_HOMEPAGE="true"
     ENABLE_KOMETA="true"
-    ENABLE_POSTERIZARR="true"
-    ENABLE_SCANLY="false"
+    ENABLE_AVENIA="true"
+    ENABLE_SCHEDULER="true"
     # Set only the selected media server to true
     case "$MEDIA_SERVER" in
         plex)
@@ -493,13 +497,7 @@ esac
         configure_cinesync_organization
     fi
 
-    # Set Zurg downloads path and CineSync origin path
-    PD_ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/pd_zurg"
-    if [ "$ENABLE_PD_ZURG" = "true" ]; then
-        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/pd_zurg/__all__"
-    else
-        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
-    fi
+    # ...Zurg logic removed...
 
     # API Keys and External Services (wording and logic unified with custom install)
     echo ""
@@ -508,12 +506,13 @@ esac
     # Debrid Services Section
     echo ""
     print_info "Debrid Services (Real-Debrid, AllDebrid, Premiumize)"
-    echo "Provide at least one debrid API token to enable Torrentio, Zurg, and cli-debrid."
+    echo "Provide at least one debrid API token to enable Torrentio, Decypharr, and cli-debrid."
     echo "If none are provided, these features will be disabled."
     echo ""
     read -p "Real-Debrid API Token (recommended): " RD_API_TOKEN
     read -p "AllDebrid API Token (optional): " AD_API_TOKEN
     read -p "Premiumize API Token (optional): " PREMIUMIZE_API_TOKEN
+    read -p "TorBox API Token (optional): " TORBOX_API_TOKEN
 
     # Determine which token to use for all debrid features
     if [ -n "$RD_API_TOKEN" ]; then
@@ -532,15 +531,13 @@ esac
 
     # Apply token to all relevant services, or disable if none provided
     if [ "$DEBRID_PROVIDER" = "none" ]; then
-        print_warning "No debrid token provided. Torrentio, Zurg, and cli-debrid will be disabled."
+        print_warning "No debrid token provided. Torrentio and cli-debrid will be disabled."
         ENABLE_TORRENTIO="false"
-        ENABLE_ZURG="false"
         ENABLE_CLI_DEBRID="false"
         ENABLE_RDT_CLIENT="false"
     else
         print_success "Using $DEBRID_PROVIDER token for all debrid features."
         ENABLE_TORRENTIO="true"
-        ENABLE_ZURG="true"
         ENABLE_CLI_DEBRID="true"
         ENABLE_RDT_CLIENT="true"
     fi
@@ -584,12 +581,12 @@ esac
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
         echo "Fanart.tv API Key (optional)"
-        echo "  Get your Fanart.tv API key here: https://fanart.tv/users/apikey (login required)"
+        echo "  Get your Fanart.tv API key here: https://fanart.tv/get-an-api-key/(login required)"
         read -p "Fanart.tv API Key: " fanart_key
         FANART_API_KEY=${fanart_key:-}
 
         echo "TVDB API Key (optional)"
-        echo "  Get your TVDB API key here: https://thetvdb.com/api-information (login required)"
+        echo "  Get your TVDB API key here: https://thetvdb.com/dashboard/account/apikey (login required)"
         read -p "TVDB API Key: " tvdb_key
         TVDB_API_KEY=${tvdb_key:-}
     fi
@@ -604,33 +601,6 @@ gather_custom_preferences() {
     print_info "Complete control over your Surge deployment."
     echo "We'll walk through every configuration option."
     echo ""
-    
-    # Media server choice
-    echo "Choose your media server:"
-    echo "1) Plex Media Server (Premium)"
-    echo "2) Jellyfin (Free & Open Source)"
-    echo "3) Emby (Feature-rich)"
-    echo ""
-    read -p "Enter choice (1-3): " media_choice
-    
-    case $media_choice in
-        1) MEDIA_SERVER="plex" ;;
-        2) MEDIA_SERVER="jellyfin" ;;
-        3) MEDIA_SERVER="emby" ;;
-        *) print_error "Invalid choice"; exit 1 ;;
-    esac
-    
-    # Plex server name configuration (required for proper library setup)
-    if [ "$MEDIA_SERVER" = "plex" ]; then
-        echo ""
-        print_info "Plex Server Configuration"
-        echo "Enter a name for your Plex server (required for proper library setup)"
-        echo "This will be displayed in the Plex interface and used for identification"
-        read -p "Plex server name [MyPlexServer]: " plex_server_name
-        PLEX_SERVER_NAME=${plex_server_name:-MyPlexServer}
-        print_success "Plex server name set to: $PLEX_SERVER_NAME"
-        echo ""
-    fi
     
     # Deployment type
     echo ""
@@ -670,13 +640,7 @@ gather_custom_preferences() {
             configure_cinesync_organization
         fi
     fi
-    # Set Zurg downloads path and CineSync origin path (always, no prompt)
-    PD_ZURG_DOWNLOADS_PATH="$STORAGE_PATH/downloads/pd_zurg"
-    if [ "$ENABLE_PD_ZURG" = "true" ]; then
-        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/pd_zurg/__all__"
-    else
-        CINESYNC_ORIGIN_PATH="$STORAGE_PATH/downloads/Zurg"
-    fi
+    # ...Zurg logic removed...
 
     # Storage location
     echo ""
@@ -749,17 +713,16 @@ gather_custom_preferences() {
         ENABLE_NZBGET=$([[ "$enable_nzbget" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
         ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        read -p "Enable Zurg (Real-Debrid filesystem)? [y/N]: " enable_zurg
-        ENABLE_ZURG=$([[ "$enable_zurg" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        # ...Zurg prompt removed...
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
         ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         # =============================
         # Debrid Service Configuration
         # =============================
-        if [ "$ENABLE_RDT_CLIENT" = "true" ] || [ "$ENABLE_ZURG" = "true" ] || [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        if [ "$ENABLE_RDT_CLIENT" = "true" ] || [ "$ENABLE_CLI_DEBRID" = "true" ]; then
             echo ""
             print_info "Debrid Service Configuration"
-            echo "Provide at least one debrid API token to enable Torrentio, Zurg, and cli-debrid."
+            echo "Provide at least one debrid API token to enable Torrentio and cli-debrid."
             echo "If none are provided, these features will be disabled."
             echo ""
             read -p "Real-Debrid API Token (recommended): " RD_API_TOKEN

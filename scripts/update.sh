@@ -131,6 +131,7 @@ send_update_notification() {
         
         local payload=$(cat <<EOF
 {
+  "avatar_url": "https://raw.githubusercontent.com/amcgready/Surge/main/assets/Surge.png",
   "embeds": [
     {
       "title": "${emoji} Surge Update ${status^}",

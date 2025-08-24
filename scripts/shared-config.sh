@@ -90,6 +90,7 @@ send_discord_notification() {
     
     local payload=$(cat << EOF
 {
+  "avatar_url": "https://raw.githubusercontent.com/amcgready/Surge/main/assets/Surge.png",
   "embeds": [
     {
       "title": "${NOTIFICATION_TITLE_PREFIX:-Surge} - $title",
