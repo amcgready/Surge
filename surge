@@ -151,6 +151,9 @@ case ${1:-} in
     security-audit)
         exec "$SCRIPT_DIR/scripts/security-audit.sh" "${@:2}"
         ;;
+    library)
+        exec python3 "$SCRIPT_DIR/scripts/libraries.py" "${@:2}"
+        ;;
     exec)
         if [ -z "$2" ]; then
             echo -e "${RED}Error:${NC} Service not specified"
