@@ -738,6 +738,21 @@ main() {
     setup_environment
     create_directories
     deploy_services "$MEDIA_SERVER" "$DEPLOYMENT_TYPE"
+
+    # After deployment, generate libraries.json and create Plex libraries
+    print_info "Generating libraries.json for Plex..."
+    if python3 "$SCRIPT_DIR/generate_libraries_json.py"; then
+        print_success "libraries.json generated successfully."
+    else
+        print_warning "Failed to generate libraries.json."
+    fi
+
+    print_info "Creating Plex libraries from libraries.json..."
+    if python3 "$SCRIPT_DIR/plex_create_libraries.py"; then
+        print_success "Plex libraries created successfully."
+    else
+        print_warning "Failed to create Plex libraries."
+    fi
 }
 
 # Run main function
