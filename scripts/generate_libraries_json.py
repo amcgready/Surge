@@ -34,14 +34,17 @@ def guess_library_type(folder_name):
     return "movie"  # Default to movie if unknown
 
 libraries = []
+seen_names = set()
 for entry in os.scandir(cinesync_media_root):
     if entry.is_dir():
         lib_type = guess_library_type(entry.name)
-        libraries.append({
-            "name": entry.name,
-            "type": lib_type,
-            "location": entry.path
-        })
+        if entry.name not in seen_names:
+            libraries.append({
+                "name": entry.name,
+                "type": lib_type,
+                "location": entry.path
+            })
+            seen_names.add(entry.name)
 
 with open(output_json_path, "w") as f:
     json.dump(libraries, f, indent=2)

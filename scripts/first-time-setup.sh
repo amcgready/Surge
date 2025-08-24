@@ -1047,31 +1047,43 @@ configure_cinesync_organization() {
     echo "📂 Your media will be organized as follows:"
     echo "   📺 TV Shows: $CINESYNC_CUSTOM_SHOW_FOLDER"
     echo "   🎬 Movies: $CINESYNC_CUSTOM_MOVIE_FOLDER"
-    
     if [ "$CINESYNC_ANIME_SEPARATION" = "true" ]; then
         echo "   🗾 Anime TV: $CINESYNC_CUSTOM_ANIME_SHOW_FOLDER"
         echo "   🎌 Anime Movies: $CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER"
     fi
-    
     if [ "$CINESYNC_4K_SEPARATION" = "true" ]; then
         echo "   📺 4K TV: $CINESYNC_CUSTOM_4KSHOW_FOLDER"
         echo "   🎞️ 4K Movies: $CINESYNC_CUSTOM_4KMOVIE_FOLDER"
     fi
-    
     if [ "$CINESYNC_KIDS_SEPARATION" = "true" ]; then
         echo "   👶 Kids TV: $CINESYNC_CUSTOM_KIDS_SHOW_FOLDER"
         echo "   🧸 Kids Movies: $CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER"
     fi
-    
     if [ "$CINESYNC_SHOW_RESOLUTION_STRUCTURE" = "true" ]; then
         echo "   📐 Resolution-based sub-folders: Enabled"
     fi
-    
     if [ "$CINESYNC_USE_SOURCE_STRUCTURE" = "true" ]; then
         echo "   📋 Source structure preservation: Enabled"
     fi
-    
     echo ""
+
+    # Export variables for configure-cinesync.py
+    export CINESYNC_ANIME_SEPARATION
+    export CINESYNC_4K_SEPARATION
+    export CINESYNC_KIDS_SEPARATION
+    export CINESYNC_CUSTOM_ANIME_SHOW_FOLDER
+    export CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER
+    export CINESYNC_CUSTOM_4KSHOW_FOLDER
+    export CINESYNC_CUSTOM_4KMOVIE_FOLDER
+    export CINESYNC_CUSTOM_KIDS_SHOW_FOLDER
+    export CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER
+    export CINESYNC_CUSTOM_SHOW_FOLDER
+    export CINESYNC_CUSTOM_MOVIE_FOLDER
+    export CINESYNC_SHOW_RESOLUTION_STRUCTURE
+    export CINESYNC_USE_SOURCE_STRUCTURE
+
+    # Regenerate CineSync .env file with correct values
+    python3 "$SCRIPT_DIR/configure-cinesync.py" "$STORAGE_PATH"
 }
 
 # Comprehensive post-deployment configuration
