@@ -317,14 +317,14 @@ services:
   kometa:
     image: kometateam/kometa:latest
     container_name: surge-kometa
-    command: --run
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
-    # Uncomment and configure volumes if needed
-    # volumes:
-    #   - ${STORAGE_PATH}/Kometa/config:/config
+    volumes: 
+      - ${STORAGE_PATH}/Kometa/config:/config
+      - ${STORAGE_PATH}/Assets:/Assets:rw
+
     networks:
       - surge-network
 

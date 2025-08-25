@@ -190,7 +190,7 @@ create_directories() {
     )
 
     # Only create folders for enabled services, and only copy default configs/envs if missing
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
@@ -257,6 +257,31 @@ create_directories() {
         print_success "Pangolin config.json generated in $STORAGE_PATH/Pangolin/config/"
     else
         print_warning "Failed to generate Pangolin config.json. Please check configure-pangolin.py."
+    fi
+
+    # Source main .env and export all variables before Kometa setup
+    if [ -f "$PROJECT_DIR/.env" ]; then
+        set -a
+        source "$PROJECT_DIR/.env"
+        set +a
+    fi
+    # Generate Kometa configuration and clone repo before starting containers
+    print_info "Configuring Kometa and cloning repo..."
+    if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
+        print_success "Kometa configuration and repo setup complete."
+    else
+        print_warning "Failed to configure Kometa or clone repo. Please check configure-kometa.py."
+    fi
+    # Remove and regenerate Kometa config.yml as the very last step
+    KOMETA_CONFIG="$STORAGE_PATH/Kometa/config/config.yml"
+    if [ -f "$KOMETA_CONFIG" ]; then
+        rm -f "$KOMETA_CONFIG"
+        print_info "Removed existing Kometa config.yml as final step."
+    fi
+    if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
+        print_success "Final Kometa config.yml generated."
+    else
+        print_warning "Failed to generate final Kometa config.yml. Please check configure-kometa.py."
     fi
 }
 
@@ -455,6 +480,18 @@ deploy_services() {
                     echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
                 fi
                 print_info "Plex token saved to .env file."
+                # Re-run Bazarr configuration to add Plex
+                print_info "Re-running Bazarr configuration to add Plex integration..."
+                if docker compose ps bazarr | grep -q "Up"; then
+                    if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from service_config import configure_bazarr_applications; success = configure_bazarr_applications(); sys.exit(0 if success else 1)"; then
+                        print_success "Bazarr applications reconfigured with Plex integration!"
+                    else
+                        print_warning "Failed to reconfigure Bazarr applications with Plex. You can try again manually:"
+                        print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
+                    fi
+                else
+                    print_info "Bazarr not running, skipping Plex integration configuration."
+                fi
             else
                 print_warning "Could not extract Plex token from Preferences.xml."
             fi

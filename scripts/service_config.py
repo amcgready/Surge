@@ -581,11 +581,26 @@ def configure_bazarr_applications():
     # Wait for config files to exist with retries
     max_retries = 6
     retry_delay = 10
-    
+
+    plex_enabled = False
+    plex_token = None
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path) as envf:
+            for line in envf:
+                if line.startswith("ENABLE_PLEX=") and line.strip().split("=")[1].lower() == "true":
+                    plex_enabled = True
+                if line.startswith("PLEX_TOKEN="):
+                    plex_token = line.strip().split("=",1)[1]
+    # Also check environment variables
+    if os.environ.get("ENABLE_PLEX", "false").lower() == "true":
+        plex_enabled = True
+    if os.environ.get("PLEX_TOKEN"):
+        plex_token = os.environ["PLEX_TOKEN"]
+
     for attempt in range(max_retries):
         radarr_api_key = get_api_key_from_xml(radarr_config)
         sonarr_api_key = get_api_key_from_xml(sonarr_config)
-        
         if radarr_api_key and sonarr_api_key:
             print(f"✅ Found API keys on attempt {attempt + 1}")
             break
@@ -622,6 +637,28 @@ def configure_bazarr_applications():
         
         config_data['general']['use_radarr'] = True
         config_data['general']['use_sonarr'] = True
+
+        # Enable Plex usage if available
+        if plex_enabled and plex_token:
+            print("📝 Adding Plex connection to Bazarr config...")
+            config_data['general']['use_plex'] = True
+            if 'plex' not in config_data:
+                config_data['plex'] = {}
+            config_data['plex'].update({
+                'token': plex_token,
+                'ip': 'surge-plex',
+                'port': 32400,
+                'base_url': '/',
+                'ssl': False
+            })
+        else:
+            print("ℹ️ Plex integration not enabled or token missing; skipping Plex config for Bazarr.")
+
+        # Set movies and series folder paths
+        movies_folder = os.path.join(storage_path, 'Movies')
+        series_folder = os.path.join(storage_path, 'TV Series')
+        config_data['general']['movies_path'] = movies_folder
+        config_data['general']['series_path'] = series_folder
         
         # Configure Radarr connection
         if 'radarr' not in config_data:

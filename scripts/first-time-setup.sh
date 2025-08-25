@@ -550,7 +550,7 @@ esac
     export ENABLE_RDT_CLIENT
 
     # TMDB and Trakt
-    echo "\nTMDB API Key (for metadata, optional)"
+    echo "\nTMDB API Key (for metadata and Kometa, required)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
     read -p "TMDB API Key: " tmdb_key
     TMDB_API_KEY=${tmdb_key:-}
@@ -563,6 +563,30 @@ esac
         read -p "Trakt Client Secret: " trakt_secret
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
+
+    echo "\nAniDB Username (required for Kometa integration)"
+    read -p "AniDB Username: " anidb_user
+    ANIDB_USERNAME=${anidb_user:-}
+
+    echo "AniDB Password (required for Kometa integration)"
+    read -sp "AniDB Password: " anidb_pass
+    echo
+    ANIDB_PASSWORD=${anidb_pass:-}
+
+    echo "\nGithub Token (for Kometa and asset automation, optional)"
+    echo "  Get your Github token here: https://github.com/settings/tokens (login required)"
+    read -p "Github Token: " github_token
+    GITHUB_TOKEN=${github_token:-}
+
+    echo "\nOMDB API Key (for metadata, optional)"
+    echo "  Get your OMDB API key here: https://www.omdbapi.com/apikey.aspx (login required)"
+    read -p "OMDB API Key: " omdb_key
+    OMDB_API_KEY=${omdb_key:-}
+
+    echo "\nMDBLIST API Key (for metadata, optional)"
+    echo "  Get your MDBLIST API key here: https://mdblist.com/api (login required)"
+    read -p "MDBLIST API Key: " mdblist_key
+    MDBLIST_API_KEY=${mdblist_key:-}
 
     if [ "$ENABLE_NZBGET" = "true" ]; then
         echo ""
@@ -868,10 +892,28 @@ gather_custom_preferences() {
         DISCORD_NOTIFY_SYSTEM="false"
     fi
 
-    echo "\nTMDB API Key (for metadata, optional)"
+    echo "\nTMDB API Key (for metadata, REQUIRED)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
-    read -p "TMDB API Key: " tmdb_key
-    TMDB_API_KEY=${tmdb_key:-}
+    while true; do
+        read -p "TMDB API Key: " tmdb_key
+        if [ -n "$tmdb_key" ]; then
+            TMDB_API_KEY="$tmdb_key"
+            break
+        else
+            print_error "TMDB API Key is required. Please enter a value."
+        fi
+    done
+    # Write all gathered keys/tokens to main .env file
+    {
+        echo "TMDB_API_KEY=$TMDB_API_KEY"
+        echo "TRAKT_CLIENT_ID=$TRAKT_CLIENT_ID"
+        echo "TRAKT_CLIENT_SECRET=$TRAKT_CLIENT_SECRET"
+        echo "ANIDB_USERNAME=$ANIDB_USERNAME"
+        echo "ANIDB_PASSWORD=$ANIDB_PASSWORD"
+        echo "GITHUB_TOKEN=$GITHUB_TOKEN"
+        echo "OMDB_API_KEY=$OMDB_API_KEY"
+        echo "MDBLIST_API_KEY=$MDBLIST_API_KEY"
+    } >> "$PROJECT_DIR/.env"
 
     echo "\nTrakt Client ID (optional)"
     echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
