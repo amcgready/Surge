@@ -2,6 +2,18 @@
   <img src="assets/Surge.png" alt="Surge Logo" width="200"/>
 </div>
 
+<div align="center">
+  <a href="https://discord.gg/rivenmedia">
+    <img src="https://img.shields.io/badge/Discord-Join%20Discord-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord">
+  </a>
+  <a href="https://github.com/amcgready/Surge">
+    <img src="https://img.shields.io/github/stars/amcgready/Surge?style=for-the-badge&label=Stars" alt="GitHub Repo stars">
+  </a>
+  <a href="https://wakatime.com/badge/github/amcgready/Surge">
+    <img src="https://wakatime.com/badge/github/amcgready/Surge.svg" alt="wakatime" height="28">
+  </a>
+</div>
+
 # Surge - Unified Media Management Stack
 
 Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
@@ -24,7 +36,6 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 
 ### Download Clients & Tools
 - **[NZBGet](https://github.com/nzbgetcom/nzbget)** - Efficient Usenet downloader
-- **[RDT-Client](https://github.com/rogerfar/rdt-client)** - Real-Debrid torrent client
 - **[GAPS](https://github.com/JasonHHouse/gaps)** - Finds missing movies in Plex libraries and integrates with Radarr
 - **[pd_zurg](https://github.com/I-am-PUID-0/pd_zurg)** - Real-Debrid filesystem mounting and integration tool
 - **[cli_debrid](https://github.com/godver3/cli_debrid)** - Web interface and CLI for debrid services management
