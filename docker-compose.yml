@@ -278,18 +278,18 @@ services:
     profiles:
       - homepage
 
-  avenia:
-    image: containrrr/avenia:latest
-    container_name: surge-avenia
-    env_file:
-      - ${STORAGE_PATH}/Avenia/.avenia.env
+  dockupdater:
+    image: ghcr.io/dockupdater/dockupdater:latest
+    container_name: surge-dockupdater
+    environment:
+      - WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
     profiles:
-      - avenia
+      - dockupdater
 
   pangolin:
     image: fosrl/pangolin:latest
@@ -313,6 +313,20 @@ services:
       - surge-network
     profiles:
       - pangolin
+
+  kometa:
+    image: kometateam/kometa:latest
+    container_name: surge-kometa
+    command: --run
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    # Uncomment and configure volumes if needed
+    # volumes:
+    #   - ${STORAGE_PATH}/Kometa/config:/config
+    networks:
+      - surge-network
 
 networks:
   surge-network:

@@ -385,8 +385,7 @@ gather_auto_preferences() {
     ENABLE_GAPS="true"
     ENABLE_HOMEPAGE="true"
     ENABLE_KOMETA="true"
-    ENABLE_AVENIA="true"
-    ENABLE_SCHEDULER="true"
+    ENABLE_DOCKUPDATER="true"
     # Set only the selected media server to true
     case "$MEDIA_SERVER" in
         plex)

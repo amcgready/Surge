@@ -53,9 +53,7 @@ cleanup_system() {
         docker volume prune -f
     fi
     
-    # Remove unused networks
-    print_info "Removing unused networks..."
-    docker network prune -f
+
     
     print_success "System cleanup completed!"
 }
