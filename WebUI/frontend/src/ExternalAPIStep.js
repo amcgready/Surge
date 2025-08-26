@@ -141,6 +141,44 @@ const ExternalAPIStep = ({ config, setConfig }) => {
                 Alternative debrid service. Get from <a href="https://www.premiumize.me/account" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }}>Premiumize</a>.
               </Typography>
             </Box>
+            <Box>
+              <Typography style={{ color: '#fff', marginBottom: 4 }}>
+                TorBox API Token
+              </Typography>
+              <input
+                name="torboxApiToken"
+                value={config.torboxApiToken || ''}
+                onChange={(e) => setConfig(prev => ({ ...prev, torboxApiToken: e.target.value }))}
+                placeholder="Enter your TorBox API token (optional)"
+                style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+              />
+              <Typography style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+                Alternative debrid service. Get from <a href="https://torbox.app/account" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }}>TorBox</a>.
+              </Typography>
+            </Box>
+    {/* Discord Webhook */}
+    <Box sx={{ border: '1px solid #222', borderRadius: 2, p: 3, background: '#181828', mt: 3 }}>
+      <Typography style={{ color: '#fff', fontWeight: 'bold', marginBottom: 12, fontSize: 16 }}>
+        🛎️ Notifications (Optional)
+      </Typography>
+      <Box display="flex" flexDirection="column" gap={2}>
+        <Box>
+          <Typography style={{ color: '#fff', marginBottom: 4 }}>
+            Discord Webhook URL
+          </Typography>
+          <input
+            name="discordWebhook"
+            value={config.discordWebhook || ''}
+            onChange={(e) => setConfig(prev => ({ ...prev, discordWebhook: e.target.value }))}
+            placeholder="Enter your Discord webhook URL (optional)"
+            style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
+          />
+          <Typography style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+            Get from <a href="https://discord.com/developers/docs/resources/webhook" target="_blank" rel="noopener noreferrer" style={{ color: '#888' }}>Discord</a>. Used for service notifications.
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
           </Box>
         </Box>
       </Box>

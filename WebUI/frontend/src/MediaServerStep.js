@@ -55,41 +55,7 @@ const Step1 = ({ config, setConfig, coreServers }) => {
           </Typography>
           {config.mediaServer === 'plex' && (
             <Box>
-              <Box display="flex" gap={2} mb={2}>
-                <Box flex={1}>
-                  <Typography style={{ color: '#fff', marginBottom: 8 }}>Server Name</Typography>
-                  <input
-                    type="text"
-                    value={config.plexSettings.HOSTNAME}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      plexSettings: { ...prev.plexSettings, HOSTNAME: e.target.value }
-                    }))}
-                    placeholder="PlexServer"
-                    style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
-                  />
-                  <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
-                    The friendly name for your Plex server
-                  </Typography>
-                </Box>
-                <Box flex={1}>
-                  <Typography style={{ color: '#fff', marginBottom: 8 }}>Plex Claim Token (Optional)</Typography>
-                  <input
-                    type="text"
-                    value={config.plexSettings.PLEX_CLAIM}
-                    onChange={(e) => setConfig(prev => ({
-                      ...prev,
-                      plexSettings: { ...prev.plexSettings, PLEX_CLAIM: e.target.value }
-                    }))}
-                    placeholder="claim-xxxxxxxxx"
-                    style={{ width: '100%', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: 8 }}
-                  />
-                  <Typography style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
-                    Get from <a href="https://plex.tv/claim" target="_blank" rel="noopener noreferrer" style={{ color: '#07938f' }}>plex.tv/claim</a>
-                  </Typography>
-                </Box>
-              </Box>
-              <Box mt={3} p={2} sx={{ background: '#252525', borderRadius: 1, border: '1px solid #444' }}>
+              <Box mt={2} p={2} sx={{ background: '#252525', borderRadius: 1, border: '1px solid #444' }}>
                 <Typography style={{ color: '#fff', fontWeight: 'bold', marginBottom: 8 }}>
                   🎬 Automatic Library Creation
                 </Typography>

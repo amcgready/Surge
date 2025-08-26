@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import MediaServerStep from './MediaServerStep';
 import StorageConfigStep from './StorageConfigStep';
 import ExternalAPIStep from './ExternalAPIStep';
-import ContentEnhancementStep from './ContentEnhancementStep';
+import AdditionalServicesStep from './AdditionalServicesStep';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Button, Tooltip, Divider } from '@mui/material';
 import SurgeLogo from './SurgeLogo';
 import bgImage from './assets/background.jpg';
@@ -18,7 +18,6 @@ import jellyfinLogo from './assets/service-logos/jellyfin.png';
 import nzbgetLogo from './assets/service-logos/NZBGet.png';
 import rdtClientLogo from './assets/service-logos/RDT-Client.png';
 import gapsLogo from './assets/service-logos/gaps.jpg';
-import zurgLogo from './assets/service-logos/zurg.png';
 import decypharrLogo from './assets/service-logos/decypharr.png';
 
 const steps = [
@@ -26,7 +25,7 @@ const steps = [
   'Media Server',
   'Storage Config',
   'External APIs',
-  'Content Enhancement',
+  'Additional Services',
   'Deploy'
 ];
 
@@ -76,14 +75,14 @@ function App() {
     { key: 'nzbget', name: 'NZBGet', desc: 'Efficient Usenet downloader', logo: nzbgetLogo },
     { key: 'rdtclient', name: 'RDT-Client', desc: 'Real-Debrid download client', logo: rdtClientLogo },
     { key: 'gaps', name: 'GAPS', desc: 'Finds missing movies for Radarr', logo: gapsLogo },
-    { key: 'zurg', name: 'Zurg', desc: 'NZBGet/Usenet automation tool', logo: zurgLogo },
+    // { key: 'zurg', name: 'Zurg', desc: 'NZBGet/Usenet automation tool', logo: zurgLogo },
     { key: 'decypharr', name: 'Decypharr', desc: 'Decryption and post-processing tool', logo: decypharrLogo }
   ];
   const [downloadTools, setDownloadTools] = React.useState({
     nzbget: true,
     rdtclient: true,
     gaps: true,
-    zurg: true,
+    // zurg: true,
     decypharr: true
   });
   // Core Media Server single-select toggle
@@ -681,7 +680,7 @@ function App() {
               <ExternalAPIStep config={config} setConfig={setConfig} />
             )}
             {activeStep === 4 && (
-              <ContentEnhancementStep
+              <AdditionalServicesStep
                 contentEnhancementList={contentEnhancementList}
                 contentEnhancement={contentEnhancement}
                 setContentEnhancement={setContentEnhancement}
