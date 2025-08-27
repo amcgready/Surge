@@ -10,6 +10,9 @@ services:
       - TZ=${TZ:-UTC}
       - FLASK_ENV=production
     restart: unless-stopped
+    entrypoint: ["sh", "-c", "/app/copy_env.sh && exec python app.py"]
+    volumes:
+      - ../.env.example:/app/.env.example
   webui-frontend:
     build: ./frontend
     container_name: surge-webui-frontend

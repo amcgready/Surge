@@ -120,3 +120,4 @@ data/id_ed25519*
 scripts/patch-admin-credentials.sh
 scripts/test.config
 WebUI/build.py
+backup.env
