@@ -22,6 +22,20 @@ prompt_media_server_type() {
             ;;
     esac
     export MEDIA_SERVER
+
+    # Write the selected media server to the .env file
+    ENV_FILE="$PROJECT_DIR/.env"
+    if [ ! -f "$ENV_FILE" ]; then
+        touch "$ENV_FILE"
+    fi
+
+    if grep -q "^MEDIA_SERVER=" "$ENV_FILE"; then
+        sed -i "s/^MEDIA_SERVER=.*/MEDIA_SERVER=$MEDIA_SERVER/" "$ENV_FILE"
+    else
+        echo "MEDIA_SERVER=$MEDIA_SERVER" >> "$ENV_FILE"
+    fi
+
+    echo "Media server set to $MEDIA_SERVER in .env file."
 }
 # Write or update OMDB token and AniDB credentials in .env
 write_metadata_tokens_to_env() {
@@ -415,6 +429,9 @@ gather_auto_preferences() {
     export STORAGE_PATH
     write_storage_path_to_env
     
+    # Prompt for media server selection after storage path
+    prompt_media_server_type
+
     # Auto-detect user IDs
     PUID=$(id -u)
     PGID=$(id -g)
@@ -1005,9 +1022,6 @@ configure_cinesync_organization() {
     
     # Content separation options
     echo "📂 Content Separation Options:"
-    echo ""
-    
-    # Anime separation
     read -p "Separate anime content into dedicated folders? [Y/n]: " anime_separation
     CINESYNC_ANIME_SEPARATION=$([[ "$anime_separation" =~ ^[Nn]$ ]] && echo "false" || echo "true")
     
@@ -1653,7 +1667,6 @@ create_config() {
     
 
 
-
     # --- BEGIN: Explicitly set all ENABLE_* variables for deployment clarity ---
     # Only services with ENABLE_* set to true will be deployed. All others are set to false.
     ENABLE_VARS=(RADARR SONARR BAZARR PROWLARR NZBGET RDT_CLIENT ZURG CLI_DEBRID DECYPHARR KOMETA POSTERIZARR OVERSEERR TAUTULLI CINESYNC PLACEHOLDARR GAPS WATCHTOWER SCHEDULER)
@@ -1854,6 +1867,23 @@ show_next_steps() {
         
         if [ "$ENABLE_DECYPHARR" = "true" ]; then
             echo "   - Decypharr: http://localhost:8282"
+        fi
+        
+        # Optional services
+        if [ "$ENABLE_BAZARR" = "true" ]; then
+            echo "   - Bazarr: http://localhost:6767"
+        fi
+        
+        if [ "$ENABLE_OVERSEERR" = "true" ]; then
+            echo "   - Overseerr: http://localhost:5055"
+        fi
+        
+        if [ "$ENABLE_TAUTULLI" = "true" ]; then
+            echo "   - Tautulli: http://localhost:8182"
+        fi
+        
+        if [ "$ENABLE_POSTERIZARR" = "true" ]; then
+            echo "   - Posterizarr: http://localhost:9876"
         fi
         
         echo ""
