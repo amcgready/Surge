@@ -180,24 +180,27 @@ create_directories() {
     for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
-        enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
-        if [ "$enabled" = "true" ]; then
-            for sub in ${service_folders[$service]}; do
-                mkdir -p "$STORAGE_PATH/$service/$sub"
-            done
-            # Only copy default config/env if missing
-            default_config="$SCRIPT_DIR/initial-configs/${service,,}-config.yml"
-            target_config="$STORAGE_PATH/$service/config/config.yml"
-            if [ -f "$default_config" ] && [ ! -f "$target_config" ]; then
-                cp "$default_config" "$target_config"
-                print_info "Default config for $service copied to $target_config"
-            fi
-            # Example for env files (customize per service as needed)
-            default_env="$SCRIPT_DIR/initial-configs/${service,,}.env"
-            target_env="$STORAGE_PATH/$service/.env"
-            if [ -f "$default_env" ] && [ ! -f "$target_env" ]; then
-                cp "$default_env" "$target_env"
-                print_info "Default env for $service copied to $target_env"
+        # Only proceed if the ENABLE_* line exists and is set to true
+        if grep -q "^$var_name=" "$PROJECT_DIR/.env"; then
+            enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r')
+            if [ "$enabled" = "true" ]; then
+                for sub in ${service_folders[$service]}; do
+                    mkdir -p "$STORAGE_PATH/$service/$sub"
+                done
+                # Only copy default config/env if missing
+                default_config="$SCRIPT_DIR/initial-configs/${service,,}-config.yml"
+                target_config="$STORAGE_PATH/$service/config/config.yml"
+                if [ -f "$default_config" ] && [ ! -f "$target_config" ]; then
+                    cp "$default_config" "$target_config"
+                    print_info "Default config for $service copied to $target_config"
+                fi
+                # Example for env files (customize per service as needed)
+                default_env="$SCRIPT_DIR/initial-configs/${service,,}.env"
+                target_env="$STORAGE_PATH/$service/.env"
+                if [ -f "$default_env" ] && [ ! -f "$target_env" ]; then
+                    cp "$default_env" "$target_env"
+                    print_info "Default env for $service copied to $target_env"
+                fi
             fi
         fi
     done
@@ -350,26 +353,16 @@ deploy_services() {
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server pangolin"
-    [ "$(grep '^ENABLE_RADARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" radarr"
-    [ "$(grep '^ENABLE_SONARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" sonarr"
-    [ "$(grep '^ENABLE_BAZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" bazarr"
-    [ "$(grep '^ENABLE_PROWLARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" prowlarr"
-    [ "$(grep '^ENABLE_NZBGET=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" nzbget"
-    [ "$(grep '^ENABLE_RDT_CLIENT=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" rdt-client"
-    [ "$(grep '^ENABLE_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" zurg"
-    [ "$(grep '^ENABLE_CLI_DEBRID=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" cli-debrid"
-    [ "$(grep '^ENABLE_DECYPHARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" decypharr"
-    [ "$(grep '^ENABLE_KOMETA=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" kometa"
-    [ "$(grep '^ENABLE_POSTERIZARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" posterizarr"
-    [ "$(grep '^ENABLE_OVERSEERR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" overseerr"
-    [ "$(grep '^ENABLE_TAUTULLI=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" tautulli"
-    [ "$(grep '^ENABLE_CINESYNC=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" cinesync"
-    [ "$(grep '^ENABLE_PLACEHOLDARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" placeholdarr"
-    [ "$(grep '^ENABLE_GAPS=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" gaps"
-    [ "$(grep '^ENABLE_HOMEPAGE=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" homepage"
-    [ "$(grep '^ENABLE_WATCHTOWER=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" watchtower"
-    [ "$(grep '^ENABLE_PD_ZURG=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" pd_zurg"
-    [ "$(grep '^ENABLE_SCANLY=' "$PROJECT_DIR/.env" | cut -d'=' -f2)" = "true" ] && PROFILES+=" scanly"
+    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "RDT_CLIENT" "ZURG" "CLI_DEBRID" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "WATCHTOWER" "PD_ZURG" "SCANLY"; do
+        var_name="ENABLE_${service}"
+        if grep -q "^$var_name=" "$PROJECT_DIR/.env"; then
+            enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r')
+            profile_name=$(echo "$service" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+            if [ "$enabled" = "true" ]; then
+                PROFILES+=" $profile_name"
+            fi
+        fi
+    done
 
     # Build multiple --profile flags
     COMPOSE_PROFILE_FLAGS=""
