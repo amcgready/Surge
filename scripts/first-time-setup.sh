@@ -481,7 +481,6 @@ gather_auto_preferences() {
     ENABLE_GAPS="true"
     ENABLE_WATCHTOWER="true"
     ENABLE_SCHEDULER="true"
-    ENABLE_RDT_CLIENT="true"
     ENABLE_PD_ZURG="false"
     ENABLE_KOMETA="true"
     ENABLE_POSTERIZARR="true"
@@ -506,7 +505,7 @@ gather_auto_preferences() {
 
     # Debrid Services Section
     echo ""
-    print_info "Debrid Services (Real-Debrid, AllDebrid, Premiumize)"
+    print_info "Debrid Services (Real-Debrid, AllDebrid, Premiumize, Torbox)"
     echo "Provide at least one debrid API token to enable Torrentio, Decypharr, and cli-debrid."
     echo "If none are provided, these features will be disabled."
     echo ""
@@ -659,7 +658,18 @@ gather_custom_preferences() {
         *) print_error "Invalid choice"; exit 1 ;;
     esac
 
-    # Prompt for CineSync folder options immediately after deployment type selection
+
+    # Storage location
+    echo ""
+    print_info "Storage Configuration"
+    echo "Where would you like to store your media and configuration?"
+    echo "Default: /opt/surge (recommended)"
+    read -p "Storage path [/opt/surge]: " storage_path
+    STORAGE_PATH=${storage_path:-/opt/surge}
+    export STORAGE_PATH
+    write_storage_path_to_env
+
+    # Prompt for CineSync folder options after storage path is set
     if [ "$DEPLOYMENT_TYPE" = "full" ]; then
         if [ "$ENABLE_CINESYNC" = "true" ]; then
             configure_cinesync_organization
@@ -672,14 +682,6 @@ gather_custom_preferences() {
         fi
     fi
     # ...Zurg logic removed...
-
-    # Storage location
-    echo ""
-    print_info "Storage Configuration"
-    echo "Where would you like to store your media and configuration?"
-    echo "Default: /opt/surge (recommended)"
-    read -p "Storage path [/opt/surge]: " storage_path
-    STORAGE_PATH=${storage_path:-/opt/surge}
     
     # User/Group IDs
     echo ""
@@ -742,9 +744,6 @@ gather_custom_preferences() {
         ENABLE_PROWLARR=$([[ "$enable_prowlarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         read -p "Enable NZBGet (Usenet downloader)? [Y/n]: " enable_nzbget
         ENABLE_NZBGET=$([[ "$enable_nzbget" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        read -p "Enable RDT-Client (Real-Debrid)? [y/N]: " enable_rdt
-        ENABLE_RDT_CLIENT=$([[ "$enable_rdt" =~ ^[Yy]$ ]] && echo "true" || echo "false")
-        # ...Zurg prompt removed...
         read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
         ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
         # =============================
@@ -939,13 +938,28 @@ gather_custom_preferences() {
         print_info "Using admin credentials for NZBGet."
     fi
 
-    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
+    if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
-        print_info "Real-Debrid Configuration"
-        read -p "Real-Debrid API Token: " rd_token
-        RD_API_TOKEN=${rd_token:-}
+        echo "🎨 Posterizarr Enhanced Configuration:"
+        echo "Fanart.tv API Key (optional)"
+        echo "  Get your Fanart.tv API key here: https://fanart.tv/get-an-api-key/(login required)"
+        read -p "Fanart.tv API Key: " fanart_key
+        FANART_API_KEY=${fanart_key:-}
+        write_api_keys_to_env
+
+        echo "TVDB API Key (optional)"
+        echo "  Get your TVDB API key here: https://thetvdb.com/dashboard/account/apikey (login required)"
+        read -p "TVDB API Key: " tvdb_key
+        TVDB_API_KEY=${tvdb_key:-}
+        write_api_keys_to_env
     fi
 
+    print_success "Auto configuration complete! Deploying full stack with all features."
+}
+
+# Custom installation - detailed questions
+gather_custom_preferences() {
+    print_step "🔧 Custom Installation Setup"
     echo ""
     print_info "Additional API Keys (Enhanced Integration)"
     echo "These API keys enable full automation and advanced features:"
@@ -2168,7 +2182,26 @@ main() {
         export STORAGE_PATH PUID PGID
         
         # Export all ENABLE_* variables for directory creation
-        export ENABLE_BAZARR ENABLE_RADARR ENABLE_SONARR ENABLE_PROWLARR ENABLE_NZBGET ENABLE_RDT_CLIENT ENABLE_ZURG ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_OVERSEERR ENABLE_TAUTULLI ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS
+        export ENABLE_BAZARR ENABLE_RADARR ENABLE_SONARR ENABLE_PROWLARR ENABLE_NZBGET ENABLE_RDT_CLIENT ENABLE_ZURG ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_OVERSEERR ENABLE_TAUTULLI ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_SCANLY ENABLE_PARSELY
+        # Clone Surge repo if ENABLE_SCANLY is true
+                if [ "$ENABLE_SCANLY" = "true" ]; then
+                    if [ ! -d "$PROJECT_DIR/Surge" ]; then
+                        print_info "Cloning Surge repository for Scanly..."
+                        git clone https://github.com/amcgready/Surge.git "$PROJECT_DIR/Surge"
+                    else
+                        print_info "Surge repository already exists. Skipping clone."
+                    fi
+                fi
+
+                # Clone Parsely repo if ENABLE_PARSELY is true
+                if [ "$ENABLE_PARSELY" = "true" ]; then
+                    if [ ! -d "$PROJECT_DIR/Parsely" ]; then
+                        print_info "Cloning Parsely repository for Parsely..."
+                        git clone https://github.com/amcgready/Parsely.git "$PROJECT_DIR/Parsely"
+                    else
+                        print_info "Parsely repository already exists. Skipping clone."
+                    fi
+                fi
 
         # Create per-service directories (now STORAGE_PATH is set)
         create_service_directories

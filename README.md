@@ -18,38 +18,33 @@
 
 Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
 
+# Important Notice: Surge is in active development. Bugs are expected. Notice something weird, report it on the Discord or open a GitHub issue! I'm always looking for suggestions and appreciate you taking time to look at the project.
+
 ## 🚀 What's Included
 
-### Core Media Server (Choose One)
-- **[Plex Media Server](https://github.com/plexinc/pms-docker)** - Premium media streaming platform
-- **[Emby](https://github.com/MediaBrowser/Emby)** - Feature-rich media server with live TV support  
-- **[Jellyfin](https://github.com/jellyfin/jellyfin)** - Free and open-source media server
-
-### Media Automation & Management
-- **[Radarr](https://github.com/Radarr/Radarr)** - Movie collection manager for Usenet and BitTorrent
-- **[Sonarr](https://github.com/Sonarr/Sonarr)** - TV series collection manager
-- **[Prowlarr](https://github.com/Prowlarr/Prowlarr)** - Indexer manager/proxy for torrent trackers and Usenet indexers
-  - Includes **[Torrentio](https://github.com/dreulavelle/Prowlarr-Indexers)** custom indexer for Real-Debrid integration
-- **[Bazarr](https://github.com/morpheus65535/bazarr)** - Subtitle management for Radarr and Sonarr
-- **[CineSync](https://github.com/sureshfizzy/CineSync)** - Comprehensive media library management system for Movies & TV shows
-- **[Placeholdarr](https://github.com/TheIndieArmy/placeholdarr)** - Creates placeholder files for undownloaded media in Plex/Jellyfin libraries
-
-### Download Clients & Tools
-- **[NZBGet](https://github.com/nzbgetcom/nzbget)** - Efficient Usenet downloader
-- **[GAPS](https://github.com/JasonHHouse/gaps)** - Finds missing movies in Plex libraries and integrates with Radarr
-- **[pd_zurg](https://github.com/I-am-PUID-0/pd_zurg)** - Real-Debrid filesystem mounting and integration tool
-- **[cli_debrid](https://github.com/godver3/cli_debrid)** - Web interface and CLI for debrid services management
-- **[Decypharr](https://github.com/sirrobot01/decypharr)** - QBittorrent API implementation with multiple debrid service support
-
-### Content Enhancement
-- **[Kometa](https://github.com/Kometa-Team/Kometa)** - Metadata and collection management (formerly Plex Meta Manager)
-- **[ImageMaid](https://github.com/Kometa-Team/ImageMaid)** - Automated image cleanup and optimization for media libraries
-- **[Posterizarr](https://github.com/fscorrupt/posterizarr)** - Automated poster generation for Plex/Jellyfin/Emby with custom overlays and text
-
-### Monitoring & Interface
-- **[Overseerr](https://github.com/sct/overseerr)** - Request management and media discovery for Plex/Emby/Jellyfin
-- **[Tautulli](https://github.com/Tautulli/Tautulli)** - Plex/Emby/Jellyfin monitoring and statistics
-- **[Homepage](https://github.com/gethomepage/homepage)** - Unified dashboard for all services
+| Service |  | Description |
+|---|:---:|---|
+| [Plex Media Server](https://github.com/plexinc/pms-docker) | ✅ | Premium media streaming platform |
+| [Emby](https://github.com/MediaBrowser/Emby) | ✅ | Feature-rich media server with live TV support |
+| [Jellyfin](https://github.com/jellyfin/jellyfin) | ✅ | Free and open-source media server |
+| [Radarr](https://github.com/Radarr/Radarr) | ✅ | Movie collection manager for Usenet and BitTorrent |
+| [Sonarr](https://github.com/Sonarr/Sonarr) | ✅ | TV series collection manager |
+| [Prowlarr](https://github.com/Prowlarr/Prowlarr) | ✅ | Indexer manager/proxy for torrent trackers and Usenet indexers |
+| [Torrentio](https://github.com/dreulavelle/Prowlarr-Indexers) | ✅ | Custom indexer for Real-Debrid integration |
+| [Bazarr](https://github.com/morpheus65535/bazarr) | ✅ | Subtitle management for Radarr and Sonarr |
+| [CineSync](https://github.com/sureshfizzy/CineSync) | ✅ | Media library management for Movies & TV shows |
+| [Placeholdarr](https://github.com/TheIndieArmy/placeholdarr) | ✅ | Placeholder files for undownloaded media |
+| [NZBGet](https://github.com/nzbgetcom/nzbget) | ✅ | Efficient Usenet downloader |
+| [GAPS](https://github.com/JasonHHouse/gaps) | ✅ | Finds missing movies in Plex libraries and integrates with Radarr |
+| [pd_zurg](https://github.com/I-am-PUID-0/pd_zurg) | ✅ | Real-Debrid filesystem mounting and integration tool |
+| [cli_debrid](https://github.com/godver3/cli_debrid) | ✅ | Web interface and CLI for debrid services management |
+| [Decypharr](https://github.com/sirrobot01/decypharr) | ✅ | QBittorrent API implementation with multiple debrid service support |
+| [Kometa](https://github.com/Kometa-Team/Kometa) | ✅ | Metadata and collection management |
+| [ImageMaid](https://github.com/Kometa-Team/ImageMaid) | ✅ | Automated image cleanup and optimization |
+| [Posterizarr](https://github.com/fscorrupt/posterizarr) | ✅ | Automated poster generation with overlays and text |
+| [Overseerr](https://github.com/sct/overseerr) | ✅ | Request management and media discovery |
+| [Tautulli](https://github.com/Tautulli/Tautulli) | ✅ | Monitoring and statistics for Plex/Emby/Jellyfin |
+| [Homepage](https://github.com/gethomepage/homepage) | ✅ | Unified dashboard for all services |
 
 ## 🔧 Enhanced Features
 
@@ -62,27 +57,26 @@ Surge includes pre-configured **[Torrentio](https://github.com/dreulavelle/Prowl
 
 The Torrentio indexer is automatically available in Prowlarr and just needs your Real-Debrid API key for configuration.
 
-### 🌐 RDT-Client Full Automation
-Surge now includes **complete RDT-Client automation** that eliminates all manual configuration:
+### 🌐 Decypharr Automation
+Surge now includes **Decypharr automation** that eliminates manual configuration:
 
 #### ✨ **Zero-Configuration Setup**
 - **Automatic Real-Debrid Integration**: Uses your RD_API_TOKEN from setup
 - **Torrentio Indexer**: Automatically configured in Prowlarr with your Real-Debrid credentials
 - **Download Client Setup**: Seamlessly integrated with Radarr and Sonarr
-- **No Manual Steps**: Everything configured during deployment
 
 #### 🔧 **What Gets Automated**
-- ✅ RDT-Client container configuration with Real-Debrid API token
+- ✅ Decypharr container configuration with Real-Debrid API token
 - ✅ Torrentio indexer added to Prowlarr with quality filters and provider settings
-- ✅ RDT-Client configured as download client in Radarr (movies)
-- ✅ RDT-Client configured as download client in Sonarr (TV shows)
+- ✅ Decypharr configured as download client in Radarr (movies)
+- ✅ Decypharr configured as download client in Sonarr (TV shows)
 - ✅ Proper category management and Docker networking
 - ✅ SSL and security settings optimized
 
 #### 🚀 **Ready-to-Use Results**
-After deployment with RDT-Client enabled:
+After deployment with Decypharr enabled:
 - **Immediate Functionality**: Search and download torrents via Real-Debrid
-- **Integrated Workflow**: Radarr/Sonarr → Torrentio → RDT-Client → Real-Debrid
+- **Integrated Workflow**: Radarr/Sonarr → Torrentio → Decypharr → Real-Debrid
 - **Quality Control**: Automatic quality filtering and provider selection
 - **Secure Configuration**: No exposed credentials or hardcoded paths
 - **Security Auditing**: Built-in security audit with `./surge security-audit`
@@ -114,7 +108,6 @@ Surge goes far beyond simple container deployment - it provides **complete autom
 - **Quality filters** automatically applied based on service requirements
 
 #### **Download Client Automation**
-- **RDT-Client** automatically configured in Radarr and Sonarr when enabled
 - **NZBGet** automatically added as download client with proper categories
 - **Docker networking** properly configured for container-to-container communication
 - **Download paths** mapped correctly across all services

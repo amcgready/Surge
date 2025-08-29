@@ -271,7 +271,7 @@ services:
       - ${STORAGE_PATH}/Homepage/config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - "${HOMEPAGE_PORT:-3003}:3000"
+      - "${HOMEPAGE_PORT:-3004}:3000"
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
@@ -305,7 +305,7 @@ services:
       - ${STORAGE_PATH}/Pangolin/messages:/app/messages
       # Add any Pangolin-specific volumes here
     ports:
-      - "3000:3000"
+      - "3003:3000"
       - "3001:3001"
       - "3002:3002"
     restart: ${RESTART_POLICY:-unless-stopped}
