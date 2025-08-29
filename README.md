@@ -45,6 +45,8 @@ Surge is a comprehensive, one-stop Docker deployment solution that combines the 
 | [Overseerr](https://github.com/sct/overseerr) | ✅ | Request management and media discovery |
 | [Tautulli](https://github.com/Tautulli/Tautulli) | ✅ | Monitoring and statistics for Plex/Emby/Jellyfin |
 | [Homepage](https://github.com/gethomepage/homepage) | ✅ | Unified dashboard for all services |
+| [Scanly](https://github.com/amcgready/Scanly) | ✅ | Manual symlink and hardlink management tool |
+| [Parsely](https://github.com/amcgready/Parsely) | ✅ | Media List Parsing Tool |
 
 ## 🔧 Enhanced Features
 
