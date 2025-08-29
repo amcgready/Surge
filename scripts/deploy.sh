@@ -139,20 +139,7 @@ setup_environment() {
     # Check if this looks like a properly configured setup vs just a copied template
     INSTALL_TYPE=$(grep "^INSTALL_TYPE=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
     
-    if [ -z "$INSTALL_TYPE" ] || [ "$INSTALL_TYPE" = "unknown" ]; then
-        print_warning "⚠️  Configuration appears incomplete"
-        echo ""
-        print_info "Your .env file exists but may not be properly configured."
-        echo ""
-        read -p "Would you like to run setup now to ensure proper configuration? [Y/n]: " run_setup
-        
-        if [[ ! "$run_setup" =~ ^[Nn]$ ]]; then
-            print_info "Running setup first..."
-            exec "$SCRIPT_DIR/first-time-setup.sh" "--reconfigure"
-        else
-            print_info "Continuing with existing configuration..."
-        fi
-    fi
+    # Removed incomplete configuration check and setup prompt
     
     print_info "✅ Environment configuration ready"
 }

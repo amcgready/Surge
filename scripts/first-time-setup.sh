@@ -1,67 +1,12 @@
-
-# Utility function definitions (must be before any usage)
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
-DARK_BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-print_step() {
-    echo -e "${PURPLE}[STEP]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-# Main setup logic for both initial setup and --reconfigure
-main_setup_logic() {
-    # Admin credentials setup for integrated services
-    print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
-    DEFAULT_ARR_USER="admin"
-    DEFAULT_ARR_HASH="HnxsPdd7O+41SaNwktBU4ax7QuR41BA3ibq/UITYg5o="
-    DEFAULT_ARR_SALT="IKT1ieqFHoJ/hTfSp+Um7Q=="
-    DEFAULT_ARR_ITER=10000
-    print_success "Default admin credentials set for Prowlarr, Sonarr, and Radarr."
-
-    # Patch Users table for all *arr services after deployment
-    patch_arr_users() {
-        local db_path="$1"
-        if [ -f "$db_path" ]; then
-            sqlite3 "$db_path" "UPDATE Users SET username='${DEFAULT_ARR_USER}', password_hash='${DEFAULT_ARR_HASH}', password_salt='${DEFAULT_ARR_SALT}', iterations=${DEFAULT_ARR_ITER} WHERE id=1;"
-            echo "Patched Users table in $db_path"
-        else
-            echo "Database not found: $db_path"
-        fi
-    }
-
-    # After deployment, patch all *arr DBs
-    ARR_DB_PATHS=(
-        "$STORAGE_PATH/Prowlarr/config/prowlarr.db"
-        "$STORAGE_PATH/Sonarr/config/sonarr.db"
-        "$STORAGE_PATH/Radarr/config/radarr.db"
-    )
-    for db in "${ARR_DB_PATHS[@]}"; do
-        patch_arr_users "$db"
-    done
-
-    # ...existing code for install type, media server, deployment type, etc...
-
-    # Interactive media server selection and deployment
-    echo "Choose your media server:"
-    echo "1) Plex Media Server (Premium)"
-    echo "2) Jellyfin (Free & Open Source)"
-    echo "3) Emby (Feature-rich)"
-    echo ""
-    read -p "Enter choice (1-3): " media_choice
-    case $media_choice in
+# Prompt for media server type before installation type selection
+prompt_media_server_type() {
+    echo "Select the type of media server to deploy:"
+    echo "  1) Plex"
+    echo "  2) Jellyfin"
+    echo "  3) Emby"
+    local server_choice
+    read -p "Enter choice (1-3): " server_choice
+    case $server_choice in
         1)
             MEDIA_SERVER="plex"
             ;;
@@ -72,31 +17,95 @@ main_setup_logic() {
             MEDIA_SERVER="emby"
             ;;
         *)
-            print_error "Invalid choice"; exit 1 ;;
+            echo "Invalid choice. Defaulting to Plex."
+            MEDIA_SERVER="plex"
+            ;;
     esac
-
-    echo "Deploying $MEDIA_SERVER..."
-    ./surge deploy "$MEDIA_SERVER"
-
-    # After deployment type and service selection, but BEFORE Plex setup, prompt for CineSync folders if enabled
-    if [ "$ENABLE_CINESYNC" = "true" ]; then
-        configure_cinesync_organization
-    fi
-
-    # Now proceed to Plex setup, using CineSync folder variables for library creation
+    export MEDIA_SERVER
 }
-
-# Call main setup logic at the start of the script
-main_setup_logic
-
-#!/bin/bash
-
-
+# Write or update OMDB token and AniDB credentials in .env
+write_metadata_tokens_to_env() {
+    for var in OMDB_API_KEY ANIDB_USERNAME ANIDB_PASSWORD; do
+        value="${!var}"
+        if grep -q "^$var=" "$PROJECT_DIR/.env"; then
+            sed -i "s|^$var=.*|$var=$value|" "$PROJECT_DIR/.env"
+        else
+            echo "$var=$value" >> "$PROJECT_DIR/.env"
+        fi
+    done
+}
+# Write or update Discord notification settings in .env
+write_discord_notifications_to_env() {
+    for var in NOTIFICATION_TITLE_PREFIX DISCORD_NOTIFY_UPDATES DISCORD_NOTIFY_PROCESSING DISCORD_NOTIFY_ERRORS DISCORD_NOTIFY_MEDIA DISCORD_NOTIFY_SYSTEM; do
+        value="${!var}"
+        if grep -q "^$var=" "$PROJECT_DIR/.env"; then
+            sed -i "s|^$var=.*|$var=$value|" "$PROJECT_DIR/.env"
+        else
+            echo "$var=$value" >> "$PROJECT_DIR/.env"
+        fi
+    done
+}
 # ===========================================
 #!/bin/bash
 
 # ===========================================
 # Surge First-Time Setup Script
+# Write or update CineSync options in .env
+write_cinesync_to_env() {
+    for var in CINESYNC_ORGANIZE_MODE CINESYNC_SOURCE_PATH CINESYNC_DEST_PATH CINESYNC_EXCLUDE_EXTENSIONS; do
+        value="${!var}"
+        if [ -n "$value" ]; then
+            if grep -q "^$var=" "$PROJECT_DIR/.env"; then
+                sed -i "s|^$var=.*|$var=$value|" "$PROJECT_DIR/.env"
+            else
+                echo "$var=$value" >> "$PROJECT_DIR/.env"
+            fi
+        fi
+    done
+}
+# Write or update API keys and tokens in .env
+write_api_keys_to_env() {
+    for var in TMDB_API_KEY TRAKT_CLIENT_ID TRAKT_CLIENT_SECRET RD_API_TOKEN AD_API_TOKEN PREMIUMIZE_API_TOKEN TORBOX_API_TOKEN FANART_API_KEY TVDB_API_KEY; do
+        value="${!var}"
+        if grep -q "^$var=" "$PROJECT_DIR/.env"; then
+            sed -i "s|^$var=.*|$var=$value|" "$PROJECT_DIR/.env"
+        else
+            echo "$var=$value" >> "$PROJECT_DIR/.env"
+        fi
+    done
+}
+# Write or update DISCORD_WEBHOOK_URL in .env
+write_discord_webhook_to_env() {
+    if grep -q '^DISCORD_WEBHOOK_URL=' "$PROJECT_DIR/.env"; then
+        sed -i "s|^DISCORD_WEBHOOK_URL=.*|DISCORD_WEBHOOK_URL=$DISCORD_WEBHOOK_URL|" "$PROJECT_DIR/.env"
+    else
+        echo "DISCORD_WEBHOOK_URL=$DISCORD_WEBHOOK_URL" >> "$PROJECT_DIR/.env"
+    fi
+}
+# Write or update STORAGE_PATH in .env
+write_storage_path_to_env() {
+    if grep -q '^STORAGE_PATH=' "$PROJECT_DIR/.env"; then
+        sed -i "s|^STORAGE_PATH=.*|STORAGE_PATH=$STORAGE_PATH|" "$PROJECT_DIR/.env"
+    else
+        echo "STORAGE_PATH=$STORAGE_PATH" >> "$PROJECT_DIR/.env"
+    fi
+}
+
+# Set PROJECT_DIR early so it is available for all functions
+SCRIPT_DIR="$(cd "$(dirname \"${BASH_SOURCE[0]}\")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+# Write ImageMaid integration variables to .env
+write_imagemaid_to_env() {
+    {
+        echo "" >> "$PROJECT_DIR/.env"
+        echo "# ImageMaid Integration" >> "$PROJECT_DIR/.env"
+        echo "IMAGEMAID_MODE=$IMAGEMAID_MODE" >> "$PROJECT_DIR/.env"
+        echo "PLEX_PATH=/plex" >> "$PROJECT_DIR/.env"
+        echo "PLEX_URL=$PLEX_URL" >> "$PROJECT_DIR/.env"
+        echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
+        echo "PLEX_CONFIG_DIR=$PLEX_CONFIG_DIR" >> "$PROJECT_DIR/.env"
+    }
+}
 # Unified media management container setup
 # Version: 2.0 - Auto/Custom Installation Modes
 
@@ -157,14 +166,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  • Automatic updates with Watchtower"
     echo "  • Scheduled asset processing pipeline"
     echo ""
-    echo "EXAMPLES:"
-    echo "  ./scripts/first-time-setup.sh"
-    echo "  ./scripts/first-time-setup.sh --auto"
-    echo "  ./scripts/first-time-setup.sh --reconfigure"
-    echo ""
     exit 0
 fi
-# ===========================================
 
 set -e
 
@@ -327,6 +330,7 @@ choose_install_type() {
     echo "   ✅ Complete control over every setting"
     echo "   ✅ Choose specific services to deploy"
     echo "   ✅ Configure all environment variables"
+    
     # Auto-detect imagemaid variables
     PLEX_CONFIG_DIR="${STORAGE_PATH}/config/plex"
     IMAGEMAID_MODE="remove"
@@ -336,14 +340,7 @@ choose_install_type() {
     fi
     PLEX_TOKEN=${PLEX_TOKEN:-changeme}
     PLEX_URL="http://localhost:${PLEX_PORT:-32400}"
-    # Append imagemaid variables to .env
-    echo "" >> "$PROJECT_DIR/.env"
-    echo "# ImageMaid Integration" >> "$PROJECT_DIR/.env"
-    echo "IMAGEMAID_MODE=$IMAGEMAID_MODE" >> "$PROJECT_DIR/.env"
-    echo "PLEX_PATH=/plex" >> "$PROJECT_DIR/.env"
-    echo "PLEX_URL=$PLEX_URL" >> "$PROJECT_DIR/.env"
-    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
-    echo "PLEX_CONFIG_DIR=$PLEX_CONFIG_DIR" >> "$PROJECT_DIR/.env"
+    # Ensure .env is initialized before any writes
     echo "   ✅ Perfect for power users"
     echo ""
     read -p "Enter choice (1-2): " install_choice
@@ -353,6 +350,9 @@ choose_install_type() {
         2) INSTALL_TYPE="custom" ;;
         *) print_error "Invalid choice"; exit 1 ;;
     esac
+
+    # Write ImageMaid integration variables to .env after copy_env.sh runs
+    write_imagemaid_to_env
     
     echo ""
     print_success "Selected: $([ "$INSTALL_TYPE" = "auto" ] && echo "Auto Install" || echo "Custom Install")"
@@ -410,9 +410,10 @@ gather_auto_preferences() {
     echo ""
     print_info "Storage Configuration"
     echo "Where should Surge store your media and configurations?"
-    echo "Press Enter for default: /opt/surge (recommended for most users)"
-    read -p "Storage path [/opt/surge]: " storage_path
-    STORAGE_PATH=${storage_path:-/opt/surge}
+    read -p "Storage path: " storage_path
+    STORAGE_PATH="$storage_path"
+    export STORAGE_PATH
+    write_storage_path_to_env
     
     # Auto-detect user IDs
     PUID=$(id -u)
@@ -427,24 +428,29 @@ gather_auto_preferences() {
     echo ""
     print_info "🔔 Discord Notifications (Optional)"
     echo "If left blank, Discord notifications will be OFF."
-    echo "If a webhook URL is provided, ALL notification types will be ON."
-    read -p "Discord webhook URL (optional): " discord_webhook
+    read -p "Discord webhook URL: " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
-    NOTIFICATION_TITLE_PREFIX="Surge"
-    if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-        DISCORD_NOTIFY_UPDATES="true"
-        DISCORD_NOTIFY_PROCESSING="true"
-        DISCORD_NOTIFY_ERRORS="true"
-        DISCORD_NOTIFY_MEDIA="true"
-        DISCORD_NOTIFY_SYSTEM="true"
-    else
-        print_info "No Discord webhook provided. All Discord notifications are OFF."
-        DISCORD_NOTIFY_UPDATES="false"
-        DISCORD_NOTIFY_PROCESSING="false"
-        DISCORD_NOTIFY_ERRORS="false"
-        DISCORD_NOTIFY_MEDIA="false"
-        DISCORD_NOTIFY_SYSTEM="false"
-    fi
+    write_discord_webhook_to_env
+
+    read -p "Notification Title Prefix [Surge]: " notification_title_prefix
+    NOTIFICATION_TITLE_PREFIX=${notification_title_prefix:-Surge}
+
+    read -p "Notify on Updates? [Y/n]: " notify_updates
+    DISCORD_NOTIFY_UPDATES=$([[ "$notify_updates" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Processing? [Y/n]: " notify_processing
+    DISCORD_NOTIFY_PROCESSING=$([[ "$notify_processing" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Errors? [Y/n]: " notify_errors
+    DISCORD_NOTIFY_ERRORS=$([[ "$notify_errors" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Media Events? [Y/n]: " notify_media
+    DISCORD_NOTIFY_MEDIA=$([[ "$notify_media" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on System Events? [Y/n]: " notify_system
+    DISCORD_NOTIFY_SYSTEM=$([[ "$notify_system" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    write_discord_notifications_to_env
     
     # Auto settings for full stack
     # FULL STACK: Master list of all services to enable
@@ -468,32 +474,11 @@ gather_auto_preferences() {
     ENABLE_HOMEPAGE="true"
     ENABLE_RADARR="true"
     ENABLE_SONARR="true"
-ENABLE_PLEX="true"
-ENABLE_EMBY="true"
-ENABLE_JELLYFIN="true"
-# Only enable the selected media server
-case "$MEDIA_SERVER" in
-    plex)
-        ENABLE_PLEX="true"
-        ENABLE_EMBY="false"
-        ENABLE_JELLYFIN="false"
-        ;;
-    emby)
-        ENABLE_PLEX="false"
-        ENABLE_EMBY="true"
-        ENABLE_JELLYFIN="false"
-        ;;
-    jellyfin)
-        ENABLE_PLEX="false"
-        ENABLE_EMBY="false"
-        ENABLE_JELLYFIN="true"
-        ;;
-esac
-    DEPLOYMENT_TYPE="full"
 
     # Prompt for CineSync folder options if enabled (always in auto mode)
     if [ "$ENABLE_CINESYNC" = "true" ]; then
         configure_cinesync_organization
+        write_cinesync_to_env
     fi
 
     # ...Zurg logic removed...
@@ -512,6 +497,7 @@ esac
     read -p "AllDebrid API Token (optional): " AD_API_TOKEN
     read -p "Premiumize API Token (optional): " PREMIUMIZE_API_TOKEN
     read -p "TorBox API Token (optional): " TORBOX_API_TOKEN
+    write_api_keys_to_env
 
     # Determine which token to use for all debrid features
     if [ -n "$RD_API_TOKEN" ]; then
@@ -550,12 +536,13 @@ esac
     export ENABLE_RDT_CLIENT
 
     # TMDB and Trakt
-    echo "\nTMDB API Key (for metadata and Kometa, required)"
+    echo "TMDB API Key (for metadata and Kometa, required)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
     read -p "TMDB API Key: " tmdb_key
     TMDB_API_KEY=${tmdb_key:-}
+    write_api_keys_to_env
 
-    echo "\nTrakt Client ID (optional)"
+    echo "Trakt Client ID (optional)"
     echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
     read -p "Trakt Client ID: " trakt_id
     TRAKT_CLIENT_ID=${trakt_id:-}
@@ -563,8 +550,9 @@ esac
         read -p "Trakt Client Secret: " trakt_secret
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
+    write_api_keys_to_env
 
-    echo "\nAniDB Username (required for Kometa integration)"
+    echo "AniDB Username (required for Kometa integration)"
     read -p "AniDB Username: " anidb_user
     ANIDB_USERNAME=${anidb_user:-}
 
@@ -573,17 +561,18 @@ esac
     echo
     ANIDB_PASSWORD=${anidb_pass:-}
 
-    echo "\nGithub Token (for Kometa and asset automation, optional)"
+    echo "Github Token (for Kometa and asset automation, optional)"
     echo "  Get your Github token here: https://github.com/settings/tokens (login required)"
     read -p "Github Token: " github_token
     GITHUB_TOKEN=${github_token:-}
 
-    echo "\nOMDB API Key (for metadata, optional)"
+    echo "OMDB API Key (for metadata, optional)"
     echo "  Get your OMDB API key here: https://www.omdbapi.com/apikey.aspx (login required)"
     read -p "OMDB API Key: " omdb_key
     OMDB_API_KEY=${omdb_key:-}
+    write_metadata_tokens_to_env
 
-    echo "\nMDBLIST API Key (for metadata, optional)"
+    echo "MDBLIST API Key (for metadata, optional)"
     echo "  Get your MDBLIST API key here: https://mdblist.com/api (login required)"
     read -p "MDBLIST API Key: " mdblist_key
     MDBLIST_API_KEY=${mdblist_key:-}
@@ -607,11 +596,13 @@ esac
         echo "  Get your Fanart.tv API key here: https://fanart.tv/get-an-api-key/(login required)"
         read -p "Fanart.tv API Key: " fanart_key
         FANART_API_KEY=${fanart_key:-}
+        write_api_keys_to_env
 
         echo "TVDB API Key (optional)"
         echo "  Get your TVDB API key here: https://thetvdb.com/dashboard/account/apikey (login required)"
         read -p "TVDB API Key: " tvdb_key
         TVDB_API_KEY=${tvdb_key:-}
+        write_api_keys_to_env
     fi
 
     print_success "Auto configuration complete! Deploying full stack with all features."
@@ -873,24 +864,29 @@ gather_custom_preferences() {
     echo ""
     print_info "🔔 Discord Notifications (Optional)"
     echo "If left blank, Discord notifications will be OFF."
-    echo "If a webhook URL is provided, ALL notification types will be ON."
     read -p "Discord webhook URL (optional): " discord_webhook
     DISCORD_WEBHOOK_URL=${discord_webhook:-}
-    NOTIFICATION_TITLE_PREFIX="Surge"
-    if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-        DISCORD_NOTIFY_UPDATES="true"
-        DISCORD_NOTIFY_PROCESSING="true"
-        DISCORD_NOTIFY_ERRORS="true"
-        DISCORD_NOTIFY_MEDIA="true"
-        DISCORD_NOTIFY_SYSTEM="true"
-    else
-        print_info "No Discord webhook provided. All Discord notifications are OFF."
-        DISCORD_NOTIFY_UPDATES="false"
-        DISCORD_NOTIFY_PROCESSING="false"
-        DISCORD_NOTIFY_ERRORS="false"
-        DISCORD_NOTIFY_MEDIA="false"
-        DISCORD_NOTIFY_SYSTEM="false"
-    fi
+    write_discord_webhook_to_env
+
+    read -p "Notification Title Prefix [Surge]: " notification_title_prefix
+    NOTIFICATION_TITLE_PREFIX=${notification_title_prefix:-Surge}
+
+    read -p "Notify on Updates? [Y/n]: " notify_updates
+    DISCORD_NOTIFY_UPDATES=$([[ "$notify_updates" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Processing? [Y/n]: " notify_processing
+    DISCORD_NOTIFY_PROCESSING=$([[ "$notify_processing" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Errors? [Y/n]" notify_errors
+    DISCORD_NOTIFY_ERRORS=$([[ "$notify_errors" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on Media Events? [Y/n]: " notify_media
+    DISCORD_NOTIFY_MEDIA=$([[ "$notify_media" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    read -p "Notify on System Events? [Y/n]: " notify_system
+    DISCORD_NOTIFY_SYSTEM=$([[ "$notify_system" =~ ^[Nn]$ ]] && echo "false" || echo "true")
+
+    write_discord_notifications_to_env
 
     echo "\nTMDB API Key (for metadata, REQUIRED)"
     echo "  Get your TMDB API key here: https://www.themoviedb.org/settings/api (login required)"
@@ -903,17 +899,7 @@ gather_custom_preferences() {
             print_error "TMDB API Key is required. Please enter a value."
         fi
     done
-    # Write all gathered keys/tokens to main .env file
-    {
-        echo "TMDB_API_KEY=$TMDB_API_KEY"
-        echo "TRAKT_CLIENT_ID=$TRAKT_CLIENT_ID"
-        echo "TRAKT_CLIENT_SECRET=$TRAKT_CLIENT_SECRET"
-        echo "ANIDB_USERNAME=$ANIDB_USERNAME"
-        echo "ANIDB_PASSWORD=$ANIDB_PASSWORD"
-        echo "GITHUB_TOKEN=$GITHUB_TOKEN"
-        echo "OMDB_API_KEY=$OMDB_API_KEY"
-        echo "MDBLIST_API_KEY=$MDBLIST_API_KEY"
-    } >> "$PROJECT_DIR/.env"
+    write_metadata_tokens_to_env
 
     echo "\nTrakt Client ID (optional)"
     echo "  Get your Trakt API credentials here: https://trakt.tv/oauth/applications (login required)"
@@ -1676,102 +1662,6 @@ create_config() {
         declare "ENABLE_${var}=$val"
     done
 
-    cat > "$PROJECT_DIR/.env" << EOF
-# ===========================================
-# SURGE CONFIGURATION - Generated $(date)
-# ===========================================
-
-# GENERAL CONFIGURATION
-TZ=$TIMEZONE
-PUID=$PUID
-PGID=$PGID
-
-STORAGE_PATH=$STORAGE_PATH
-CONFIG_DIR=\${STORAGE_PATH}/config
-
-# MEDIA SERVER SELECTION
-MEDIA_SERVER=$MEDIA_SERVER
-PLEX_SERVER_NAME=${PLEX_SERVER_NAME:-MyPlexServer}
-
-# SERVICE CONFIGURATION
-# Only services with ENABLE_* set to true will be deployed. All others are set to false.
-ENABLE_RADARR=$ENABLE_RADARR
-ENABLE_SONARR=$ENABLE_SONARR
-ENABLE_BAZARR=$ENABLE_BAZARR
-ENABLE_PROWLARR=$ENABLE_PROWLARR
-ENABLE_NZBGET=$ENABLE_NZBGET
-ENABLE_RDT_CLIENT=$ENABLE_RDT_CLIENT
-ENABLE_ZURG=$ENABLE_ZURG
-ENABLE_CLI_DEBRID=$ENABLE_CLI_DEBRID
-ENABLE_DECYPHARR=$ENABLE_DECYPHARR
-ENABLE_KOMETA=$ENABLE_KOMETA
-ENABLE_POSTERIZARR=$ENABLE_POSTERIZARR
-ENABLE_OVERSEERR=$ENABLE_OVERSEERR
-ENABLE_TAUTULLI=$ENABLE_TAUTULLI
-ENABLE_CINESYNC=$ENABLE_CINESYNC
-ENABLE_PLACEHOLDARR=$ENABLE_PLACEHOLDARR
-ENABLE_GAPS=$ENABLE_GAPS
-ENABLE_WATCHTOWER=$ENABLE_WATCHTOWER
-ENABLE_SCHEDULER=$ENABLE_SCHEDULER
-
-# NETWORK PORTS
-HOMEPAGE_PORT=${HOMEPAGE_PORT:-3000}
-RADARR_PORT=${RADARR_PORT:-7878}
-SONARR_PORT=${SONARR_PORT:-8989}
-PROWLARR_PORT=9696
-BAZARR_PORT=6767
-NZBGET_PORT=6789
-DECYPHARR_PORT=8282
-TAUTULLI_PORT=8182
-OVERSEERR_PORT=5055
-RDT_CLIENT_PORT=6500
-ZURG_PORT=9999
-KOMETA_PORT=5556
-PLEX_PORT=${PLEX_PORT:-32400}
-EMBY_PORT=${EMBY_PORT:-8096}
-JELLYFIN_PORT=${JELLYFIN_PORT:-8096}
-GAPS_PORT=${GAPS_PORT:-8484}
-
-# AUTOMATION
-WATCHTOWER_INTERVAL=${WATCHTOWER_INTERVAL:-86400}
-ASSET_PROCESSING_SCHEDULE="${ASSET_PROCESSING_SCHEDULE:-0 2 * * *}"
-
-# EXTERNAL SERVICES (OPTIONAL)
-TMDB_API_KEY=${TMDB_API_KEY:-}
-TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
-TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
-FANART_API_KEY=${FANART_API_KEY:-}
-TVDB_API_KEY=${TVDB_API_KEY:-}
-
-# NOTIFICATIONS & WEBHOOKS
-DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
-NOTIFICATION_TITLE_PREFIX=${NOTIFICATION_TITLE_PREFIX:-Surge}
-DISCORD_NOTIFY_UPDATES=${DISCORD_NOTIFY_UPDATES:-false}
-DISCORD_NOTIFY_PROCESSING=${DISCORD_NOTIFY_PROCESSING:-false}
-DISCORD_NOTIFY_ERRORS=${DISCORD_NOTIFY_ERRORS:-false}
-DISCORD_NOTIFY_MEDIA=${DISCORD_NOTIFY_MEDIA:-false}
-DISCORD_NOTIFY_SYSTEM=${DISCORD_NOTIFY_SYSTEM:-false}
-
-# DOWNLOAD CLIENT SETTINGS
-NZBGET_USER=${NZBGET_USER:-admin}
-# Note: NZBGET_PASS should be set in .env file or will be auto-generated
-NZBGET_PASS=${NZBGET_PASS:-}
-RD_API_TOKEN=${RD_API_TOKEN:-}
-PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-}
-AD_API_TOKEN=${AD_API_TOKEN:-}
-PREMIUMIZE_API_TOKEN=${PREMIUMIZE_API_TOKEN:-}
-RD_USERNAME=${RD_USERNAME:-}
-
-# DEPLOYMENT TYPE
-DEPLOYMENT_TYPE=${DEPLOYMENT_TYPE:-full}
-INSTALL_TYPE=${INSTALL_TYPE:-auto}
-
-# GENERATED TIMESTAMP
-CONFIG_GENERATED="$(date '+%Y-%m-%d %H:%M:%S')"
-CONFIG_VERSION=1.0
-EOF
-
-    print_success "Configuration file created"
     
     # Create download directories
     create_download_directories
@@ -2150,6 +2040,7 @@ detect_new_variables() {
                 2)
                     cp "$PROJECT_DIR/.env" "$PROJECT_DIR/.env.backup.$(date +%Y%m%d_%H%M%S)"
                     print_info "Current config backed up. Running full setup..."
+                    prompt_media_server_type
                     choose_install_type
                     if [ "$INSTALL_TYPE" = "auto" ]; then
                         gather_auto_preferences
@@ -2220,6 +2111,8 @@ main() {
 
     # If no config exists or user chose to reconfigure, gather preferences
     if [ ! -f "$PROJECT_DIR/.env" ] || [ "$RECONFIGURE_MODE" = "true" ]; then
+        # Run copy_env script before installation type selection
+        /bin/bash "/home/adam/Desktop/Surge/WebUI/backend/scripts/copy_env.sh" --quiet
         # Handle installation type selection
         if [ "$INSTALL_TYPE" = "auto" ]; then
             INSTALL_TYPE="auto"
@@ -2261,16 +2154,6 @@ main() {
         # Show next steps
         show_next_steps
 
-        # Send welcome Discord notification if webhook is configured
-        if [ -n "$DISCORD_WEBHOOK_URL" ] && [ -f "$PROJECT_DIR/scripts/shared-config.sh" ]; then
-            print_step "Sending setup completion notification..."
-
-            # Source the .env to get variables
-            source "$PROJECT_DIR/.env"
-
-            # Test webhook with setup completion message
-            "$PROJECT_DIR/scripts/shared-config.sh" test-webhook
-        fi
         return
     fi
 
@@ -2279,50 +2162,6 @@ main() {
     if [ -f "$PROJECT_DIR/.env" ]; then
         source "$PROJECT_DIR/.env"
         export STORAGE_PATH PUID PGID
-        # Validate required variables before creating directories
-        missing_vars=false
-        if [ -z "$STORAGE_PATH" ]; then
-            print_warning "STORAGE_PATH is missing from your configuration."
-            echo "This is the main folder where Surge will store all media, downloads, and configs."
-            echo "Recommended default: /opt/surge"
-            read -p "Enter storage path [/opt/surge]: " storage_path
-            STORAGE_PATH=${storage_path:-/opt/surge}
-            missing_vars=true
-        fi
-        if [ -z "$PUID" ]; then
-            print_warning "PUID (user ID) is missing from your configuration."
-            echo "This should be the user ID that will own the files."
-            echo "Recommended: your current user ID ($(id -u))"
-            read -p "Enter user ID [$(id -u)]: " puid
-            PUID=${puid:-$(id -u)}
-            missing_vars=true
-        fi
-        if [ -z "$PGID" ]; then
-            print_warning "PGID (group ID) is missing from your configuration."
-            echo "This should be the group ID that will own the files."
-            echo "Recommended: your current group ID ($(id -g))"
-            read -p "Enter group ID [$(id -g)]: " pgid
-            PGID=${pgid:-$(id -g)}
-            missing_vars=true
-        fi
-        if [ "$missing_vars" = true ]; then
-            print_info "Updating .env with missing values..."
-            # Update .env file with new values
-            sed -i "/^STORAGE_PATH=/d" "$PROJECT_DIR/.env"
-            sed -i "/^PUID=/d" "$PROJECT_DIR/.env"
-            sed -i "/^PGID=/d" "$PROJECT_DIR/.env"
-            echo "STORAGE_PATH=$STORAGE_PATH" >> "$PROJECT_DIR/.env"
-            echo "PUID=$PUID" >> "$PROJECT_DIR/.env"
-            echo "PGID=$PGID" >> "$PROJECT_DIR/.env"
-            # Re-source .env to ensure variables are loaded
-            source "$PROJECT_DIR/.env"
-            export STORAGE_PATH PUID PGID
-            print_info "Debug: Loaded values after update:"
-            echo "  STORAGE_PATH=$STORAGE_PATH"
-            echo "  PUID=$PUID"
-            echo "  PGID=$PGID"
-            print_success "Configuration updated. Continuing setup..."
-        fi
     fi
     create_directories
     create_service_configs
