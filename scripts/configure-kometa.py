@@ -59,6 +59,7 @@ class KometaConfigurator:
             self.log(f"Failed to clone Kometa repo: {e}", "ERROR")
 
     def configure_kometa(self):
+        self.download_kometa_repo()
         # Write Streaming.yml in the config directory
         streaming_path = os.path.join(self.config_dir, 'Streaming.yml')
         streaming_content = {
