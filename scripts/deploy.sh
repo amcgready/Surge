@@ -737,13 +737,6 @@ main() {
 
     # Check for existing file structure before running deployment
     STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
-    if [ -d "$STORAGE_PATH" ]; then
-        # Check for presence of service folders as a sign of previous deployment
-        if [ -d "$STORAGE_PATH/Plex" ] || [ -d "$STORAGE_PATH/Emby" ] || [ -d "$STORAGE_PATH/Jellyfin" ] || [ -d "$STORAGE_PATH/Radarr" ] || [ -d "$STORAGE_PATH/Sonarr" ]; then
-            print_warning "WARNING: File structure detected, running ./surge deploy MEDIASERVERNAME will reset all services. If you are looking to update, run ./surge update instead"
-            read -p "Press Enter to continue with deployment or Ctrl+C to abort..."
-        fi
-    fi
     
     # Parse arguments
     case ${1:-} in
