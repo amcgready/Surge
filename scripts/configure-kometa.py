@@ -22,11 +22,8 @@ class KometaConfigurator:
                     if line.strip() and not line.strip().startswith('#') and '=' in line:
                         key, value = line.strip().split('=', 1)
                         os.environ[key] = value
-        self.storage_path = storage_path or '/opt/surge'
-        self.config_dir = f"{self.storage_path}/Kometa/config"
-        self.config_file = f"{self.config_dir}/config.yml"
+        self.storage_path = storage_path
         self.kometa_repo = "https://github.com/Kometa-Team/Kometa.git"
-        
         # Load environment variables
         self.plex_url = 'http://localhost:32400'
         self.plex_token = os.environ.get('PLEX_TOKEN', '')
@@ -40,27 +37,16 @@ class KometaConfigurator:
         print(f"[{timestamp}] {icon} {message}")
         sys.stdout.flush()
     
-    def download_kometa_repo(self):
-        target_dir = os.path.join(self.storage_path, "Kometa")
-        kometa_py = os.path.join(target_dir, "kometa.py")
-        if os.path.exists(kometa_py):
-            self.log(f"Kometa main script already exists at {kometa_py}, skipping clone.", "INFO")
-            return
-        self.log(f"Cloning Kometa repo into {target_dir}...", "INFO")
-        try:
-            subprocess.check_call(["git", "clone", self.kometa_repo, target_dir])
-            self.log("Kometa repo cloned successfully.", "SUCCESS")
-            # Delete default config.yml after clone
-            default_config = os.path.join(target_dir, "config", "config.yml")
-            if os.path.exists(default_config):
-                os.remove(default_config)
-                self.log("Deleted default config.yml after git clone.", "INFO")
-        except Exception as e:
-            self.log(f"Failed to clone Kometa repo: {e}", "ERROR")
 
     def configure_kometa(self):
-        self.download_kometa_repo()
-        # Write Streaming.yml in the config directory
+    # Kometa repo should already be cloned by deploy.sh
+        self.config_dir = f"{self.storage_path}/Kometa/config"
+        self.config_file = f"{self.config_dir}/config.yml"
+        self.log("Configuring Kometa connection to Plex...", "INFO")
+        # Now create config directory and assets folder
+        os.makedirs(self.config_dir, exist_ok=True)
+        os.makedirs(f"{self.config_dir}/assets", exist_ok=True)
+        # Now create Streaming.yml
         streaming_path = os.path.join(self.config_dir, 'Streaming.yml')
         streaming_content = {
             'collections': {
@@ -132,13 +118,6 @@ class KometaConfigurator:
         with open(streaming_path, 'w') as f:
             yaml.dump(streaming_content, f, default_flow_style=False, sort_keys=False)
         self.log(f"Streaming.yml written to {streaming_path}", "SUCCESS")
-        self.download_kometa_repo()
-        self.log("Configuring Kometa connection to Plex...", "INFO")
-        
-        # Create config directory if it doesn't exist
-        os.makedirs(self.config_dir, exist_ok=True)
-        os.makedirs(f"{self.config_dir}/assets", exist_ok=True)
-        
         # Remove any existing config.yml before generating new one
         if os.path.exists(self.config_file):
             try:
@@ -146,6 +125,21 @@ class KometaConfigurator:
                 self.log("Removed existing config.yml before generating new one.", "INFO")
             except Exception as e:
                 self.log(f"Failed to remove existing config.yml: {e}", "WARNING")
+        # Now create criterion.yml
+        criterion_path = os.path.join(self.config_dir, 'criterion.yml')
+        criterion_content = {
+            'collections': {
+                'Criterion Collection': {
+                    'trakt_list': 'https://trakt.tv/lists/27683848',
+                    'collection_order': 'custom',
+                    'sync_mode': 'sync',
+                    'url_poster': 'https://theposterdb.com/api/assets/17633/'
+                }
+            }
+        }
+        with open(criterion_path, 'w') as f:
+            yaml.dump(criterion_content, f, default_flow_style=False, sort_keys=False)
+        self.log(f"criterion.yml written to {criterion_path}", "SUCCESS")
         
 
         # Build config dictionary exactly matching the provided example

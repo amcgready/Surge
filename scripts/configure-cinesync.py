@@ -38,70 +38,81 @@ class SurgeCineSyncConfigurator:
     def __init__(self):
         """Initialize CineSync configurator."""
         self.project_root = Path(__file__).parent.parent
-        self.storage_path = os.environ.get('STORAGE_PATH')
-        if not self.storage_path:
-            raise RuntimeError("STORAGE_PATH environment variable is required but not set. Please run './surge setup' or export STORAGE_PATH before running this script.")
-
-        # Load environment variables
         self.load_env()
-
-        # Configuration paths
-        self.config_dir = Path(self.storage_path) / "Cinesync" / "config"
-        self.env_file = self.config_dir / ".env"
-        self.template_file = self.project_root / "configs" / "cinesync-env.template"
-
-        # Service detection
-        self.enabled_services = self.detect_enabled_services()
-
-        # Configuration settings
-        self.config = {
-            'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', '/downloads/Decypharr/debrids'),
-            'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', '/downloads/CineSync'),
-        }
-        self.log("CineSync Configurator initialized", "INFO")
-        self.log(f"Storage path: {self.storage_path}", "INFO")
-        self.log(f"Config directory: {self.config_dir}", "INFO")
-
-    # _read_storage_path_from_env removed: STORAGE_PATH must be set in environment
-
-    # def find_storage_path(self) -> str:
-    #     Deprecated: No fallback to /opt/surge. STORAGE_PATH is required.
-
-
-    def __init__(self):
-        """Initialize CineSync configurator."""
-        self.project_root = Path(__file__).parent.parent
-
-        # Always load .env from absolute project root before anything else
-        env_path = Path.home() / "Desktop" / "Surge" / ".env"
-        if env_path.exists():
-            with open(env_path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        os.environ[key] = value
-
-        # Now check for STORAGE_PATH after loading .env
         self.storage_path = os.environ.get('STORAGE_PATH')
         if not self.storage_path:
             raise RuntimeError("STORAGE_PATH environment variable is required but not set. Please run './surge setup' or export STORAGE_PATH before running this script.")
-
-        # Configuration paths
         self.config_dir = Path(self.storage_path) / "CineSync" / "config"
         self.env_file = self.config_dir / ".env"
         self.template_file = self.project_root / "configs" / "cinesync-env.template"
-
-        # Service detection
         self.enabled_services = self.detect_enabled_services()
-
-        # Configuration settings
-        self.config = {}
+        self.config = {
+            # Directory Paths
+            'SOURCE_DIR': os.environ.get('CINESYNC_SOURCE_DIR', f'{self.storage_path}/downloads/Decypharr/debrids'),
+            'DESTINATION_DIR': os.environ.get('CINESYNC_DESTINATION_DIR', f'{self.storage_path}/downloads/CineSync'),
+            'USE_SOURCE_STRUCTURE': os.environ.get('CINESYNC_USE_SOURCE_STRUCTURE', 'false'),
+            # Media Organization
+            'CINESYNC_LAYOUT': os.environ.get('CINESYNC_LAYOUT', 'true'),
+            'ANIME_SEPARATION': os.environ.get('CINESYNC_ANIME_SEPARATION', 'true'),
+            '4K_SEPARATION': os.environ.get('CINESYNC_4K_SEPARATION', 'false'),
+            'KIDS_SEPARATION': os.environ.get('CINESYNC_KIDS_SEPARATION', 'false'),
+            # Custom Folders
+            'CUSTOM_SHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_SHOW_FOLDER', 'TV Series'),
+            'CUSTOM_4KSHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_4KSHOW_FOLDER', '4K Series'),
+            'CUSTOM_ANIME_SHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_ANIME_SHOW_FOLDER', 'Anime Series'),
+            'CUSTOM_MOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_MOVIE_FOLDER', 'Movies'),
+            'CUSTOM_4KMOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_4KMOVIE_FOLDER', '4K Movies'),
+            'CUSTOM_ANIME_MOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_ANIME_MOVIE_FOLDER', 'Anime Movies'),
+            'CUSTOM_KIDS_MOVIE_FOLDER': os.environ.get('CINESYNC_CUSTOM_KIDS_MOVIE_FOLDER', 'Kids Movies'),
+            'CUSTOM_KIDS_SHOW_FOLDER': os.environ.get('CINESYNC_CUSTOM_KIDS_SHOW_FOLDER', 'Kids Series'),
+            # Resolution Structure
+            'SHOW_RESOLUTION_STRUCTURE': os.environ.get('CINESYNC_SHOW_RESOLUTION_STRUCTURE', 'false'),
+            'MOVIE_RESOLUTION_STRUCTURE': os.environ.get('CINESYNC_MOVIE_RESOLUTION_STRUCTURE', 'false'),
+            # Logging
+            'LOG_LEVEL': os.environ.get('CINESYNC_LOG_LEVEL', 'INFO'),
+            # Rclone Mount
+            'RCLONE_MOUNT': os.environ.get('CINESYNC_RCLONE_MOUNT', 'false'),
+            'MOUNT_CHECK_INTERVAL': os.environ.get('CINESYNC_MOUNT_CHECK_INTERVAL', '30'),
+            # API Keys
+            'TMDB_API_KEY': os.environ.get('CINESYNC_TMDB_API_KEY') or os.environ.get('TMDB_API_KEY', ''),
+            'LANGUAGE': os.environ.get('CINESYNC_LANGUAGE', 'English'),
+            # Metadata Settings
+            'ANIME_SCAN': os.environ.get('CINESYNC_ANIME_SCAN', 'false'),
+            'TMDB_FOLDER_ID': os.environ.get('CINESYNC_TMDB_FOLDER_ID', 'false'),
+            'IMDB_FOLDER_ID': os.environ.get('CINESYNC_IMDB_FOLDER_ID', 'false'),
+            'TVDB_FOLDER_ID': os.environ.get('CINESYNC_TVDB_FOLDER_ID', 'false'),
+            # File Processing
+            'RENAME_ENABLED': os.environ.get('CINESYNC_RENAME_ENABLED', 'false'),
+            'MEDIAINFO_PARSER': os.environ.get('CINESYNC_MEDIAINFO_PARSER', 'false'),
+            'RENAME_TAGS': os.environ.get('CINESYNC_RENAME_TAGS', 'Resolution'),
+            # Collections
+            'MOVIE_COLLECTION_ENABLED': os.environ.get('CINESYNC_MOVIE_COLLECTION_ENABLED', 'false'),
+            # System Settings
+            'PUID': os.environ.get('PUID', '1000'),
+            'PGID': os.environ.get('PGID', '1000'),
+            'TZ': os.environ.get('TZ', 'UTC')
+        }
         self.api_keys = {}
-
         self.log("CineSync Configurator initialized", "INFO")
         self.log(f"Storage path: {self.storage_path}", "INFO")
         self.log(f"Config directory: {self.config_dir}", "INFO")
+
+    def load_env(self):
+        """Load environment variables from .env files in several common locations."""
+        env_locations = [
+            Path.cwd() / ".env",
+            self.project_root / ".env",
+            Path.home() / "Desktop" / "Surge" / ".env"
+        ]
+        for env_path in env_locations:
+            if env_path.exists():
+                self.log(f"Loading environment from {env_path}", "INFO")
+                with open(env_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, value = line.split('=', 1)
+                            os.environ[key] = value
         
 
     def log(self, message: str, level: str = "INFO"):

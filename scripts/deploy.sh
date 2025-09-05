@@ -255,12 +255,22 @@ create_directories() {
         source "$PROJECT_DIR/.env"
         set +a
     fi
-    # Generate Kometa configuration and clone repo before starting containers
-    print_info "Configuring Kometa and cloning repo..."
-    if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
-        print_success "Kometa configuration and repo setup complete."
+    # Clone Kometa repo before running configure-kometa.py
+    KOMETA_DIR="$STORAGE_PATH/Kometa"
+    KOMETA_REPO="https://github.com/Kometa-Team/Kometa.git"
+    if [ ! -f "$KOMETA_DIR/kometa.py" ]; then
+        print_info "Cloning Kometa repo into $KOMETA_DIR..."
+        git clone "$KOMETA_REPO" "$KOMETA_DIR"
+        print_success "Kometa repo cloned successfully."
     else
-        print_warning "Failed to configure Kometa or clone repo. Please check configure-kometa.py."
+        print_info "Kometa repo already exists at $KOMETA_DIR, skipping clone."
+    fi
+    # Generate Kometa configuration after repo is present
+    print_info "Configuring Kometa..."
+    if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
+        print_success "Kometa configuration setup complete."
+    else
+        print_warning "Failed to configure Kometa. Please check configure-kometa.py."
     fi
     # Remove and regenerate Kometa config.yml as the very last step
     KOMETA_CONFIG="$STORAGE_PATH/Kometa/config/config.yml"
@@ -353,7 +363,7 @@ deploy_services() {
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server pangolin"
-    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "RDT_CLIENT" "ZURG" "CLI_DEBRID" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "WATCHTOWER" "PD_ZURG" "SCANLY"; do
+    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "RDT_CLIENT" "ZURG" "CLI_DEBRID" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "SCANLY" "PARSELY"; do
         var_name="ENABLE_${service}"
         if grep -q "^$var_name=" "$PROJECT_DIR/.env"; then
             enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r')
@@ -371,27 +381,31 @@ deploy_services() {
     done
     # Generate CineSync configuration before deploying containers
     if echo "$PROFILES" | grep -q "cinesync"; then
-        print_info "Generating CineSync configuration before container deployment..."
+        print_info "[CineSync] Starting CineSync environment file generation..."
         STORAGE_PATH=$(grep "^STORAGE_PATH=" "$PROJECT_DIR/.env" 2>/dev/null | head -1 | cut -d'=' -f2 | tr -d '\n\r' || echo "/opt/surge")
         export STORAGE_PATH
-        if python3 "$SCRIPT_DIR/configure-cinesync.py"; then
-            print_success "CineSync environment file created successfully!"
-            # Wait for .env file to exist before continuing
-            ENV_PATH="$STORAGE_PATH/CineSync/config/.env"
-            WAIT_SECONDS=0
-            while [ ! -f "$ENV_PATH" ] && [ $WAIT_SECONDS -lt 60 ]; do
-                print_info "Waiting for CineSync .env file to be created... ($WAIT_SECONDS seconds)"
-                sleep 2
-                WAIT_SECONDS=$((WAIT_SECONDS+2))
-            done
-            if [ -f "$ENV_PATH" ]; then
-                print_success "CineSync .env file detected: $ENV_PATH"
-            else
-                print_warning "CineSync .env file not found after waiting. Please check logs."
-            fi
+        ENV_PATH="$STORAGE_PATH/CineSync/config/.env"
+        print_info "[CineSync] Will attempt to create: $ENV_PATH"
+        python3 "$SCRIPT_DIR/configure-cinesync.py" > "$PROJECT_DIR/logs/cinesync-config.log" 2>&1
+        CONFIG_EXIT_CODE=$?
+        if [ $CONFIG_EXIT_CODE -eq 0 ]; then
+            print_success "[CineSync] configure-cinesync.py exited successfully."
         else
-            print_warning "Failed to generate CineSync environment file. You can run it manually:"
-            print_warning "  python3 $SCRIPT_DIR/configure-cinesync.py"
+            print_error "[CineSync] configure-cinesync.py failed with exit code $CONFIG_EXIT_CODE. See logs/cinesync-config.log for details."
+        fi
+        # Wait for .env file to exist before continuing
+        WAIT_SECONDS=0
+        while [ ! -f "$ENV_PATH" ] && [ $WAIT_SECONDS -lt 60 ]; do
+            print_info "[CineSync] Waiting for .env file to be created... ($WAIT_SECONDS seconds)"
+            sleep 2
+            WAIT_SECONDS=$((WAIT_SECONDS+2))
+        done
+        if [ -f "$ENV_PATH" ]; then
+            print_success "[CineSync] .env file detected: $ENV_PATH"
+            print_info "[CineSync] .env file contents:"
+            cat "$ENV_PATH"
+        else
+            print_error "[CineSync] .env file not found after waiting. See logs/cinesync-config.log for details."
         fi
     fi
 

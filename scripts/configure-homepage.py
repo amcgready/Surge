@@ -510,7 +510,7 @@ class SurgeHomepageConfigurator:
             self.log("=== Homepage Configuration Complete ===", "SUCCESS")
             self.log(f"✅ Configured {service_count} service groups", "SUCCESS")
             self.log(f"✅ Found {len(self.api_keys)} API keys/tokens", "SUCCESS")
-            self.log(f"✅ Homepage available at: http://localhost:{os.environ.get('HOMEPAGE_PORT', '3000')}", "SUCCESS")
+            self.log(f"✅ Homepage available at: http://localhost:{os.environ.get('HOMEPAGE_PORT', '3004')}", "SUCCESS")
             self.log("✅ All configuration files generated successfully", "SUCCESS")
             
             return True

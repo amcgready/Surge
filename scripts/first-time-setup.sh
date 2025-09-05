@@ -2186,10 +2186,10 @@ main() {
         # Clone Surge repo if ENABLE_SCANLY is true
                 if [ "$ENABLE_SCANLY" = "true" ]; then
                     if [ ! -d "$PROJECT_DIR/Surge" ]; then
-                        print_info "Cloning Surge repository for Scanly..."
-                        git clone https://github.com/amcgready/Surge.git "$PROJECT_DIR/Surge"
+                        print_info "Cloning Scanly repository for Scanly..."
+                        git clone https://github.com/amcgready/Scanly.git "$PROJECT_DIR/Surge"
                     else
-                        print_info "Surge repository already exists. Skipping clone."
+                        print_info "Scanly repository already exists. Skipping clone."
                     fi
                 fi
 
