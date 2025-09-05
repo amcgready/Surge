@@ -265,6 +265,12 @@ create_directories() {
     else
         print_info "Kometa repo already exists at $KOMETA_DIR, skipping clone."
     fi
+    # Fix permissions for Kometa config.cache before configuration
+    KOMETA_CACHE_FILE="$STORAGE_PATH/Kometa/config/config.cache"
+    if [ -f "$KOMETA_CACHE_FILE" ]; then
+        print_info "Fixing permissions for Kometa config.cache: $KOMETA_CACHE_FILE"
+        sudo chown 1000:1000 "$KOMETA_CACHE_FILE"
+    fi
     # Generate Kometa configuration after repo is present
     print_info "Configuring Kometa..."
     if python3 "$SCRIPT_DIR/configure-kometa.py" "$STORAGE_PATH"; then
