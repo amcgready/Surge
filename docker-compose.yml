@@ -182,7 +182,7 @@ services:
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
       - ${STORAGE_PATH}/CineSync/config/.env:/app/.env
-      - ${STORAGE_PATH}/downloads:${STORAGE_PATH}/downloads
+      - ${STORAGE_PATH}/downloads:/downloads
       - /mnt:/mnt
       - ${STORAGE_PATH}:${STORAGE_PATH}
     restart: ${RESTART_POLICY:-unless-stopped}
