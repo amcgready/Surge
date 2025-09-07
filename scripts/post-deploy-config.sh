@@ -307,17 +307,6 @@ main() {
         fi
     fi
     
-    # Configure Tautulli (if Tautulli is running)
-    if docker ps --format "table {{.Names}}" | grep -q "tautulli"; then
-        if [ -f "$SCRIPT_DIR/configure-tautulli.py" ]; then
-            log_info "Configuring Tautulli connection to Plex..."
-            if python3 "$SCRIPT_DIR/configure-tautulli.py" "$STORAGE_PATH"; then
-                log_info "✅ Tautulli configuration completed successfully"
-            else
-                log_error "❌ Tautulli configuration failed"
-            fi
-        fi
-    fi
     
     # Configure Kometa (if Kometa is running)
     if docker ps --format "table {{.Names}}" | grep -q "kometa"; then
@@ -331,29 +320,15 @@ main() {
         fi
     fi
     
-    # Configure RDT-Client automation (if RDT-Client is running)
-    if docker ps --format "table {{.Names}}" | grep -q "rdt-client"; then
-        log_info "Configuring RDT-Client automation..."
-        if [ -n "$RD_API_TOKEN" ]; then
-            log_info "Using Real-Debrid API token from environment: ${RD_API_TOKEN:0:8}..."
-            export RD_API_TOKEN="$RD_API_TOKEN"
-        fi
-        
-        if [ -f "$SCRIPT_DIR/configure-rdt-client.py" ]; then
-            if python3 "$SCRIPT_DIR/configure-rdt-client.py" "$STORAGE_PATH"; then
-                log_info "✅ RDT-Client configuration completed successfully"
+    # Configure Torrentio indexer (if Prowlarr is running)
+    if docker ps --format "table {{.Names}}" | grep -q "prowlarr"; then
+        log_info "Configuring Torrentio indexer in Prowlarr..."
+        if [ -f "$SCRIPT_DIR/configure-torrentio.py" ]; then
+            if python3 "$SCRIPT_DIR/configure-torrentio.py" "$STORAGE_PATH"; then
+                log_info "✅ Torrentio indexer configuration completed successfully"
             else
-                log_error "❌ RDT-Client configuration failed"
+                log_error "❌ Torrentio indexer configuration failed"
             fi
-        elif [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
-            log_info "Running comprehensive RDT-Client and Torrentio setup..."
-            if python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"; then
-                log_info "✅ RDT-Client and Torrentio setup completed successfully"
-            else
-                log_error "❌ RDT-Client and Torrentio setup failed"
-            fi
-        else
-            log_info "⚠️ RDT-Client detected but no automation scripts found"
         fi
     fi
     

@@ -431,6 +431,21 @@ deploy_services() {
     # Configure services automatically
     configure_services
 
+    # Configure Tautulli if enabled in .env
+    ENABLE_TAUTULLI=$(grep "^ENABLE_TAUTULLI=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    if [ "$ENABLE_TAUTULLI" = "true" ]; then
+        print_info "Configuring Tautulli connection to Plex..."
+        if [ -f "$SCRIPT_DIR/configure-tautulli.py" ]; then
+            if python3 "$SCRIPT_DIR/configure-tautulli.py" "$STORAGE_PATH"; then
+                print_success "Tautulli configuration completed successfully."
+            else
+                print_warning "Tautulli configuration failed."
+            fi
+        else
+            print_warning "configure-tautulli.py script not found in $SCRIPT_DIR. Skipping Tautulli configuration."
+        fi
+    fi
+
     # Run post-deployment configuration synchronously so API keys are ready before Decypharr config
     print_info "Running post-deployment configuration..."
     if [ -f "$SCRIPT_DIR/post-deploy-config.sh" ]; then
