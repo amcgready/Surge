@@ -121,3 +121,4 @@ scripts/patch-admin-credentials.sh
 scripts/test.config
 WebUI/build.py
 backup.env
+scripts/get_plex_token.py
