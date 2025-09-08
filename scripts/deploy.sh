@@ -250,6 +250,7 @@ create_directories() {
     ENABLE_PLACEHOLDARR=$(grep "^ENABLE_PLACEHOLDARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     if [ "$ENABLE_PLACEHOLDARR" = "true" ]; then
         print_info "Placeholdarr is enabled. Running configure-placeholdarr.sh..."
+        export STORAGE_PATH
         bash "$SCRIPT_DIR/configure-placeholdarr.sh"
     fi
 
@@ -523,36 +524,47 @@ deploy_services() {
         print_info "Please open http://localhost:32400/web in your browser."
         print_info "Name your Plex server and click Next in the browser."
         read -p "After you have named your Plex server and clicked Next, press Enter to continue..."
-        # Extract Plex token from Preferences.xml (correct location)
+        # Wait and retry for Preferences.xml and Plex token
         PLEX_PREFS="$STORAGE_PATH/Plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
-        if [ -f "$PLEX_PREFS" ]; then
-            PLEX_TOKEN=$(grep -o 'PlexOnlineToken="[^"]*"' "$PLEX_PREFS" | head -1 | sed 's/PlexOnlineToken="\([^"]*\)"/\1/')
-            if [ -n "$PLEX_TOKEN" ]; then
-                print_success "Extracted Plex token: $PLEX_TOKEN"
-                # Save to .env
-                if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
-                    sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
-                else
-                    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
-                fi
-                print_info "Plex token saved to .env file."
-                # Re-run Bazarr configuration to add Plex
-                print_info "Re-running Bazarr configuration to add Plex integration..."
-                if docker compose ps bazarr | grep -q "Up"; then
-                    if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from service_config import configure_bazarr_applications; success = configure_bazarr_applications(); sys.exit(0 if success else 1)"; then
-                        print_success "Bazarr applications reconfigured with Plex integration!"
+        MAX_WAIT=60
+        WAITED=0
+        while [ $WAITED -lt $MAX_WAIT ]; do
+            if [ -f "$PLEX_PREFS" ]; then
+                PLEX_TOKEN=$(grep -o 'PlexOnlineToken="[^"]*"' "$PLEX_PREFS" | head -1 | sed 's/PlexOnlineToken="\([^"]*\)"/\1/')
+                if [ -n "$PLEX_TOKEN" ]; then
+                    print_success "Extracted Plex token: $PLEX_TOKEN"
+                    # Save to .env
+                    if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
+                        sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
                     else
-                        print_warning "Failed to reconfigure Bazarr applications with Plex. You can try again manually:"
-                        print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
+                        echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
                     fi
-                else
-                    print_info "Bazarr not running, skipping Plex integration configuration."
+                    print_info "Plex token saved to .env file."
+                    # Re-run Bazarr configuration to add Plex
+                    print_info "Re-running Bazarr configuration to add Plex integration..."
+                    if docker compose ps bazarr | grep -q "Up"; then
+                        if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from service_config import configure_bazarr_applications; success = configure_bazarr_applications(); sys.exit(0 if success else 1)"; then
+                            print_success "Bazarr applications reconfigured with Plex integration!"
+                        else
+                            print_warning "Failed to reconfigure Bazarr applications with Plex. You can try again manually:"
+                            print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
+                        fi
+                    else
+                        print_info "Bazarr not running, skipping Plex integration configuration."
+                    fi
+                    break
                 fi
-            else
-                print_warning "Could not extract Plex token from Preferences.xml."
             fi
-        else
-            print_warning "Preferences.xml not found at $PLEX_PREFS. Plex may not be fully initialized yet."
+            sleep 3
+            WAITED=$((WAITED+3))
+            if [ $WAITED -eq 15 ]; then
+                print_info "Waiting for Plex to finish initializing and generate Preferences.xml..."
+            fi
+        done
+        if [ -z "$PLEX_TOKEN" ]; then
+            print_warning "Could not extract Plex token from Preferences.xml after waiting $MAX_WAIT seconds."
+            print_warning "Please ensure you have signed into Plex and completed the server setup in the web UI."
+            print_warning "You can manually add PLEX_TOKEN to your .env file later."
         fi
     elif [ "$media_server" = "emby" ]; then
         echo "  - Emby Server: http://localhost:8096"

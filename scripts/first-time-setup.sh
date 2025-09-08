@@ -36,6 +36,23 @@ prompt_media_server_type() {
     fi
 
     echo "Media server set to $MEDIA_SERVER in .env file."
+
+    # If Plex, prompt for credentials and update get_plex_token.py
+    if [ "$MEDIA_SERVER" = "plex" ]; then
+        echo "\nPlex account required for automation."
+        read -p "Enter your Plex username/email: " PLEX_USERNAME
+        read -s -p "Enter your Plex password: " PLEX_PASSWORD
+        echo
+        # Update get_plex_token.py with credentials
+        sed -i "s/^PLEX_USERNAME = .*/PLEX_USERNAME = \"$PLEX_USERNAME\"/" "$SCRIPT_DIR/get_plex_token.py"
+        sed -i "s/^PLEX_PASSWORD = .*/PLEX_PASSWORD = \"$PLEX_PASSWORD\"/" "$SCRIPT_DIR/get_plex_token.py"
+        # Save username to .env for reference
+        if grep -q '^PLEX_USERNAME=' "$ENV_FILE"; then
+            sed -i "s/^PLEX_USERNAME=.*/PLEX_USERNAME=$PLEX_USERNAME/" "$ENV_FILE"
+        else
+            echo "PLEX_USERNAME=$PLEX_USERNAME" >> "$ENV_FILE"
+        fi
+    fi
 }
 # Write or update OMDB token and AniDB credentials in .env
 write_metadata_tokens_to_env() {
@@ -383,41 +400,33 @@ gather_auto_preferences() {
 
     print_step "Setting default admin credentials for all *arr services (admin / your chosen password)"
 
-    # AUTO INSTALL PRESET: Only enable services present in docker-compose.yml
-    ENABLE_RADARR="true"
-    ENABLE_SONARR="true"
-    ENABLE_BAZARR="true"
-    ENABLE_PROWLARR="true"
-    ENABLE_NZBGET="true"
-    ENABLE_CLI_DEBRID="true"
-    ENABLE_DECYPHARR="true"
-    ENABLE_POSTERIZARR="true"
-    ENABLE_CINESYNC="true"
-    ENABLE_PLACEHOLDARR="true"
-    ENABLE_OVERSEERR="true"
-    ENABLE_TAUTULLI="true"
-    ENABLE_GAPS="true"
-    ENABLE_HOMEPAGE="true"
-    ENABLE_KOMETA="true"
-    ENABLE_DOCKUPDATER="true"
+    # AUTO INSTALL: Enable all services and features by default
+    ALL_ENABLE_VARS=(
+        ENABLE_RADARR ENABLE_SONARR ENABLE_OVERSEERR ENABLE_BAZARR ENABLE_PROWLARR ENABLE_NZBGET ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_TAUTULLI ENABLE_HOMEPAGE ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_PANGOLIN ENABLE_DOCKUPDATER ENABLE_SCANLY ENABLE_PARSELY
+    )
+    # Set all to true
+    for var in "${ALL_ENABLE_VARS[@]}"; do
+        export $var="true"
+    done
     # Set only the selected media server to true
     case "$MEDIA_SERVER" in
         plex)
-            ENABLE_PLEX="true"
-            ENABLE_EMBY="false"
-            ENABLE_JELLYFIN="false"
-            ;;
+            ENABLE_PLEX="true"; ENABLE_EMBY="false"; ENABLE_JELLYFIN="false";;
         emby)
-            ENABLE_PLEX="false"
-            ENABLE_EMBY="true"
-            ENABLE_JELLYFIN="false"
-            ;;
+            ENABLE_PLEX="false"; ENABLE_EMBY="true"; ENABLE_JELLYFIN="false";;
         jellyfin)
-            ENABLE_PLEX="false"
-            ENABLE_EMBY="false"
-            ENABLE_JELLYFIN="true"
-            ;;
+            ENABLE_PLEX="false"; ENABLE_EMBY="false"; ENABLE_JELLYFIN="true";;
     esac
+    # Write all ENABLE_* variables to .env
+    ENV_FILE="$PROJECT_DIR/.env"
+    for var in "${ALL_ENABLE_VARS[@]}" ENABLE_PLEX ENABLE_EMBY ENABLE_JELLYFIN; do
+        value="${!var}"
+        if grep -q "^$var=" "$ENV_FILE"; then
+            sed -i "s|^$var=.*|$var=$value|" "$ENV_FILE"
+        else
+            echo "$var=$value" >> "$ENV_FILE"
+        fi
+    done
     DEPLOYMENT_TYPE="auto"
     
     # Storage location (simplified)
@@ -664,10 +673,27 @@ gather_custom_preferences() {
     print_info "Storage Configuration"
     echo "Where would you like to store your media and configuration?"
     echo "Default: /opt/surge (recommended)"
-    read -p "Storage path [/opt/surge]: " storage_path
-    STORAGE_PATH=${storage_path:-/opt/surge}
+
+    while true; do
+        read -p "Storage path [/opt/surge]: " storage_path
+        STORAGE_PATH=${storage_path:-/opt/surge}
+        # Prevent empty or root path
+        if [ -z "$STORAGE_PATH" ] || [ "$STORAGE_PATH" = "/" ]; then
+            print_error "Invalid storage path. Please enter a directory you have write access to (not / or blank)."
+        else
+            break
+        fi
+    done
     export STORAGE_PATH
     write_storage_path_to_env
+
+    # Prompt for sudo and set permissions before any directory creation
+    echo "\n[INFO] Setting permissions for $STORAGE_PATH (sudo required)"
+    sudo -v
+    sudo mkdir -p "$STORAGE_PATH"
+    sudo chown -R $(id -u):$(id -g) "$STORAGE_PATH"
+    sudo chmod -R 755 "$STORAGE_PATH"
+    print_success "Permissions set for $STORAGE_PATH"
 
     # Prompt for CineSync folder options after storage path is set
     if [ "$DEPLOYMENT_TYPE" = "full" ]; then
@@ -2202,6 +2228,23 @@ main() {
                         print_info "Parsely repository already exists. Skipping clone."
                     fi
                 fi
+
+
+        # If Plex, run get_plex_token.py after server naming but before folder creation
+        if [ "$MEDIA_SERVER" = "plex" ]; then
+            echo "\n[INFO] Attempting to fetch Plex token from plex.tv..."
+            PLEX_TOKEN=$(python3 "$SCRIPT_DIR/get_plex_token.py" | grep 'Plex Token:' | awk '{print $3}')
+            if [ -n "$PLEX_TOKEN" ]; then
+                if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
+                    sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
+                else
+                    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
+                fi
+                echo "[SUCCESS] Plex token saved to .env."
+            else
+                echo "[WARNING] Could not fetch Plex token. You may need to sign in manually later."
+            fi
+        fi
 
         # Create per-service directories (now STORAGE_PATH is set)
         create_service_directories
