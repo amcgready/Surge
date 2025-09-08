@@ -178,6 +178,10 @@ create_directories() {
 
     # Only create folders for enabled services, and only copy default configs/envs if missing
     for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+        # Skip Kometa in this loop; handle it after git clone
+        if [ "$service" = "Kometa" ]; then
+            continue
+        fi
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         # Only proceed if the ENABLE_* line exists and is set to true
@@ -269,6 +273,8 @@ create_directories() {
         print_info "Cloning Kometa repo into $KOMETA_DIR..."
         git clone "$KOMETA_REPO" "$KOMETA_DIR"
         print_success "Kometa repo cloned successfully."
+    # Now create Kometa config folder after clone
+    mkdir -p "$KOMETA_DIR/config"
     else
         print_info "Kometa repo already exists at $KOMETA_DIR, skipping clone."
     fi
