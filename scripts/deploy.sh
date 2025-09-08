@@ -432,7 +432,35 @@ deploy_services() {
     # Remove Decypharr from profiles for phase 1
     PHASE1_PROFILE_FLAGS=$(echo "$COMPOSE_PROFILE_FLAGS" | sed 's/--profile decypharr//g')
     eval docker compose $COMPOSE_FILES $PHASE1_PROFILE_FLAGS up -d
+
     print_success "Phase 1: All services except Decypharr deployed successfully!"
+
+    # If Prowlarr is enabled, wait for it to be healthy and configure Torrentio indexer
+    ENABLE_PROWLARR=$(grep "^ENABLE_PROWLARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    if [ "$ENABLE_PROWLARR" = "true" ]; then
+        # Wait for Prowlarr container to be healthy (assumes container is named 'surge-prowlarr')
+        print_info "Waiting for surge-prowlarr container to be healthy..."
+        MAX_ATTEMPTS=30
+        ATTEMPT=1
+        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' surge-prowlarr 2>/dev/null || echo "none")
+            if [ "$STATUS" = "healthy" ]; then
+                print_success "surge-prowlarr is healthy."
+                break
+            fi
+            sleep 5
+            ATTEMPT=$((ATTEMPT+1))
+        done
+        if [ "$STATUS" != "healthy" ]; then
+            print_warning "surge-prowlarr did not become healthy in time. Proceeding anyway."
+        fi
+        print_info "Running Torrentio indexer configuration for Prowlarr..."
+        if python3 "$SCRIPT_DIR/configure-torrentio.py" "$STORAGE_PATH"; then
+            print_success "Torrentio indexer configured in Prowlarr."
+        else
+            print_warning "Torrentio indexer configuration failed."
+        fi
+    fi
 
     # Configure services automatically
     configure_services
