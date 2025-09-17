@@ -542,7 +542,6 @@ deploy_services() {
         else
             print_warning "Failed to retrieve Plex token using get_plex_token.py. Please ensure you have signed into Plex and completed the server setup in the web UI. You can manually add PLEX_TOKEN to your .env file later."
         fi
-        fi
     elif [ "$media_server" = "emby" ]; then
         echo "  - Emby Server: http://localhost:8096"
     elif [ "$media_server" = "jellyfin" ]; then
