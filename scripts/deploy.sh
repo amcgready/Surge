@@ -177,7 +177,7 @@ create_directories() {
     )
 
     # Only create folders for enabled services, and only copy default configs/envs if missing
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "Zurg" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         # Skip Kometa in this loop; handle it after git clone
         if [ "$service" = "Kometa" ]; then
             continue
@@ -342,10 +342,10 @@ deploy_services() {
     
     # Read environment variables for service enablement
     RD_API_TOKEN=$(grep "^RD_API_TOKEN=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "")
-    ENABLE_CLI_DEBRID=$(grep "^ENABLE_CLI_DEBRID=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+    # ENABLE_CLI_DEBRID removed
     ENABLE_DECYPHARR=$(grep "^ENABLE_DECYPHARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     ENABLE_PD_ZURG=$(grep "^ENABLE_PD_ZURG=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
-    export RD_API_TOKEN ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_PD_ZURG
+    export RD_API_TOKEN ENABLE_DECYPHARR ENABLE_PD_ZURG
 
     # Base compose files
     COMPOSE_FILES="-f docker-compose.yml"
@@ -383,7 +383,7 @@ deploy_services() {
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server pangolin"
-    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "RDT_CLIENT" "ZURG" "CLI_DEBRID" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "SCANLY" "PARSELY"; do
+    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "ZURG" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "SCANLY" "PARSELY"; do
         var_name="ENABLE_${service}"
         if grep -q "^$var_name=" "$PROJECT_DIR/.env"; then
             enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r')
@@ -524,47 +524,24 @@ deploy_services() {
         print_info "Please open http://localhost:32400/web in your browser."
         print_info "Name your Plex server and click Next in the browser."
         read -p "After you have named your Plex server and clicked Next, press Enter to continue..."
-        # Wait and retry for Preferences.xml and Plex token
-        PLEX_PREFS="$STORAGE_PATH/Plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
-        MAX_WAIT=60
-        WAITED=0
-        while [ $WAITED -lt $MAX_WAIT ]; do
-            if [ -f "$PLEX_PREFS" ]; then
-                PLEX_TOKEN=$(grep -o 'PlexOnlineToken="[^"]*"' "$PLEX_PREFS" | head -1 | sed 's/PlexOnlineToken="\([^"]*\)"/\1/')
-                if [ -n "$PLEX_TOKEN" ]; then
-                    print_success "Extracted Plex token: $PLEX_TOKEN"
-                    # Save to .env
-                    if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
-                        sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
-                    else
-                        echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
-                    fi
-                    print_info "Plex token saved to .env file."
-                    # Re-run Bazarr configuration to add Plex
-                    print_info "Re-running Bazarr configuration to add Plex integration..."
-                    if docker compose ps bazarr | grep -q "Up"; then
-                        if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from service_config import configure_bazarr_applications; success = configure_bazarr_applications(); sys.exit(0 if success else 1)"; then
-                            print_success "Bazarr applications reconfigured with Plex integration!"
-                        else
-                            print_warning "Failed to reconfigure Bazarr applications with Plex. You can try again manually:"
-                            print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
-                        fi
-                    else
-                        print_info "Bazarr not running, skipping Plex integration configuration."
-                    fi
-                    break
+        print_info "Retrieving Plex token using get_plex_token.py..."
+        if python3 "$SCRIPT_DIR/get_plex_token.py"; then
+            print_success "Plex token retrieved and saved to .env file."
+            # Re-run Bazarr configuration to add Plex
+            print_info "Re-running Bazarr configuration to add Plex integration..."
+            if docker compose ps bazarr | grep -q "Up"; then
+                if python3 -c "import sys; sys.path.append('$SCRIPT_DIR'); from service_config import configure_bazarr_applications; success = configure_bazarr_applications(); sys.exit(0 if success else 1)"; then
+                    print_success "Bazarr applications reconfigured with Plex integration!"
+                else
+                    print_warning "Failed to reconfigure Bazarr applications with Plex. You can try again manually:"
+                    print_warning "  python3 -c 'from scripts.service_config import configure_bazarr_applications; configure_bazarr_applications()'"
                 fi
+            else
+                print_info "Bazarr not running, skipping Plex integration configuration."
             fi
-            sleep 3
-            WAITED=$((WAITED+3))
-            if [ $WAITED -eq 15 ]; then
-                print_info "Waiting for Plex to finish initializing and generate Preferences.xml..."
-            fi
-        done
-        if [ -z "$PLEX_TOKEN" ]; then
-            print_warning "Could not extract Plex token from Preferences.xml after waiting $MAX_WAIT seconds."
-            print_warning "Please ensure you have signed into Plex and completed the server setup in the web UI."
-            print_warning "You can manually add PLEX_TOKEN to your .env file later."
+        else
+            print_warning "Failed to retrieve Plex token using get_plex_token.py. Please ensure you have signed into Plex and completed the server setup in the web UI. You can manually add PLEX_TOKEN to your .env file later."
+        fi
         fi
     elif [ "$media_server" = "emby" ]; then
         echo "  - Emby Server: http://localhost:8096"
@@ -583,12 +560,6 @@ deploy_services() {
         print_info "   2. Run: ./surge deploy $media_server"
     fi
 
-    # Show cli_debrid status
-    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-        CLI_DEBRID_PORT=$(grep "^CLI_DEBRID_PORT=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "5000")
-        echo "  - cli_debrid Web UI: http://localhost:${CLI_DEBRID_PORT}"
-        echo "  - cli_debrid CLI: Available via ./surge exec cli-debrid"
-    fi
 
     # Show Decypharr status
     if [ "$ENABLE_DECYPHARR" = "true" ]; then

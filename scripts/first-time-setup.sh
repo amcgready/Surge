@@ -672,11 +672,9 @@ gather_custom_preferences() {
     echo ""
     print_info "Storage Configuration"
     echo "Where would you like to store your media and configuration?"
-    echo "Default: /opt/surge (recommended)"
-
     while true; do
-        read -p "Storage path [/opt/surge]: " storage_path
-        STORAGE_PATH=${storage_path:-/opt/surge}
+        read -p "Enter storage path: " storage_path
+        STORAGE_PATH="$storage_path"
         # Prevent empty or root path
         if [ -z "$STORAGE_PATH" ] || [ "$STORAGE_PATH" = "/" ]; then
             print_error "Invalid storage path. Please enter a directory you have write access to (not / or blank)."
@@ -1320,7 +1318,6 @@ configure_services_post_deployment() {
             print_success "Zurg configuration completed!"
             print_info "💾 Zurg Real-Debrid filesystem is now automated"
             print_info "🌐 Zurg WebDAV available at: http://localhost:${ZURG_PORT:-9999}"
-            print_info "📁 Mount point: /mnt/zurg (requires rclone mount)"
         else
             print_warning "Zurg configuration had some issues, manual setup may be needed"
         fi
@@ -2181,8 +2178,8 @@ main() {
 
     # If no config exists or user chose to reconfigure, gather preferences
     if [ ! -f "$PROJECT_DIR/.env" ] || [ "$RECONFIGURE_MODE" = "true" ]; then
-        # Run copy_env script before installation type selection
-        /bin/bash "/home/adam/Desktop/Surge/WebUI/backend/scripts/copy_env.sh" --quiet
+    # Run copy_env script before installation type selection
+    /bin/bash "$PROJECT_DIR/WebUI/backend/scripts/copy_env.sh" --quiet
         # Handle installation type selection
         if [ "$INSTALL_TYPE" = "auto" ]; then
             INSTALL_TYPE="auto"
@@ -2230,21 +2227,7 @@ main() {
                 fi
 
 
-        # If Plex, run get_plex_token.py after server naming but before folder creation
-        if [ "$MEDIA_SERVER" = "plex" ]; then
-            echo "\n[INFO] Attempting to fetch Plex token from plex.tv..."
-            PLEX_TOKEN=$(python3 "$SCRIPT_DIR/get_plex_token.py" | grep 'Plex Token:' | awk '{print $3}')
-            if [ -n "$PLEX_TOKEN" ]; then
-                if grep -q '^PLEX_TOKEN=' "$PROJECT_DIR/.env"; then
-                    sed -i "s/^PLEX_TOKEN=.*/PLEX_TOKEN=$PLEX_TOKEN/" "$PROJECT_DIR/.env"
-                else
-                    echo "PLEX_TOKEN=$PLEX_TOKEN" >> "$PROJECT_DIR/.env"
-                fi
-                echo "[SUCCESS] Plex token saved to .env."
-            else
-                echo "[WARNING] Could not fetch Plex token. You may need to sign in manually later."
-            fi
-        fi
+        # Plex token fetch removed; handled in deploy script only.
 
         # Create per-service directories (now STORAGE_PATH is set)
         create_service_directories

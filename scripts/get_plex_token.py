@@ -30,6 +30,24 @@ def get_plex_token(username, password):
     if response.status_code == 201:
         token = response.json()["user"]["authentication_token"]
         print(f"Plex Token: {token}")
+        # Save token to .env
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.env")
+        try:
+            # Read existing .env
+            if os.path.exists(env_path):
+                with open(env_path, "r") as f:
+                    lines = f.readlines()
+            else:
+                lines = []
+            # Remove any existing PLEX_TOKEN line
+            lines = [line for line in lines if not line.startswith("PLEX_TOKEN=")]
+            # Add new token
+            lines.append(f"PLEX_TOKEN={token}\n")
+            with open(env_path, "w") as f:
+                f.writelines(lines)
+            print(f"PLEX_TOKEN saved to {env_path}")
+        except Exception as e:
+            print(f"Failed to save PLEX_TOKEN to .env: {e}")
         return token
     else:
         print("Failed to get Plex token. Check your credentials.")

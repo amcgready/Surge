@@ -71,6 +71,11 @@ services:
       - surge-network
     profiles:
       - prowlarr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
 
   decypharr:
     image: cy01/blackhole:latest
