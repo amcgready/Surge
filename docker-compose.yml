@@ -168,6 +168,8 @@ services:
     volumes:
       - ${STORAGE_PATH}/Placeholdarr/config:/config
       - ${STORAGE_PATH}/downloads:/downloads
+      - ${STORAGE_PATH}/downloads/CineSync/Movies:/downloads/CineSync/Movies
+      - ${STORAGE_PATH}/downloads/CineSync/TV Series:/downloads/CineSync/TV Series
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network

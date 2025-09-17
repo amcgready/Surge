@@ -249,9 +249,9 @@ create_directories() {
     # If Placeholdarr is enabled, run configure-placeholdarr.sh
     ENABLE_PLACEHOLDARR=$(grep "^ENABLE_PLACEHOLDARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     if [ "$ENABLE_PLACEHOLDARR" = "true" ]; then
-        print_info "Placeholdarr is enabled. Running configure-placeholdarr.sh..."
-        export STORAGE_PATH
-        bash "$SCRIPT_DIR/configure-placeholdarr.sh"
+    print_info "Placeholdarr is enabled. Running configure-placeholdarr.py..."
+    export STORAGE_PATH
+    python3 "$SCRIPT_DIR/configure-placeholdarr.py"
     fi
 
     # Dynamically generate Pangolin config after directories are created
