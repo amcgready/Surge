@@ -159,7 +159,6 @@ create_directories() {
         [Bazarr]="config"
         [Radarr]="config"
         [Sonarr]="config"
-        [NZBGet]="config downloads"
         [Plex]="config"
         [Emby]="config"
         [Jellyfin]="config"
@@ -177,7 +176,7 @@ create_directories() {
     )
 
     # Only create folders for enabled services, and only copy default configs/envs if missing
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "Zurg" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "Zurg" "Decypharr" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         # Skip Kometa in this loop; handle it after git clone
         if [ "$service" = "Kometa" ]; then
             continue
@@ -274,10 +273,14 @@ create_directories() {
         print_info "Cloning Kometa repo into $KOMETA_DIR..."
         git clone "$KOMETA_REPO" "$KOMETA_DIR"
         print_success "Kometa repo cloned successfully."
-    # Now create Kometa config folder after clone
-    mkdir -p "$KOMETA_DIR/config"
+        # Only create config folder after clone
+        mkdir -p "$KOMETA_DIR/config"
     else
         print_info "Kometa repo already exists at $KOMETA_DIR, skipping clone."
+        # Only create config folder if repo exists and not during setup
+        if [ -d "$KOMETA_DIR/.git" ] && [ ! -d "$KOMETA_DIR/config" ]; then
+            mkdir -p "$KOMETA_DIR/config"
+        fi
     fi
     # Fix permissions for Kometa config.cache before configuration
     KOMETA_CACHE_FILE="$STORAGE_PATH/Kometa/config/config.cache"
@@ -383,7 +386,7 @@ deploy_services() {
 
     # Dynamically build PROFILES list from ENABLE_* variables in .env
     PROFILES="$media_server pangolin"
-    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "NZBGET" "ZURG" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "SCANLY" "PARSELY"; do
+    for service in "RADARR" "SONARR" "BAZARR" "PROWLARR" "ZURG" "DECYPHARR" "KOMETA" "POSTERIZARR" "OVERSEERR" "TAUTULLI" "CINESYNC" "PLACEHOLDARR" "GAPS" "HOMEPAGE" "SCANLY" "PARSELY"; do
         var_name="ENABLE_${service}"
         if grep -q "^$var_name=" "$PROJECT_DIR/.env"; then
             enabled=$(grep "^$var_name=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r')
@@ -436,26 +439,10 @@ deploy_services() {
 
     print_success "Phase 1: All services except Decypharr deployed successfully!"
 
-    # If Prowlarr is enabled, wait for it to be healthy and configure Torrentio indexer
+    # If Prowlarr is enabled, run Torrentio indexer configuration immediately (no health/retry check)
     ENABLE_PROWLARR=$(grep "^ENABLE_PROWLARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     if [ "$ENABLE_PROWLARR" = "true" ]; then
-        # Wait for Prowlarr container to be healthy (assumes container is named 'surge-prowlarr')
-        print_info "Waiting for surge-prowlarr container to be healthy..."
-        MAX_ATTEMPTS=30
-        ATTEMPT=1
-        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' surge-prowlarr 2>/dev/null || echo "none")
-            if [ "$STATUS" = "healthy" ]; then
-                print_success "surge-prowlarr is healthy."
-                break
-            fi
-            sleep 5
-            ATTEMPT=$((ATTEMPT+1))
-        done
-        if [ "$STATUS" != "healthy" ]; then
-            print_warning "surge-prowlarr did not become healthy in time. Proceeding anyway."
-        fi
-        print_info "Running Torrentio indexer configuration for Prowlarr..."
+        print_info "Running Torrentio indexer configuration for Prowlarr ..."
         if python3 "$SCRIPT_DIR/configure-torrentio.py" "$STORAGE_PATH"; then
             print_success "Torrentio indexer configured in Prowlarr."
         else
@@ -585,6 +572,42 @@ deploy_services() {
 configure_services() {
     print_info "Configuring service connections automatically..."
     # ...existing code for other service configuration...
+
+        # Configure zilean if enabled
+        ENABLE_ZILEAN=$(grep "^ENABLE_ZILEAN=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+        if [ "$ENABLE_ZILEAN" = "true" ]; then
+            print_info "Configuring zilean service..."
+            if [ -f "$SCRIPT_DIR/configure-zilean.sh" ]; then
+                bash "$SCRIPT_DIR/configure-zilean.sh"
+                print_success "zilean configuration completed."
+            else
+                print_warning "configure-zilean.sh script not found. Skipping zilean configuration."
+            fi
+        fi
+
+        # Configure zurg-testing if enabled
+        ENABLE_ZURG_TESTING=$(grep "^ENABLE_ZURG_TESTING=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+        if [ "$ENABLE_ZURG_TESTING" = "true" ]; then
+            print_info "Configuring zurg-testing service..."
+            if [ -f "$SCRIPT_DIR/configure-zurg-testing.sh" ]; then
+                bash "$SCRIPT_DIR/configure-zurg-testing.sh"
+                print_success "zurg-testing configuration completed."
+            else
+                print_warning "configure-zurg-testing.sh script not found. Skipping zurg-testing configuration."
+            fi
+        fi
+
+        # Configure riven if enabled
+        ENABLE_RIVEN=$(grep "^ENABLE_RIVEN=" "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
+        if [ "$ENABLE_RIVEN" = "true" ]; then
+            print_info "Configuring riven service..."
+            if [ -f "$SCRIPT_DIR/configure-riven.sh" ]; then
+                bash "$SCRIPT_DIR/configure-riven.sh"
+                print_success "riven configuration completed."
+            else
+                print_warning "configure-riven.sh script not found. Skipping riven configuration."
+            fi
+        fi
 
     # Generate Decypharr configuration last if Decypharr is enabled (by env or profile)
     ENABLE_DECYPHARR_FLAG=$(grep '^ENABLE_DECYPHARR=' "$PROJECT_DIR/.env" | cut -d'=' -f2 | tr -d '\n\r' || echo "false")

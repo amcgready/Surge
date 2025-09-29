@@ -18,6 +18,8 @@ import kometaLogo from './assets/service-logos/kometa.png';
 import pangolinLogo from './assets/service-logos/pangolin.png';
 import dockupdaterLogo from './assets/service-logos/dockupdater.png';
 
+import { getPangolinSetupToken } from './utils/readEnvToken';
+
 export default function AdditionalServicesStep(props) {
   const {
     contentEnhancementList,
@@ -27,6 +29,17 @@ export default function AdditionalServicesStep(props) {
     setConfig,
     handleChange
   } = props;
+
+  // Auto-populate Pangolin setup token on first render
+  React.useEffect(() => {
+    async function fetchToken() {
+      const token = await getPangolinSetupToken();
+      if (token && !config.pangolinSetupToken) {
+        setConfig(prev => ({ ...prev, pangolinSetupToken: token }));
+      }
+    }
+    fetchToken();
+  }, [setConfig, config.pangolinSetupToken]);
 
   // Default selected services
   React.useEffect(() => {

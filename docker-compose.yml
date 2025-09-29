@@ -71,11 +71,6 @@ services:
       - surge-network
     profiles:
       - prowlarr
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9696"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
 
   decypharr:
     image: cy01/blackhole:latest
@@ -91,19 +86,8 @@ services:
     volumes:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
-      - ${STORAGE_PATH}/Decypharr:/media/remote/realdebrid/__all__/
-      - ${STORAGE_PATH}/downloads:/downloads
-      - ${STORAGE_PATH}/Decypharr/symlinks:/mnt/downloads/symlinks
-      - ${STORAGE_PATH}/Decypharr/temp:/mnt/downloads/temp
-      - ${STORAGE_PATH}/Decypharr/remote:/mnt/rclone/remote
       - ${STORAGE_PATH}/Decypharr/cache:/mnt/rclone/cache
-      - ${STORAGE_PATH}/downloads/Decypharr/blackhole/sonarr:/mnt/downloads/blackhole/sonarr
-      - ${STORAGE_PATH}/downloads/Decypharr/blackhole/radarr:/mnt/downloads/blackhole/radarr
-      - ${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid:/mnt/rclone/remote/realdebrid:rshared
-      - ${STORAGE_PATH}/downloads/Decypharr/debrids/alldebrid:/mnt/rclone/remote/alldebrid:rshared
-      - ${STORAGE_PATH}/downloads/Decypharr/debrids/debridlink:/mnt/rclone/remote/debridlink:rshared
-      - ${STORAGE_PATH}/downloads/Decypharr/debrids/torbox:/mnt/rclone/remote/torbox:rshared
-
+      - /mnt:/mnt
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
     restart: ${RESTART_POLICY:-unless-stopped}
@@ -114,7 +98,7 @@ services:
     cap_add:
       - SYS_ADMIN
     devices:
-      - /dev/fuse:/dev/fuse
+      - /dev/fuse:/dev/fuse:rwm
     security_opt:
       - apparmor:unconfined
 
@@ -149,9 +133,7 @@ services:
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
       - ${STORAGE_PATH}/CineSync/config/.env:/app/.env
-      - ${STORAGE_PATH}/downloads:/downloads
       - /mnt:/mnt
-      - ${STORAGE_PATH}:${STORAGE_PATH}
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
@@ -280,6 +262,69 @@ services:
     networks:
       - surge-network
 
+  riven-frontend:
+    image: spoked/riven-frontend:latest
+    container_name: riven-frontend
+    restart: unless-stopped
+    tty: true
+    environment:
+      - TZ=Etc/UTC
+    ports:
+      - "3004:3000"
+    volumes:
+      - ./config/riven:/riven/config # Mount a config directory for Riven frontend
+    depends_on:
+      riven:
+        condition: service_started
+    networks:
+      - surge-network
+
+  riven:
+    image: spoked/riven:latest
+    container_name: riven
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    tty: true
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - RIVEN_FORCE_ENV=true
+      - RIVEN_DATABASE_HOST=postgresql+psycopg2://postgres:postgres@riven-db/riven
+    healthcheck:
+      test: curl -s http://localhost:8080 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - ./data/riven:/riven/data
+      - /mnt:/mnt
+    depends_on:
+      riven_postgres:
+        condition: service_healthy
+    networks:
+      - surge-network
+
+  riven_postgres:
+    image: postgres:17-alpine
+    container_name: riven-db
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=riven
+    volumes:
+      - ./data/riven-db:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - surge-network
+
 networks:
   surge-network:
     name: surge-network
+
