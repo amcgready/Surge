@@ -402,7 +402,7 @@ gather_auto_preferences() {
 
     # AUTO INSTALL: Enable all services and features by default
     ALL_ENABLE_VARS=(
-        ENABLE_RADARR ENABLE_SONARR ENABLE_OVERSEERR ENABLE_BAZARR ENABLE_PROWLARR ENABLE_NZBGET ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_TAUTULLI ENABLE_HOMEPAGE ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_PANGOLIN ENABLE_DOCKUPDATER ENABLE_SCANLY ENABLE_PARSELY
+        ENABLE_RADARR ENABLE_SONARR ENABLE_OVERSEERR ENABLE_BAZARR ENABLE_PROWLARR ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_TAUTULLI ENABLE_HOMEPAGE ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_PANGOLIN ENABLE_DOCKUPDATER ENABLE_SCANLY ENABLE_PARSELY
     )
     # Set all to true
     for var in "${ALL_ENABLE_VARS[@]}"; do
@@ -482,15 +482,10 @@ gather_auto_preferences() {
     # FULL STACK: Master list of all services to enable
     ENABLE_BAZARR="true"
     ENABLE_PROWLARR="true"
-    ENABLE_NZBGET="true"
-    ENABLE_CLI_DEBRID="true"
     ENABLE_DECYPHARR="true"
     ENABLE_CINESYNC="true"
     ENABLE_PLACEHOLDARR="true"
     ENABLE_GAPS="true"
-    ENABLE_WATCHTOWER="true"
-    ENABLE_SCHEDULER="true"
-    ENABLE_PD_ZURG="false"
     ENABLE_KOMETA="true"
     ENABLE_POSTERIZARR="true"
     ENABLE_OVERSEERR="true"
@@ -505,8 +500,6 @@ gather_auto_preferences() {
         configure_cinesync_organization
         write_cinesync_to_env
     fi
-
-    # ...Zurg logic removed...
 
     # API Keys and External Services (wording and logic unified with custom install)
     echo ""
@@ -543,22 +536,15 @@ gather_auto_preferences() {
     if [ "$DEBRID_PROVIDER" = "none" ]; then
         print_warning "No debrid token provided. Torrentio and cli-debrid will be disabled."
         ENABLE_TORRENTIO="false"
-        ENABLE_CLI_DEBRID="false"
-        ENABLE_RDT_CLIENT="false"
     else
         print_success "Using $DEBRID_PROVIDER token for all debrid features."
         ENABLE_TORRENTIO="true"
-        ENABLE_CLI_DEBRID="true"
-        ENABLE_RDT_CLIENT="true"
     fi
 
     export RD_API_TOKEN
     export AD_API_TOKEN
     export PREMIUMIZE_API_TOKEN
     export ENABLE_TORRENTIO
-    export ENABLE_ZURG
-    export ENABLE_CLI_DEBRID
-    export ENABLE_RDT_CLIENT
 
     # TMDB and Trakt
     echo "TMDB API Key (for metadata and Kometa, required)"
@@ -602,18 +588,6 @@ gather_auto_preferences() {
     read -p "MDBLIST API Key: " mdblist_key
     MDBLIST_API_KEY=${mdblist_key:-}
 
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        echo ""
-        print_info "NZBGet Configuration"
-        export NZBGET_USER="admin"
-        export NZBGET_PASS="password"
-        export OVERSEERR_USER="admin"
-        export OVERSEERR_PASS="password"
-        export TAUTULLI_USER="admin"
-        export TAUTULLI_PASS="password"
-        print_info "Using admin credentials for NZBGet."
-    fi
-
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
@@ -653,8 +627,7 @@ gather_custom_preferences() {
         1)
             DEPLOYMENT_TYPE="full"
             ENABLE_CINESYNC="true"
-            ENABLE_PD_ZURG="false"
-            export ENABLE_PD_ZURG
+
             ;;
         2)
             DEPLOYMENT_TYPE="minimal"
@@ -705,7 +678,6 @@ gather_custom_preferences() {
             configure_cinesync_organization
         fi
     fi
-    # ...Zurg logic removed...
     
     # User/Group IDs
     echo ""
@@ -766,17 +738,14 @@ gather_custom_preferences() {
         ENABLE_BAZARR=$([[ "$enable_bazarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
         read -p "Enable Prowlarr (indexer manager)? [Y/n]: " enable_prowlarr
         ENABLE_PROWLARR=$([[ "$enable_prowlarr" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        read -p "Enable NZBGet (Usenet downloader)? [Y/n]: " enable_nzbget
-        ENABLE_NZBGET=$([[ "$enable_nzbget" =~ ^[Nn]$ ]] && echo "false" || echo "true")
-        read -p "Enable cli_debrid (debrid CLI management)? [y/N]: " enable_cli_debrid
-        ENABLE_CLI_DEBRID=$([[ "$enable_cli_debrid" =~ ^[Yy]$ ]] && echo "true" || echo "false")
+        
         # =============================
         # Debrid Service Configuration
         # =============================
-        if [ "$ENABLE_RDT_CLIENT" = "true" ] || [ "$ENABLE_CLI_DEBRID" = "true" ]; then
+        if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
             echo ""
             print_info "Debrid Service Configuration"
-            echo "Provide at least one debrid API token to enable Torrentio and cli-debrid."
+            echo "Provide at least one debrid API token to enable Torrentio."
             echo "If none are provided, these features will be disabled."
             echo ""
             read -p "Real-Debrid API Token (recommended): " RD_API_TOKEN
@@ -800,17 +769,11 @@ gather_custom_preferences() {
 
             # Apply token to all relevant services, or disable if none provided
             if [ "$DEBRID_PROVIDER" = "none" ]; then
-                print_warning "No debrid token provided. Torrentio, Zurg, and cli-debrid will be disabled."
+                print_warning "No debrid token provided. Torrentio will be disabled."
                 ENABLE_TORRENTIO="false"
-                ENABLE_ZURG="false"
-                ENABLE_CLI_DEBRID="false"
-                ENABLE_RDT_CLIENT="false"
             else
                 print_success "Using $DEBRID_PROVIDER token for all debrid features."
                 ENABLE_TORRENTIO="true"
-                ENABLE_ZURG="true"
-                ENABLE_CLI_DEBRID="true"
-                ENABLE_RDT_CLIENT="true"
             fi
 
             # Export for downstream scripts
@@ -818,17 +781,6 @@ gather_custom_preferences() {
             export AD_API_TOKEN
             export PREMIUMIZE_API_TOKEN
             export ENABLE_TORRENTIO
-            export ENABLE_ZURG
-            export ENABLE_CLI_DEBRID
-            export ENABLE_RDT_CLIENT
-        fi
-        # Prompt for custom Zurg downloads path if Zurg is enabled
-        if [ "$ENABLE_ZURG" = "true" ]; then
-            echo ""
-            print_info "Zurg downloads destination"
-            echo "Default: Uses standard Surge downloads directory"
-            read -p "Custom Zurg downloads path (optional): " PD_ZURG_DOWNLOADS_PATH
-            PD_ZURG_DOWNLOADS_PATH=${PD_ZURG_DOWNLOADS_PATH:-}
         fi
         read -p "Enable Decypharr (automated decryption)? [y/N]: " enable_decypharr
         ENABLE_DECYPHARR=$([[ "$enable_decypharr" =~ ^[Yy]$ ]] && echo "true" || echo "false")
@@ -850,9 +802,6 @@ gather_custom_preferences() {
         # Minimal deployment
         ENABLE_BAZARR="false"
         ENABLE_PROWLARR="true"
-        ENABLE_NZBGET="true"
-        ENABLE_RDT_CLIENT="false"
-        ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="false"
         ENABLE_POSTERIZARR="false"
@@ -865,9 +814,7 @@ gather_custom_preferences() {
         # Full deployment
         ENABLE_BAZARR="true"
         ENABLE_PROWLARR="true"
-        ENABLE_NZBGET="true"
         ENABLE_RDT_CLIENT="false"
-        ENABLE_CLI_DEBRID="false"
         ENABLE_DECYPHARR="false"
         ENABLE_KOMETA="true"
         ENABLE_POSTERIZARR="true"
@@ -950,18 +897,6 @@ gather_custom_preferences() {
         TRAKT_CLIENT_SECRET=${trakt_secret:-}
     fi
 
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        echo ""
-        print_info "NZBGet Configuration"
-        export NZBGET_USER="admin"
-        export NZBGET_PASS="password"
-        export OVERSEERR_USER="admin"
-        export OVERSEERR_PASS="password"
-        export TAUTULLI_USER="admin"
-        export TAUTULLI_PASS="password"
-        print_info "Using admin credentials for NZBGet."
-    fi
-
     if [ "$ENABLE_POSTERIZARR" = "true" ]; then
         echo ""
         echo "🎨 Posterizarr Enhanced Configuration:"
@@ -997,19 +932,7 @@ gather_custom_preferences() {
             read -p "Real-Debrid API Token (for Torrentio) (optional): " prowlarr_rd_token
             RD_API_TOKEN=${prowlarr_rd_token:-}
         else
-            print_info "✅ Using Real-Debrid token already provided for RDT-Client/Zurg"
-        fi
-        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-            echo ""
-            echo "🔧 cli_debrid Configuration:"
-            if [ -z "$RD_API_TOKEN" ]; then
-                read -p "Real-Debrid API Token (optional): " rd_token_cli
-                RD_API_TOKEN=${rd_token_cli:-}
-            fi
-            read -p "AllDebrid API Token (optional): " ad_token
-            AD_API_TOKEN=${ad_token:-}
-            read -p "Premiumize API Token (optional): " pm_token
-            PREMIUMIZE_API_TOKEN=${pm_token:-}
+            print_info "✅ Using Real-Debrid token already provided"
         fi
     fi
 
@@ -1034,7 +957,6 @@ create_download_directories() {
     show_quick_progress "Setting up directory structure..." 8
     
     # Create directory structure
-    mkdir -p "$STORAGE_PATH/downloads/"{nzbget,rdt-client,completed,incomplete}
     mkdir -p "$STORAGE_PATH/downloads/completed/"{movies,tv}
     mkdir -p "$STORAGE_PATH/downloads/incomplete/"{movies,tv}
     
@@ -1206,18 +1128,6 @@ configure_services_post_deployment() {
         fi
     fi
 
-    # Configure NZBGet comprehensive automation
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        print_info "🔧 Running NZBGet comprehensive automation..."
-        show_quick_progress "Configuring NZBGet automation settings..." 15
-        python3 "$SCRIPT_DIR/configure-nzbget.py" "$STORAGE_PATH"
-        if [ $? -eq 0 ]; then
-            print_success "NZBGet automation completed successfully!"
-        else
-            print_warning "NZBGet automation had some issues, manual configuration may be needed"
-        fi
-    fi
-
     # Configure download clients in Radarr/Sonarr
     configure_arr_download_clients
 
@@ -1310,19 +1220,6 @@ configure_services_post_deployment() {
         fi
     fi
 
-    # Configure Zurg if enabled
-    if [ "$ENABLE_ZURG" = "true" ]; then
-        print_info "💾 Configuring Zurg Real-Debrid filesystem..."
-        show_quick_progress "Setting up rclone mount and WebDAV..." 15
-        if python3 "$SCRIPT_DIR/configure-zurg.py" "$STORAGE_PATH"; then
-            print_success "Zurg configuration completed!"
-            print_info "💾 Zurg Real-Debrid filesystem is now automated"
-            print_info "🌐 Zurg WebDAV available at: http://localhost:${ZURG_PORT:-9999}"
-        else
-            print_warning "Zurg configuration had some issues, manual setup may be needed"
-        fi
-    fi
-
     print_success "Service configuration completed!"
 }
 # Generate homepage.yaml widgets for all enabled services
@@ -1360,21 +1257,6 @@ configure_homepage_widgets() {
     if [ "$ENABLE_BAZARR" = "true" ]; then
         echo "  - name: Bazarr" >> "$homepage_yaml"
         echo "    url: http://localhost:6767" >> "$homepage_yaml"
-    fi
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        echo "  - name: NZBGet" >> "$homepage_yaml"
-        echo "    url: http://localhost:6789" >> "$homepage_yaml"
-    fi
-    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-        echo "  - name: RDT-Client" >> "$homepage_yaml"
-        echo "    url: http://localhost:6500" >> "$homepage_yaml"
-    fi
-    if [ "$ENABLE_PD_ZURG" = "true" ]; then
-        echo "  - name: PD_Zurg" >> "$homepage_yaml"
-    fi
-    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-        echo "  - name: cli_debrid" >> "$homepage_yaml"
-        echo "    url: cli" >> "$homepage_yaml"
     fi
     if [ "$ENABLE_DECYPHARR" = "true" ]; then
         echo "  - name: Decypharr" >> "$homepage_yaml"
@@ -1532,113 +1414,6 @@ add_prowlarr_to_arr() {
 # Configure download clients in Radarr and Sonarr
 configure_arr_download_clients() {
     print_info "Configuring download clients in Radarr and Sonarr..."
-    
-    # Configure NZBGet if enabled
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        configure_nzbget_in_arr "radarr" "7878"
-        configure_nzbget_in_arr "sonarr" "8989"
-    fi
-    
-    # Configure RDT-Client if enabled
-    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-        print_info "🌐 Running RDT-Client comprehensive automation..."
-        show_quick_progress "Configuring RDT-Client and Torrentio settings..." 12
-        # Ensure RD_API_TOKEN is set from setup wizard
-        if [ -z "$RD_API_TOKEN" ]; then
-            print_warning "Real-Debrid API token not found in environment."
-            read -p "Please enter your Real-Debrid API Token for Torrentio setup: " rd_token_fallback
-            export RD_API_TOKEN="$rd_token_fallback"
-        else
-            export RD_API_TOKEN
-        fi
-        if [ -f "$SCRIPT_DIR/configure-rdt-torrentio.py" ]; then
-            python3 "$SCRIPT_DIR/configure-rdt-torrentio.py" "$STORAGE_PATH"
-            if [ $? -eq 0 ]; then
-                print_success "RDT-Client and Torrentio automation completed successfully!"
-            else
-                print_warning "RDT-Client automation had some issues, manual configuration may be needed"
-                # Fallback to old method
-                configure_rdt_client_in_arr "radarr" "7878"
-                configure_rdt_client_in_arr "sonarr" "8989"
-            fi
-        else
-            # Fallback to old method
-            configure_rdt_client_in_arr "radarr" "7878"
-            configure_rdt_client_in_arr "sonarr" "8989"
-        fi
-    fi
-}
-
-# Configure NZBGet in *arr service
-configure_nzbget_in_arr() {
-    local service=$1
-    local port=$2
-    local api_key=$(get_arr_api_key "$service" "$port")
-    # Use admin credentials for NZBGet
-    local username="admin"
-    local password="changeme"
-    if [ -n "$api_key" ]; then
-        print_info "Adding NZBGet to $service..."
-        local download_client_data='{
-            "enable": true,
-            "protocol": "usenet",
-            "priority": 1,
-            "removeCompletedDownloads": true,
-            "removeFailedDownloads": true,
-            "name": "NZBGet",
-            "fields": [
-                {"name": "host", "value": "surge-nzbget"},
-                {"name": "port", "value": 6789},
-                {"name": "username", "value": "admin"},
-                {"name": "password", "value": "changeme"},
-                {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
-                {"name": "useSsl", "value": false}
-            ],
-            "implementationName": "NZBGet",
-            "implementation": "Nzbget",
-            "configContract": "NzbgetSettings",
-            "tags": []
-        }'
-        curl -s -X POST "http://localhost:$port/api/v3/downloadclient" \
-            -H "Content-Type: application/json" \
-            -H "X-Api-Key: $api_key" \
-            -d "$download_client_data" > /dev/null
-    fi
-}
-
-# Configure RDT-Client in *arr service
-configure_rdt_client_in_arr() {
-    local service=$1
-    local port=$2
-    local api_key=$(get_arr_api_key "$service" "$port")
-    
-    if [ -n "$api_key" ]; then
-        print_info "Adding RDT-Client to $service..."
-        
-        local download_client_data='{
-            "enable": true,
-            "protocol": "torrent",
-            "priority": 1,
-            "removeCompletedDownloads": true,
-            "removeFailedDownloads": true,
-            "name": "RDT-Client",
-            "fields": [
-                {"name": "host", "value": "surge-rdt-client"},
-                {"name": "port", "value": 6500},
-                {"name": "category", "value": "'$([ "$service" = "radarr" ] && echo "movies" || echo "tv")'"},
-                {"name": "useSsl", "value": false}
-            ],
-            "implementationName": "rTorrent",
-            "implementation": "RTorrent",
-            "configContract": "RTorrentSettings",
-            "tags": []
-        }'
-        
-        curl -s -X POST "http://localhost:$port/api/v3/downloadclient" \
-            -H "Content-Type: application/json" \
-            -H "X-Api-Key: $api_key" \
-            -d "$download_client_data" > /dev/null
-    fi
 }
 
 # Configure media server connections for various services
@@ -1706,16 +1481,27 @@ create_config() {
 
     # --- BEGIN: Explicitly set all ENABLE_* variables for deployment clarity ---
     # Only services with ENABLE_* set to true will be deployed. All others are set to false.
-    ENABLE_VARS=(RADARR SONARR BAZARR PROWLARR NZBGET RDT_CLIENT ZURG CLI_DEBRID DECYPHARR KOMETA POSTERIZARR OVERSEERR TAUTULLI CINESYNC PLACEHOLDARR GAPS WATCHTOWER SCHEDULER)
+    ENABLE_VARS=(RADARR SONARR BAZARR PROWLARR RDT_CLIENT DECYPHARR KOMETA POSTERIZARR OVERSEERR TAUTULLI CINESYNC PLACEHOLDARR GAPS WATCHTOWER SCHEDULER)
     for var in "${ENABLE_VARS[@]}"; do
         eval "val=\${ENABLE_${var}:-false}"
         declare "ENABLE_${var}=$val"
     done
 
     
+    # Prompt for GitHub token and add to .env
+    echo ""
+    print_info "GitHub integration:"
+    read -p "Enter your GitHub token (leave blank to skip): " github_token
+    if [ -n "$github_token" ]; then
+        echo "GITHUB_TOKEN=$github_token" >> "$PROJECT_DIR/.env"
+        print_success "GitHub token saved to .env as GITHUB_TOKEN."
+    else
+        print_info "No GitHub token provided. Skipping."
+    fi
+
     # Create download directories
     create_download_directories
-    
+
     # Propagate shared configuration to all services
     if [ -f "$PROJECT_DIR/scripts/shared-config.sh" ]; then
         print_step "Configuring individual services..."
@@ -1735,10 +1521,6 @@ create_service_directories() {
         [Radarr]="config"
         [Sonarr]="config"
         [Prowlarr]="config"
-        [NZBGet]="config downloads"
-        [RDT-Client]="config downloads"
-        [Zurg]="config downloads"
-        [cli_debrid]="config"
         [Decypharr]="config"
         [Kometa]="config"
         [Posterizarr]="config"
@@ -1753,7 +1535,7 @@ create_service_directories() {
     )
 
     # Only create folders for enabled services
-    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "NZBGet" "RDT-Client" "Zurg" "cli_debrid" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
+    for service in "Bazarr" "Radarr" "Sonarr" "Prowlarr" "Decypharr" "Kometa" "Posterizarr" "Overseerr" "Tautulli" "CineSync" "Placeholdarr" "GAPS"; do
         var_name="ENABLE_${service^^}"
         var_name="${var_name//-/_}"
         # shellcheck disable=SC2154
@@ -1886,22 +1668,6 @@ show_next_steps() {
             echo "   - Bazarr: http://localhost:6767"
         fi
         
-        if [ "$ENABLE_NZBGET" = "true" ]; then
-            echo "   - NZBGet: http://localhost:6789"
-        fi
-        
-        if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-            echo "   - RDT-Client: http://localhost:6500"
-        fi
-        
-        if [ "$ENABLE_ZURG" = "true" ]; then
-            echo "   - Zurg: http://localhost:9999"
-        fi
-        
-        if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-            echo "   - cli_debrid: Available via CLI"
-        fi
-        
         if [ "$ENABLE_DECYPHARR" = "true" ]; then
             echo "   - Decypharr: http://localhost:8282"
         fi
@@ -1997,23 +1763,7 @@ display_final_access_info() {
         echo "  🧩 GAPS (Plex Missing Movies): http://localhost:${GAPS_PORT:-8484}"
     fi
     
-    # Download clients
-    if [ "$ENABLE_NZBGET" = "true" ]; then
-        echo "  📥 NZBGet (Usenet): http://localhost:6789"
-    fi
-    
-    if [ "$ENABLE_RDT_CLIENT" = "true" ]; then
-        echo "  🌐 RDT-Client (Real-Debrid): http://localhost:6500"
-    fi
-    
-    if [ "$ENABLE_ZURG" = "true" ]; then
-        echo "  🗂️  Zurg (Real-Debrid Filesystem): http://localhost:9999"
-    fi
-    
-    if [ "$ENABLE_CLI_DEBRID" = "true" ]; then
-        echo "  🔧 cli_debrid: Available via CLI"
-    fi
-    
+    # Download clients  
     if [ "$ENABLE_DECYPHARR" = "true" ]; then
         echo "  🔓 Decypharr (Decryption): http://localhost:8080"
     fi
@@ -2205,7 +1955,7 @@ main() {
         export STORAGE_PATH PUID PGID
         
         # Export all ENABLE_* variables for directory creation
-        export ENABLE_BAZARR ENABLE_RADARR ENABLE_SONARR ENABLE_PROWLARR ENABLE_NZBGET ENABLE_RDT_CLIENT ENABLE_ZURG ENABLE_CLI_DEBRID ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_OVERSEERR ENABLE_TAUTULLI ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_SCANLY ENABLE_PARSELY
+        export ENABLE_BAZARR ENABLE_RADARR ENABLE_SONARR ENABLE_PROWLARR ENABLE_RDT_CLIENT ENABLE_DECYPHARR ENABLE_KOMETA ENABLE_POSTERIZARR ENABLE_OVERSEERR ENABLE_TAUTULLI ENABLE_CINESYNC ENABLE_PLACEHOLDARR ENABLE_GAPS ENABLE_SCANLY ENABLE_PARSELY
         # Clone Surge repo if ENABLE_SCANLY is true
                 if [ "$ENABLE_SCANLY" = "true" ]; then
                     if [ ! -d "$PROJECT_DIR/Surge" ]; then
