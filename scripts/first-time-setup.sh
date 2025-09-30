@@ -123,7 +123,7 @@ write_storage_path_to_env() {
 }
 
 # Set PROJECT_DIR early so it is available for all functions
-SCRIPT_DIR="$(cd "$(dirname \"${BASH_SOURCE[0]}\")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 # Write ImageMaid integration variables to .env
 write_imagemaid_to_env() {
