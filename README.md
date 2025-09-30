@@ -18,7 +18,7 @@
 
 Surge is a comprehensive, one-stop Docker deployment solution that combines the best media management, automation, and monitoring tools into a single, easy-to-deploy stack.
 
-# Important Notice: Surge is in active development. Bugs are expected. Notice something weird, report it on the Discord or open a GitHub issue! I'm always looking for suggestions and appreciate you taking time to look at the project.
+# Important Notice: Surge is in active development. Bugs are expected. Notice something weird, report it on the Discord or open a GitHub issue! I'm always looking for suggestions and appreciate you taking time to look at the project. Surge sets permissions for user 1000:1000 and relies on this.
 
 ## 🚀 What's Included
 
