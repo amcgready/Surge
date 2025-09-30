@@ -216,7 +216,7 @@ class DecypharrConfigurator:
 
         # Helper to build debrid folder path (use rclone mount for all debrid services)
         def build_debrid_folder(service_name):
-            return f"/mnt/rclone/remote/{service_name}"
+            return f"${STORAGE_PATH}/downloads/Decypharr/debrids/{service_name}"
 
         if self.rd_api_key:
             debrid_configs.append({

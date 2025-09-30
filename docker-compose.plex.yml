@@ -17,7 +17,7 @@ services:
     volumes:
       - ${STORAGE_PATH}/Plex/config:/config
       - ${STORAGE_PATH}/Plex/transcode:/transcode
-      - ${STORAGE_PATH}/Plex/assets:/config/Library/Application Support/Plex Media Server/Metadata/Assets
+      - ${STORAGE_PATH}/Assets:/config/Library/Application Support/Plex Media Server/Metadata/Assets
       - ${STORAGE_PATH}/downloads/CineSync:/media:rw
       - ${STORAGE_PATH}/downloads/Decypharr:${STORAGE_PATH}/downloads/Decypharr
     ports:

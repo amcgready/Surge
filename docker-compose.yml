@@ -111,7 +111,7 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       - ${STORAGE_PATH}/Posterizarr/config:/config
-      - ${STORAGE_PATH}/Posterizarr/assets:/assets
+      - ${STORAGE_PATH}/Assets:/assets
       - ${STORAGE_PATH}/Posterizarr/logs:/logs
     ports:
       - "${POSTERIZARR_PORT:-5060}:5060"
@@ -264,7 +264,7 @@ services:
 
   riven-frontend:
     image: spoked/riven-frontend:latest
-    container_name: riven-frontend
+    container_name: surge-riven-frontend
     restart: unless-stopped
     tty: true
     environment:
@@ -281,7 +281,7 @@ services:
 
   riven:
     image: spoked/riven:latest
-    container_name: riven
+    container_name: surge-riven
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -308,7 +308,7 @@ services:
 
   riven_postgres:
     image: postgres:17-alpine
-    container_name: riven-db
+    container_name: surge-riven-db
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_USER=postgres
