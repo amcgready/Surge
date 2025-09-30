@@ -1,12 +1,24 @@
 
+
 import os
 import sys
 import yaml
+import subprocess
+import shutil
 
 # Get storage path from env or argument
 storage_path = os.environ.get('STORAGE_PATH') or (sys.argv[1] if len(sys.argv) > 1 else '/opt/surge')
-config_dir = os.path.join(storage_path, 'Pangolin', 'config')
+pangolin_dir = os.path.join(storage_path, 'Pangolin')
+config_dir = os.path.join(pangolin_dir, 'config')
 config_path = os.path.join(config_dir, 'config.yml')
+
+# Clone Pangolin repo
+def clone_pangolin_repo(repo_url, target_dir):
+    if os.path.exists(target_dir):
+        print(f"[INFO] Removing existing Pangolin directory: {target_dir}")
+        shutil.rmtree(target_dir)
+    print(f"[INFO] Cloning Pangolin repo to {target_dir}")
+    subprocess.run(['git', 'clone', repo_url, target_dir], check=True)
 
 # Official Pangolin config example
 config = {
@@ -22,7 +34,7 @@ config = {
         }
     },
     'server': {
-        'external_port': 3000,
+        'external_port': 3003,
         'internal_port': 3001,
         'next_port': 3002,
         'internal_hostname': 'pangolin',
@@ -61,48 +73,19 @@ config = {
     }
 }
 
-os.makedirs(config_dir, exist_ok=True)
-with open(config_path, 'w') as f:
-    yaml.dump(config, f, default_flow_style=False)
-print(f"[SUCCESS] Pangolin config generated at {config_path}")
+def create_config():
+    os.makedirs(config_dir, exist_ok=True)
+    with open(config_path, 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+    print(f"[SUCCESS] Pangolin config generated at {config_path}")
 
 # Extract Pangolin setup token from docker logs
-import subprocess
+
 import re
 
-def get_pangolin_setup_token():
-    try:
-        logs = subprocess.check_output(['docker', 'logs', 'surge-pangolin'], text=True)
-        # Adjust regex to match the actual log output for the setup token
-        match = re.search(r'Setup Token:\s*([A-Za-z0-9\-_]+)', logs)
-        if match:
-            return match.group(1)
-    except Exception as e:
-        print(f"[ERROR] Could not get Pangolin setup token: {e}")
-    return None
-
-def save_token_to_env(token, env_path):
-    if not token:
-        print("[ERROR] No Pangolin setup token found.")
-        return
-    # Read .env, replace or append token
-    lines = []
-    found = False
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            for line in f:
-                if line.startswith('PANGOLIN_SETUP_TOKEN='):
-                    lines.append(f'PANGOLIN_SETUP_TOKEN={token}\n')
-                    found = True
-                else:
-                    lines.append(line)
-    if not found:
-        lines.append(f'PANGOLIN_SETUP_TOKEN={token}\n')
-    with open(env_path, 'w') as f:
-        f.writelines(lines)
-    print(f"[SUCCESS] Pangolin setup token saved to {env_path}")
-
 if __name__ == "__main__":
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    token = get_pangolin_setup_token()
-    save_token_to_env(token, env_path)
+    # Step 1: Clone Pangolin repo
+    pangolin_repo_url = "https://github.com/fosrl/pangolin.git"  # Update if needed
+    clone_pangolin_repo(pangolin_repo_url, pangolin_dir)
+    # Step 2: Create custom config
+    create_config()

@@ -864,7 +864,16 @@ main() {
     validate_storage_path
     setup_environment
     create_directories
+
     deploy_services "$MEDIA_SERVER" "$DEPLOYMENT_TYPE"
+
+    # After deployment, extract Pangolin setup token
+    print_info "Extracting Pangolin setup token..."
+    if python3 "$SCRIPT_DIR/get-pangolin-token.py"; then
+        print_success "Pangolin setup token extracted and saved to .env."
+    else
+        print_warning "Failed to extract Pangolin setup token. You can run get-pangolin-token.py manually."
+    fi
 
     # After deployment, generate libraries.json and create Plex libraries
     print_info "Generating libraries.json for Plex..."
