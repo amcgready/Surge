@@ -357,8 +357,8 @@ class SurgeCineSyncConfigurator:
             env_content.append("# ========================================")
             env_content.append("# Directory Paths")
             env_content.append("# ========================================")
-            env_content.append(f"SOURCE_DIR={get('SOURCE_DIR','/path/to/files')}")
-            env_content.append(f"DESTINATION_DIR={get('DESTINATION_DIR','/path/to/destination')}")
+            env_content.append(f'SOURCE_DIR="{get("SOURCE_DIR","/path/to/files")}"')
+            env_content.append(f'DESTINATION_DIR="{get("DESTINATION_DIR","/path/to/destination")}"')
             env_content.append(f"USE_SOURCE_STRUCTURE={get('USE_SOURCE_STRUCTURE','false')}")
             env_content.append("")
 

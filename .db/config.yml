@@ -1,0 +1,9 @@
+enabled: false
+instancename: CineSync
+version: 5.14.0.9383
+branch: master
+apiKey: c656250b0d8f2d53fde55fe5d244ed06
+appGuid: fd8ce9f4-0717-4737-ac51-a333ef9f3c86
+serviceType: auto
+folderMode: false
+folderMappings: []

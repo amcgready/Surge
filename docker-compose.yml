@@ -87,6 +87,7 @@ services:
       - ${STORAGE_PATH}/Decypharr/config:/app/config
       - ${STORAGE_PATH}/Decypharr/config/config.json:/app/config.json
       - ${STORAGE_PATH}/Decypharr/cache:/mnt/rclone/cache
+      - ${STORAGE_PATH}/downloads/Decypharr/debrids:/mnt/rclone/remote
       - /mnt:/mnt
     ports:
       - "${DECYPHARR_PORT:-8282}:8282"
@@ -133,7 +134,9 @@ services:
       - "${CINESYNC_DEV_PORT:-5173}:5173"
     volumes:
       - ${STORAGE_PATH}/CineSync/config/.env:/app/.env
-      - /mnt:/mnt
+      - /mnt:/mnt  # Mount /mnt for access to external storage
+      - /home:/home  # Mount home directory to provide access to home files
+      - .db:/app/db  # Mount local db folder to persist database files
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
       - surge-network
@@ -264,7 +267,7 @@ services:
 
   riven-frontend:
     image: spoked/riven-frontend:latest
-    container_name: surge-riven-frontend
+    container_name: riven-frontend
     restart: unless-stopped
     tty: true
     environment:
@@ -281,7 +284,7 @@ services:
 
   riven:
     image: spoked/riven:latest
-    container_name: surge-riven
+    container_name: riven
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -308,7 +311,7 @@ services:
 
   riven_postgres:
     image: postgres:17-alpine
-    container_name: surge-riven-db
+    container_name: riven-db
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_USER=postgres

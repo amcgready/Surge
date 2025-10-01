@@ -423,13 +423,6 @@ deploy_services() {
             sleep 2
             WAIT_SECONDS=$((WAIT_SECONDS+2))
         done
-        if [ -f "$ENV_PATH" ]; then
-            print_success "[CineSync] .env file detected: $ENV_PATH"
-            print_info "[CineSync] .env file contents:"
-            cat "$ENV_PATH"
-        else
-            print_error "[CineSync] .env file not found after waiting. See logs/cinesync-config.log for details."
-        fi
     fi
 
     print_info "Starting deployment (phase 1: all services except Decypharr) with profiles:$COMPOSE_PROFILE_FLAGS"
@@ -442,6 +435,12 @@ deploy_services() {
     # If Prowlarr is enabled, run Torrentio indexer configuration immediately (no health/retry check)
     ENABLE_PROWLARR=$(grep "^ENABLE_PROWLARR=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2 | tr -d '\n\r' || echo "false")
     if [ "$ENABLE_PROWLARR" = "true" ]; then
+        print_info "Fixing permissions for Prowlarr directories before Torrentio setup..."
+        if sudo chown -R 1000:1000 "$STORAGE_PATH/Prowlarr"; then
+            print_success "Permissions fixed for $STORAGE_PATH/Prowlarr"
+        else
+            print_warning "Failed to fix permissions for $STORAGE_PATH/Prowlarr. You may need to fix manually."
+        fi
         print_info "Running Torrentio indexer configuration for Prowlarr ..."
         if python3 "$SCRIPT_DIR/configure-torrentio.py" "$STORAGE_PATH"; then
             print_success "Torrentio indexer configured in Prowlarr."
@@ -864,6 +863,41 @@ main() {
     validate_storage_path
     setup_environment
     create_directories
+
+    # Unmount rclone mounts before setting permissions
+    for mount in "${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid" "${STORAGE_PATH}/downloads/Decypharr/debrids/torbox"; do
+        if mountpoint -q "$mount"; then
+            print_info "Unmounting rclone mount at $mount for permission fix..."
+            fusermount -u "$mount" || print_warning "Failed to unmount $mount (may not be mounted)"
+        fi
+    done
+
+    # Set permissions on STORAGE_PATH
+    print_info "Setting directory ownership and permissions on ${STORAGE_PATH}..."
+    if sudo chown -R 1000:1000 "${STORAGE_PATH}" && sudo chmod -R 755 "${STORAGE_PATH}"; then
+        print_success "Directory ownership and permissions set to 1000:1000"
+    else
+        print_warning "Failed to set directory ownership/permissions. You may need to run manually:"
+        print_warning "  sudo chown -R 1000:1000 ${STORAGE_PATH}"
+        print_warning "  sudo chmod -R 755 ${STORAGE_PATH}"
+    fi
+
+    # Remount rclone remotes for realdebrid and torbox
+    print_info "Remounting rclone remotes for RealDebrid and Torbox..."
+    mkdir -p "${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid"
+    mkdir -p "${STORAGE_PATH}/downloads/Decypharr/debrids/torbox"
+    if ! mountpoint -q "${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid"; then
+        rclone mount realdebrid-webdav: "${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid" --daemon
+        print_success "Mounted realdebrid-webdav at ${STORAGE_PATH}/downloads/Decypharr/debrids/realdebrid"
+    else
+        print_info "realdebrid-webdav already mounted."
+    fi
+    if ! mountpoint -q "${STORAGE_PATH}/downloads/Decypharr/debrids/torbox"; then
+        rclone mount torbox-webdav: "${STORAGE_PATH}/downloads/Decypharr/debrids/torbox" --daemon
+        print_success "Mounted torbox-webdav at ${STORAGE_PATH}/downloads/Decypharr/debrids/torbox"
+    else
+        print_info "torbox-webdav already mounted."
+    fi
 
     deploy_services "$MEDIA_SERVER" "$DEPLOYMENT_TYPE"
 

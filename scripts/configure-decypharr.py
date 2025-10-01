@@ -216,7 +216,7 @@ class DecypharrConfigurator:
 
         # Helper to build debrid folder path (use rclone mount for all debrid services)
         def build_debrid_folder(service_name):
-            return f"${STORAGE_PATH}/downloads/Decypharr/debrids/{service_name}"
+            return f"/mnt/rclone/remote/{service_name}"
 
         if self.rd_api_key:
             debrid_configs.append({
@@ -316,13 +316,6 @@ class DecypharrConfigurator:
 
 
         # Use fixed container paths for config values to match Docker volume mappings
-        qbittorrent_download_folder = "/mnt/downloads/symlinks"
-        qbittorrent_temp_folder = "/mnt/downloads/temp"
-        qbittorrent_completed_folder = "/mnt/downloads/completed"
-
-        rclone_mount_path = "/mnt/rclone/remote"
-        rclone_cache_dir = "/mnt/rclone/cache"
-
         blackhole_sonarr = "/mnt/downloads/blackhole/sonarr"
         blackhole_radarr = "/mnt/downloads/blackhole/radarr"
 
