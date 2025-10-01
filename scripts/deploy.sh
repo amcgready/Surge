@@ -497,6 +497,18 @@ deploy_services() {
         else
             print_warning "configure-decypharr.py script not found in $SCRIPT_DIR. Skipping Decypharr configuration."
         fi
+        # Check that config.json exists and is a file, not a directory
+        CONFIG_JSON_PATH="$STORAGE_PATH/Decypharr/config/config.json"
+        if [ ! -e "$CONFIG_JSON_PATH" ]; then
+            print_error "Decypharr config.json does not exist at $CONFIG_JSON_PATH. Aborting Decypharr startup."
+            print_info "Please run: python3 $SCRIPT_DIR/configure-decypharr.py $STORAGE_PATH"
+            exit 1
+        fi
+        if [ -d "$CONFIG_JSON_PATH" ]; then
+            print_error "Decypharr config.json is a directory at $CONFIG_JSON_PATH. Aborting Decypharr startup."
+            print_info "Please remove the directory and re-run: python3 $SCRIPT_DIR/configure-decypharr.py $STORAGE_PATH"
+            exit 1
+        fi
         print_info "Starting Decypharr container (phase 2)"
         eval docker compose $COMPOSE_FILES --profile decypharr up -d
         print_success "Phase 2: Decypharr container started!"

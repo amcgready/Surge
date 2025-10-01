@@ -121,3 +121,6 @@ scripts/patch-admin-credentials.sh
 scripts/test.config
 WebUI/build.py
 backup.env
+.db/cinesync.db
+.db/processed_files.db
+.db/source_files.db

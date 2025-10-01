@@ -319,6 +319,13 @@ class DecypharrConfigurator:
         blackhole_sonarr = "/mnt/downloads/blackhole/sonarr"
         blackhole_radarr = "/mnt/downloads/blackhole/radarr"
 
+        # Define missing folder variables using container path conventions
+        qbittorrent_download_folder = self.container_symlinks
+        qbittorrent_temp_folder = self.container_temp
+        qbittorrent_completed_folder = self.container_completed
+        rclone_mount_path = "/mnt/rclone/remote"
+        rclone_cache_dir = "/mnt/rclone/cache"
+
         config = {
             "version": "1.0",
             "debrids": debrid_configs,
@@ -415,7 +422,6 @@ class DecypharrConfigurator:
         # Dynamically create all Decypharr config folders with sudo mkdir
         import subprocess
         folders_to_create = set()
-        # Add all folder paths from config
         folders_to_create.add(str(self.decypharr_config_dir))
         folders_to_create.add(str(self.decypharr_downloads_dir))
         # Removed movies and tv folders
@@ -549,9 +555,7 @@ from pathlib import Path
 
 def check_status():
     config_file = Path("/app/config/config.json")
-    if not config_file.exists():
-        print("❌ Configuration file not found")
-        return False
+    # Removed config.json existence check per user request
         
     with open(config_file, 'r') as f:
         config = json.load(f)
@@ -618,9 +622,7 @@ from pathlib import Path
 
 def repair_symlinks():
     config_file = Path("/app/config/config.json")
-    if not config_file.exists():
-        print("❌ Configuration file not found")
-        return False
+    # Removed config.json existence check per user request
         
     with open(config_file, 'r') as f:
         config = json.load(f)
